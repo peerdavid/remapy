@@ -1,0 +1,22 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "gui.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/gui.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "test.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceRoot}/test.py",
+            "console": "integratedTerminal"
+        }
+    ]
+}
