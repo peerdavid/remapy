@@ -1,20 +1,23 @@
 import os
 import tkinter as tk
+from tkinter import *
+from tkinter import scrolledtext
 import tkinter.ttk as ttk
 from PIL import ImageTk as itk
 from PIL import Image
 
+import about
 from api.client import Client
 
 
-class App(object):
-    def __init__(self, root, client, font_size=14):
+class MyRemarkable(object):
+    def __init__(self, root, client, font_size=14, rowheight=14):
         self.nodes = dict()
         self.client = client
 
         style = ttk.Style()
-        style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=('Calibri', font_size))
-        style.configure("remapy.style.Treeview.Heading", font=('Calibri', font_size+2))
+        style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
+        style.configure("remapy.style.Treeview.Heading", font=font_size)
         style.layout("remapy.style.Treeview", [('remapy.style.Treeview.treearea', {'sticky': 'nswe'})])
         
         self.upper_frame = tk.Frame(root)
@@ -43,27 +46,32 @@ class App(object):
         self.tree.heading("#2", text="Type",anchor=tk.W)
         self.tree.heading("#3", text="Size",anchor=tk.W)
 
-        self.tree.tag_configure('move', background='#FF9800')
+        self.tree.tag_configure('move', background='#FF9800')    
         
+        icon_size = rowheight-4
         self.icon_dir = Image.open("./icons/folder.png")
-        self.icon_dir = self.icon_dir.resize((font_size, font_size))
+        self.icon_dir = self.icon_dir.resize((icon_size, icon_size))
         self.icon_dir = itk.PhotoImage(self.icon_dir)
 
         self.icon_note = Image.open("./icons/notebook.png")
-        self.icon_note = self.icon_note.resize((font_size, font_size))
+        self.icon_note = self.icon_note.resize((icon_size, icon_size))
         self.icon_note = itk.PhotoImage(self.icon_note)
 
         self.icon_pdf = Image.open("./icons/pdf.png")
-        self.icon_pdf = self.icon_pdf.resize((font_size, font_size))
+        self.icon_pdf = self.icon_pdf.resize((icon_size, icon_size))
         self.icon_pdf = itk.PhotoImage(self.icon_pdf)
+
+        self.icon_book = Image.open("./icons/book.png")
+        self.icon_book = self.icon_book.resize((icon_size, icon_size))
+        self.icon_book = itk.PhotoImage(self.icon_book)
 
         for i in range(5):
             # Level 1
             self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
             
             # Level 2
-            self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Notebook",""), image=self.icon_note)
-            self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Notebook","28%"), image=self.icon_note)
+            self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Book",""), image=self.icon_book)
+            self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Pdf","28%"), image=self.icon_pdf)
             self.tree.insert(self.folder1, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
 
         # Some other docs
@@ -141,18 +149,43 @@ class App(object):
 
 
 def main():
-    root = tk.Tk()
-    client = Client()
-    
-    # ToDo: Save last position and sizes
-    width, height = 750, 650
-    x = (root.winfo_screenwidth() / 4 * 3) - (width / 2)
-    y = (root.winfo_screenheight() / 2) - (height / 2)
-    root.geometry("%dx%d+%d+%d" % (width, height, x, y))
+    form = tk.Tk()
+    form.title("RemaPy")
+    font_size = 38
+    rowheight = 28
 
-    app = App(root, client)
-    root.title("RemaPy")
-    root.mainloop()
+    tabs = ttk.Notebook(form)
+    tabs.pack(expand=1, fill="both")
+    
+    width, height = 750, 650
+    x = (form.winfo_screenwidth() / 4 * 3) - (width / 2)
+    y = (form.winfo_screenheight() / 2) - (height / 2)
+    form.geometry("%dx%d+%d+%d" % (width, height, x, y))
+
+    # Create my remarkable tab
+    rm_client = Client()
+    rm_frame = ttk.Frame(tabs)
+    MyRemarkable(rm_frame, rm_client, font_size=font_size, rowheight=rowheight)
+    tabs.add(rm_frame, text="My Remarkable")
+
+    frame = ttk.Frame(tabs)
+    tabs.add(frame, text="Advanced")
+
+    frame = ttk.Frame(tabs)
+    tabs.add(frame, text="SSH")
+
+    frame = ttk.Frame(tabs)
+    tabs.add(frame, text="Settings")
+
+    frame = ttk.Frame(tabs)
+    about_text = tk.scrolledtext.ScrolledText(frame)
+    about_text.insert("1.0", about.ABOUT)
+    about_text.config(state=tk.DISABLED)
+    about_text.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+    tabs.add(frame, text="About")
+
+    form.mainloop()
 
 
 if __name__ == '__main__':
