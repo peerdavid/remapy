@@ -4,10 +4,13 @@ import tkinter.ttk as ttk
 from PIL import ImageTk as itk
 from PIL import Image
 
-class App(object):
-    def __init__(self, root, font_size=14):
-        self.nodes = dict()
+from api.client import Client
 
+
+class App(object):
+    def __init__(self, root, client, font_size=14):
+        self.nodes = dict()
+        self.client = client
 
         style = ttk.Style()
         style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=('Calibri', font_size))
@@ -28,7 +31,6 @@ class App(object):
         self.hsb = ttk.Scrollbar(root, orient="horizontal", command=self.tree.xview)
         self.hsb.pack(fill='x')
         self.tree.configure(xscrollcommand=self.hsb.set)
-
 
         self.tree["columns"]=("#1","#2","#3")
         self.tree.column("#0", width=270, minwidth=270)
@@ -72,7 +74,7 @@ class App(object):
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
-        self.btn = tk.Button(self.lower_frame, text="Upload document")
+        self.btn = tk.Button(self.lower_frame, text="LOG IN", command=self.btn_login_click)
         self.btn.pack(side = tk.LEFT)
 
         self.btn = tk.Button(self.lower_frame, text="Create Backup")
@@ -90,14 +92,16 @@ class App(object):
         # Context menu on right click
         self.tree.bind("<Button-3>", self.popup_menu)
         self.context_menu =tk.Menu(root, tearoff=0, font=('Calibri', font_size))
-        self.context_menu.add_command(label='Download', command=self.download_click)
-        self.context_menu.add_command(label='Download Raw', command=self.download_raw_click)
-        self.context_menu.add_command(label='Move', command=self.move_click)
-        self.context_menu.add_command(label='Delete', command=self.delete_click)
+        self.context_menu.add_command(label='Download', command=self.btn_download_click)
+        self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
+        self.context_menu.add_command(label='Move', command=self.btn_move_click)
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
         
 
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
-
+    
+    def btn_login_click(self):
+        self.client.sign_in()
 
     def popup_menu(self, event):
         """action in event of button 3 on tree view"""
@@ -114,33 +118,39 @@ class App(object):
             # no action required
             pass
 
-
-    def delete_click(self):
+    def btn_delete_click(self):
         if not self.iids:
             return
 
         for iid in self.iids:
             self.tree.delete(iid)
 
-
-    def move_click(self):
+    def btn_move_click(self):
         if not self.iids:
             return 
 
         for iid in self.iids:
             self.tree.item(iid, tags="move")
 
-    def download_click(self):
+    def btn_download_click(self):
         self.progressbar.start()
 
-    def download_raw_click(self):
+    def btn_download_raw_click(self):
         self.progressbar.stop()
         
 
 
 def main():
     root = tk.Tk()
-    app = App(root)
+    client = Client()
+    
+    # ToDo: Save last position and sizes
+    width, height = 750, 650
+    x = (root.winfo_screenwidth() / 4 * 3) - (width / 2)
+    y = (root.winfo_screenheight() / 2) - (height / 2)
+    root.geometry("%dx%d+%d+%d" % (width, height, x, y))
+
+    app = App(root, client)
     root.title("RemaPy")
     root.mainloop()
 
