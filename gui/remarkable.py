@@ -62,6 +62,7 @@ class Remarkable(object):
         self.icon_book = self.icon_book.resize((icon_size, icon_size))
         self.icon_book = itk.PhotoImage(self.icon_book)
 
+        # Fill tree with data
         for i in range(5):
             # Level 1
             self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
@@ -77,6 +78,17 @@ class Remarkable(object):
         self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
         self.tree.insert("", 7, text=" Paper", values=("21.03.2019 11:25","Pdf",""), image=self.icon_pdf)
 
+        # Context menu on right click
+        # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
+        self.tree.bind("<Button-3>", self.tree_right_click)
+        self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
+        self.context_menu.add_command(label='Open')
+        self.context_menu.add_command(label='Download', command=self.btn_download_click)
+        self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
+        self.context_menu.add_command(label='Move', command=self.btn_move_click)
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
+
+        # Footer
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
@@ -93,24 +105,10 @@ class Remarkable(object):
         self.btn.pack(side = tk.LEFT)
 
 
-        # Context menu on right click
-        self.tree.bind("<Button-3>", self.popup_menu)
-        self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open')
-        self.context_menu.add_command(label='Download', command=self.btn_download_click)
-        self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
-        self.context_menu.add_command(label='Move', command=self.btn_move_click)
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
-        
-        # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
-    
-    def btn_login_click(self):
-        self.rm_client.sign_in()
-
-    def popup_menu(self, event):
-        """action in event of button 3 on tree view"""
-        # select row under mouse
-        #self.iid = self.tree.identify_row(event.y)
+    #
+    # EVENT HANDLER
+    #
+    def tree_right_click(self, event):
         self.iids = self.tree.selection()
         if self.iids:
             # mouse pointer over item
@@ -118,9 +116,12 @@ class Remarkable(object):
             pass         
         else:
             # mouse pointer not over item
-            # occurs when items do not fill frame
-            # no action required
             pass
+
+
+    def btn_login_click(self):
+        self.rm_client.sign_in()
+
 
     def btn_delete_click(self):
         if not self.iids:
@@ -129,6 +130,7 @@ class Remarkable(object):
         for iid in self.iids:
             self.tree.delete(iid)
 
+
     def btn_move_click(self):
         if not self.iids:
             return 
@@ -136,8 +138,10 @@ class Remarkable(object):
         for iid in self.iids:
             self.tree.item(iid, tags="move")
 
+
     def btn_download_click(self):
         self.progressbar.start()
+
 
     def btn_download_raw_click(self):
         self.progressbar.stop()
