@@ -1,19 +1,16 @@
 import os
 import tkinter as tk
-from tkinter import *
-from tkinter import scrolledtext
 import tkinter.ttk as ttk
 from PIL import ImageTk as itk
 from PIL import Image
 
-import about
 from api.client import Client
 
 
-class MyRemarkable(object):
-    def __init__(self, root, client, font_size=14, rowheight=14):
+class Remarkable(object):
+    def __init__(self, root, rm_client, font_size=14, rowheight=14):
         self.nodes = dict()
-        self.client = client
+        self.rm_client = rm_client
 
         style = ttk.Style()
         style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
@@ -80,16 +77,14 @@ class MyRemarkable(object):
         self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
         self.tree.insert("", 7, text=" Paper", values=("21.03.2019 11:25","Pdf",""), image=self.icon_pdf)
 
-
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
         self.search_text = tk.Entry(self.lower_frame)
-        self.search_text.pack(side=LEFT)
+        self.search_text.pack(side=tk.LEFT)
 
         self.btn = tk.Button(self.lower_frame, text="Filter")
         self.btn.pack(side = tk.LEFT)
-
 
         self.progressbar = ttk.Progressbar(self.lower_frame, orient="horizontal", length=200, mode="determinate")
         self.progressbar.pack(side = tk.LEFT, anchor="w")
@@ -107,11 +102,10 @@ class MyRemarkable(object):
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
         
-
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
     
     def btn_login_click(self):
-        self.client.sign_in()
+        self.rm_client.sign_in()
 
     def popup_menu(self, event):
         """action in event of button 3 on tree view"""
@@ -147,54 +141,3 @@ class MyRemarkable(object):
 
     def btn_download_raw_click(self):
         self.progressbar.stop()
-        
-
-
-def main():
-    form = tk.Tk()
-    form.title("RemaPy")
-    font_size = 38
-    rowheight = 28
-
-    tabs = ttk.Notebook(form)
-    tabs.pack(expand=1, fill="both")
-    
-    width, height = 750, 650
-    x = (form.winfo_screenwidth() / 4 * 3) - (width / 2)
-    y = (form.winfo_screenheight() / 2) - (height / 2)
-    form.geometry("%dx%d+%d+%d" % (width, height, x, y))
-
-    # Create my remarkable tab
-    rm_client = Client()
-    rm_frame = ttk.Frame(tabs)
-    MyRemarkable(rm_frame, rm_client, font_size=font_size, rowheight=rowheight)
-    tabs.add(rm_frame, text="My Remarkable")
-
-    frame = ttk.Frame(tabs)
-    tabs.add(frame, text="Backup", state="disabled")
-
-    frame = ttk.Frame(tabs)
-    tabs.add(frame, text="Zotero", state="disabled")
-
-    frame = ttk.Frame(tabs)
-    tabs.add(frame, text="Mirror", state="disabled")
-
-    frame = ttk.Frame(tabs)
-    tabs.add(frame, text="SSH", state="disabled")
-
-    frame = ttk.Frame(tabs)
-    tabs.add(frame, text="Settings")
-
-    frame = ttk.Frame(tabs)
-    about_text = tk.scrolledtext.ScrolledText(frame)
-    about_text.insert("1.0", about.ABOUT)
-    about_text.config(state=tk.DISABLED)
-    about_text.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
-
-    tabs.add(frame, text="About")
-
-    form.mainloop()
-
-
-if __name__ == '__main__':
-    main()

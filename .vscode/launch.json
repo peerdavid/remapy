@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "gui.py",
+            "name": "main.py",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceRoot}/gui.py",
+            "program": "${workspaceRoot}/main.py",
             "console": "integratedTerminal"
         },
         {
