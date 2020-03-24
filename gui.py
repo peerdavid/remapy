@@ -99,7 +99,7 @@ class MyRemarkable(object):
 
         # Context menu on right click
         self.tree.bind("<Button-3>", self.popup_menu)
-        self.context_menu =tk.Menu(root, tearoff=0, font=('Calibri', font_size))
+        self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Download', command=self.btn_download_click)
         self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
