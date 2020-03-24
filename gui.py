@@ -70,9 +70,11 @@ class MyRemarkable(object):
             self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
             
             # Level 2
-            self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Book",""), image=self.icon_book)
+            another_folder = self.tree.insert(self.folder1, "end", text=" Something", values=("15.03.2019 11:30","Folder",""), image=self.icon_dir)
+            self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Ebub",""), image=self.icon_book)
             self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Pdf","28%"), image=self.icon_pdf)
-            self.tree.insert(self.folder1, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
+
+            self.tree.insert(another_folder, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
 
         # Some other docs
         self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
@@ -82,24 +84,24 @@ class MyRemarkable(object):
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
-        self.btn = tk.Button(self.lower_frame, text="LOG IN", command=self.btn_login_click)
+        self.search_text = tk.Entry(self.lower_frame)
+        self.search_text.pack(side=LEFT)
+
+        self.btn = tk.Button(self.lower_frame, text="Filter")
         self.btn.pack(side = tk.LEFT)
 
-        self.btn = tk.Button(self.lower_frame, text="Create Backup")
-        self.btn.pack(side = tk.LEFT)
-
-        self.btn = tk.Button(self.lower_frame, text="Cloud to local")
-        self.btn.pack(side = tk.LEFT)
-
-        self.btn = tk.Button(self.lower_frame, text="Zotero to Cloud")
-        self.btn.pack(side = tk.LEFT)
 
         self.progressbar = ttk.Progressbar(self.lower_frame, orient="horizontal", length=200, mode="determinate")
         self.progressbar.pack(side = tk.LEFT, anchor="w")
 
+        self.btn = tk.Button(self.lower_frame, text="LOG IN", command=self.btn_login_click)
+        self.btn.pack(side = tk.LEFT)
+
+
         # Context menu on right click
         self.tree.bind("<Button-3>", self.popup_menu)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
+        self.context_menu.add_command(label='Open')
         self.context_menu.add_command(label='Download', command=self.btn_download_click)
         self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
@@ -169,10 +171,16 @@ def main():
     tabs.add(rm_frame, text="My Remarkable")
 
     frame = ttk.Frame(tabs)
-    tabs.add(frame, text="Advanced")
+    tabs.add(frame, text="Backup", state="disabled")
 
     frame = ttk.Frame(tabs)
-    tabs.add(frame, text="SSH")
+    tabs.add(frame, text="Zotero", state="disabled")
+
+    frame = ttk.Frame(tabs)
+    tabs.add(frame, text="Mirror", state="disabled")
+
+    frame = ttk.Frame(tabs)
+    tabs.add(frame, text="SSH", state="disabled")
 
     frame = ttk.Frame(tabs)
     tabs.add(frame, text="Settings")
