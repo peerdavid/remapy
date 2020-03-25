@@ -1,3 +1,5 @@
+
+from io import BytesIO
 import requests
 from uuid import uuid4
 
@@ -107,20 +109,34 @@ class Client(object):
         return self._get_item_rec(self.root, uuid)
     
 
-    def get_blob_url(self, uuid):
+    def _get_blob_url(self, uuid):
+        
+        response = self._request("GET", LIST_DOCS_URL, params={
+            "doc": uuid,
+            "withBlob": True
+        })
+        
+        if response.ok:
+            items = response.json()
+            return items[0]["BlobURLGet"]
+        
+        return None
+    
+
+    def download_file(self, uuid):
         item = self.get_item(uuid)
+        blob_url = self._get_blob_url(uuid)
+
+        stream = self._request("GET", blob_url, stream=True)
+        zip_io = BytesIO()
+        for chunk in stream.iter_content(chunk_size=8192):
+            zip_io.write(chunk)
         
-        if item.download_url == None:        
-            response = self._request("GET", LIST_DOCS_URL, params={
-                "doc": uuid,
-                "withBlob": True
-            })
-            
-            if response.ok:
-                items = response.json()
-                item.download_url = items[0]["BlobURLGet"]
+        with open("%s.zip" % item.name, "wb") as out:
+            out.write(zip_io.getbuffer())
         
-        return item.download_url
+        item.status = "Offline"
+        return item
 
 
     def _get_item_rec(self, root, uuid):

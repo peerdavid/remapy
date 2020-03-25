@@ -32,6 +32,9 @@ class Item(object):
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%SZ")
         
 
+    def modified_str(self):
+        return self.modified_client.strftime("%Y-%m-%d %H:%M:%S")
+
 class Collection(Item):
 
     def __init__(self, entry, parent):

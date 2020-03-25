@@ -99,7 +99,7 @@ class Remarkable(object):
                 pos, 
                 item.uuid, 
                 text=item.name, 
-                values=(item.modified_client.strftime("%Y-%m-%d %H:%M:%S"), item.status), 
+                values=(item.modified_str(), item.status), 
                 image=image)
 
         for child in item.children:
@@ -145,10 +145,12 @@ class Remarkable(object):
 
 
     def btn_download_click(self):
-        self.progressbar.start()
         for uuid in self.selected_uuids:
-            item = self.rm_client.get_blob_url(uuid)
+            item = self.rm_client.download_file(uuid)
+            self.tree.item(uuid, values=(item.modified_str(), item.status))
 
 
     def btn_download_raw_click(self):
-        self.progressbar.stop()
+        for uuid in self.selected_uuids:
+            item = self.rm_client.download_file(uuid)
+            self.tree.item(uuid, values=(item.modified_str(), item.status))
