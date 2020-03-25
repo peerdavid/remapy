@@ -2,6 +2,7 @@ import requests
 from uuid import uuid4
 
 import api.config as cfg
+from api.objects import Collection, Document, create_tree
 
 # 
 # EVENTS
@@ -91,7 +92,9 @@ class Client(object):
         response = self._request("GET", LIST_DOCS_URL)
 
         if response.ok:
-            return response.json()
+            items = response.json()
+            self.root = create_tree(items)
+            return self.root
         
         return None
 

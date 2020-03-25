@@ -89,40 +89,25 @@ class Remarkable(object):
         self.rm_client.listen_sign_in(self)
 
 
-    def update_tree(self):
-        tree_data = self.rm_client.get_tree()
+    
+    def _update_tree(self, item):
         
-        i = 0
-        structure = {}
-        for i in range(len(tree_data)):
-            item = tree_data[i]
-            structure[item["ID"]] = i
+        if not item.parent is None:
+            image = self.icon_note if item.is_document else self.icon_dir
+            pos = int(item.is_document)*10
+            tree_id = self.tree.insert(
+                item.parent.uuid, 
+                pos, 
+                item.uuid, 
+                text=item.name, 
+                values=("op", "type", ""), 
+                image=image)
 
-        for item in tree_data:
-            t = item["Type"]
-            if t == "CollectionType":
-                icon = self.icon_dir
-            else:
-                icon = self.icon_note
+        if item.is_document:
+            return
 
-            self.folder1 = self.tree.insert("", structure[item["ID"]], text=item["VissibleName"], values=(item["ModifiedClient"], t, ""), image=icon)
-            
-
-        # # Fill tree with data
-        # for i in range(5):
-        #     # Level 1
-        #     self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
-            
-        #     # Level 2
-        #     another_folder = self.tree.insert(self.folder1, "end", text=" Something", values=("15.03.2019 11:30","Folder",""), image=self.icon_dir)
-        #     self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Ebub",""), image=self.icon_book)
-        #     self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Pdf","28%"), image=self.icon_pdf)
-
-        #     self.tree.insert(another_folder, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
-
-        # # Some other docs
-        # self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
-        # self.tree.insert("", 7, text=" Paper", values=("21.03.2019 11:25","Pdf",""), image=self.icon_pdf)
+        for child in item.children:
+            self._update_tree(child)
 
 
     #
@@ -130,7 +115,8 @@ class Remarkable(object):
     #
     def sign_in_event_handler(self, event, data):
         if event == client.EVENT_SUCCESS:
-            self.update_tree()
+            root = self.rm_client.get_tree()
+            self._update_tree(root)
 
 
     #
