@@ -1,4 +1,3 @@
 Pillow
 pyyaml
 requests
-uuid
