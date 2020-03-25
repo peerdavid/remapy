@@ -1,2 +1,4 @@
 Pillow
 pyyaml
+requests
+uuid

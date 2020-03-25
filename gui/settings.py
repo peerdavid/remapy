@@ -67,19 +67,20 @@ class Settings(object):
             self.btn_sign_in.config(state="disabled")
             self.label_auth_status.config(text="Successfully signed in", fg="green")
             self.entry_onetime_code.config(state="disabled")
-            self.entry_onetime_code_text.set(config["onetime_code"])
             
-        elif event == client.EVENT_OFFLINE:
-            self.label_auth_status.config(text="You are offline.", fg="red")
+        elif event == client.EVENT_USER_TOKEN_FAILED:
+            self.label_auth_status.config(text="Could not renew user token (please try again).", fg="red")
             self.entry_onetime_code.config(state="disabled")
-            self.entry_onetime_code_text.set(config["onetime_code"])
 
         elif event == client.EVENT_ONETIMECODE_NEEDED:
             self.label_auth_status.config(text="Enter one-time code from:", fg="red")
             self.label_onetime_code.config(text=self.onetime_code_link)
         
+        elif event == client.EVENT_USER_TOKEN_FAILED:
+            self.label_auth_status.config(text="Could not fetch device token (please try again).", fg="red")
+            
         else:
-            self.label_auth_status.config(text="Sorry, an error occurred", fg="red")
+            self.label_auth_status.config(text="Sorry, an error occurred.", fg="red")
 
     def btn_sign_in_click(self):
         onetime_code = self.entry_onetime_code_text.get()

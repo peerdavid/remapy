@@ -74,8 +74,6 @@ class Main(object):
     def sign_in_event_handler(self, event, data):
         if event == client.EVENT_SUCCESS:
             self.notebook.tab(0, state="normal")
-        elif event == client.EVENT_OFFLINE:
-            pass # ToDo: We should show that we are offline...
         else:
             self.notebook.tab(0, state="disabled")
 

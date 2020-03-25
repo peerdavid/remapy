@@ -28,11 +28,7 @@ def load() -> dict:
         return dict(yml)
 
 
-def exists(config_path) -> bool:
-    path = _get_path()
-    if not Path.exists(path):
-        return False
-    
+def exists(config_path) -> bool:    
     config = load()
     levels = config_path.split(".")
     for level in levels:
@@ -42,6 +38,18 @@ def exists(config_path) -> bool:
         config = config[level]
 
     return True
+
+
+def get(config_path):
+    config = load()
+    levels = config_path.split(".")
+    for level in levels:
+        if not level in config:
+            return None
+        
+        config = config[level]
+
+    return config
 
 
 #

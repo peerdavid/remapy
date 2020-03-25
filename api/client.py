@@ -1,4 +1,5 @@
-
+import requests
+from uuid import uuid4
 
 import api.config as cfg
 
@@ -9,8 +10,9 @@ EVENT_SUCCESS = 0
 EVENT_FAILED = 1
 
 # Auth events
-EVENT_OFFLINE = 2
-EVENT_ONETIMECODE_NEEDED = 3
+EVENT_DEVICE_TOKEN_FAILED = 2
+EVENT_USER_TOKEN_FAILED = 3
+EVENT_ONETIMECODE_NEEDED = 4
 
 
 #
@@ -22,6 +24,11 @@ DEVICE_TOKEN_URL = "https://my.remarkable.com/token/json/2/device/new"
 USER_TOKEN_URL = "https://my.remarkable.com/token/json/2/user/new"
 DEVICE = "desktop-windows"
 SERVICE_MGR_URL = "https://service-manager-production-dot-remarkable-production.appspot.com"
+
+LIST_DOCS_URL = BASE_URL + "/document-storage/json/2/docs"
+UPDATE_STATUS_URL = BASE_URL + "/document-storage/json/2/upload/update-status"
+UPLOAD_REQUEST_URL = BASE_URL + "/document-storage/json/2/upload/request"
+DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 
 
 #
@@ -52,50 +59,119 @@ class Client(object):
         """ Load token. If not available the user must provide a 
             one time code from https://my.remarkable.com/connect/remarkable
         """ 
-        config = cfg.load()
-
-        # Get device and usertoken from rm cloud
-        if not cfg.exists("remarkable.authentication.user_token"):
+        # Get device token if not stored local
+        device_token = cfg.get("remarkable.authentication.device_token")
+        if device_token == None:
             if onetime_code is None or onetime_code == "":
                 self.publish(self.sign_in_listener, EVENT_ONETIMECODE_NEEDED)
                 return
 
             device_token = self._get_device_token(onetime_code)
             if device_token is None:
-                self.publish(self.sign_in_listener, EVENT_FAILED)
-                return
-            
-            user_token = self._get_user_token(device_token)
-            if user_token is None:
-                self.publish(self.sign_in_listener, EVENT_FAILED)
-                return
+                self.publish(self.sign_in_listener, EVENT_DEVICE_TOKEN_FAILED)
+                return            
+        
+        # Renew the user token.
+        user_token = self._get_user_token(device_token)
+        if user_token is None:
+            self.publish(self.sign_in_listener, EVENT_USER_TOKEN_FAILED)
+            return
+        
+        # Save tokens to config
+        auth = {"device_token": device_token,
+                "user_token": user_token}
+        cfg.save({"remarkable": {"authentication": auth}})
 
-            config = cfg.save({"remarkable": {
-                "authentication": {
-                    "onetime_code": onetime_code,
-                    "device_token": device_token,
-                    "user_token": user_token
-                }
-            }})
-
-
-        # Inform all subscribers that we are successfully loged in        
-        auth = config["remarkable"]["authentication"]
+        # Inform all subscriber
         self.publish(self.sign_in_listener, EVENT_SUCCESS, auth)
         return auth
     
 
     def _get_device_token(self, one_time_code):
-        if one_time_code is None:
-            return None
-        return "salkdjf-sldif-342"
+        """ Create a new device for a given one_time_code to be able to 
+            connect to the rm cloud
+        """ 
+        body = {
+            "code": one_time_code,
+            "deviceDesc": DEVICE,
+            "deviceID": str(uuid4()),
+        }
+        response = self._request("POST", DEVICE_TOKEN_URL, body=body)
+        if response.ok:
+            device_token = response.text
+            return device_token
+        return None
 
 
     def _get_user_token(self, device_token):
-        if device_token is None:
+        """ This is the second step of the authentication of the Remarkable Cloud.
+            Before each new session, you should fetch a new user token.
+            User tokens have an unknown expiration date.
+        """
+        if device_token is None or device_token == "":
             return None
-        return "dev-kdsjf9-298347"
+        
+        response = self._request("POST", USER_TOKEN_URL, None, headers={
+                "Authorization": f"Bearer {device_token}"
+        })
 
+        if response.ok:
+            user_token = response.text
+            return user_token
+        return None
+    
+
+    def _request(self, method, path,
+                data=None, body=None, headers=None,
+                params=None, stream=False):
+        """Creates a request against the Remarkable Cloud API
+        This function automatically fills in the blanks of base
+        url & authentication.
+        Credit: https://github.com/subutux/rmapy/blob/master/rmapy/api.py
+        Args:
+            method: The request method.
+            path: complete url or path to request.
+            data: raw data to put/post/...
+            body: the body to request with. This will be converted to json.
+            headers: a dict of additional headers to add to the request.
+            params: Query params to append to the request.
+            stream: Should the response be a stream?
+        Returns:
+            A Response instance containing most likely the response from
+            the server.
+        """
+
+        config = cfg.load()
+
+        if headers is None:
+            headers = {}
+       
+        if not path.startswith("http"):
+            if not path.startswith('/'):
+                path = '/' + path
+            url = f"{BASE_URL}{path}"
+        else:
+            url = path
+
+        _headers = {
+            "user-agent": USER_AGENT,
+        }
+
+        user_token = cfg.get("remarkable.authentication.usertoken")
+        if user_token != None:
+            token = self.token_set["usertoken"]
+            _headers["Authorization"] = f"Bearer {token}"
+        
+        for k in headers.keys():
+            _headers[k] = headers[k]
+        
+        r = requests.request(method, url,
+                             json=body,
+                             data=data,
+                             headers=_headers,
+                             params=params,
+                             stream=stream)
+        return r
 
 
 
