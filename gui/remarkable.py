@@ -33,16 +33,14 @@ class Remarkable(object):
         self.hsb.pack(fill='x')
         self.tree.configure(xscrollcommand=self.hsb.set)
 
-        self.tree["columns"]=("#1","#2","#3")
-        self.tree.column("#0", width=270, minwidth=270)
-        self.tree.column("#1", width=150, minwidth=150, stretch=tk.NO)
-        self.tree.column("#2", width=200, minwidth=100, stretch=tk.NO)
-        self.tree.column("#3", width=80, minwidth=50, stretch=tk.NO)
+        self.tree["columns"]=("#1","#2")
+        self.tree.column("#0", minwidth=250)
+        self.tree.column("#1", width=180, minwidth=180, stretch=tk.NO)
+        self.tree.column("#2", width=150, minwidth=150, stretch=tk.NO)
 
         self.tree.heading("#0",text="Name",anchor=tk.W)
         self.tree.heading("#1", text="Date modified",anchor=tk.W)
-        self.tree.heading("#2", text="Type",anchor=tk.W)
-        self.tree.heading("#3", text="Size",anchor=tk.W)
+        self.tree.heading("#2", text="Status",anchor=tk.W)
 
         self.tree.tag_configure('move', background='#FF9800')    
         
@@ -91,8 +89,9 @@ class Remarkable(object):
 
     
     def _update_tree(self, item):
-        
-        if not item.parent is None:
+        is_root = not item.is_document and item.parent is None
+
+        if not is_root:
             image = self.icon_note if item.is_document else self.icon_dir
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
@@ -100,11 +99,8 @@ class Remarkable(object):
                 pos, 
                 item.uuid, 
                 text=item.name, 
-                values=("op", "type", ""), 
+                values=(item.modified_client.strftime("%Y-%m-%d %H:%M:%S"), item.status), 
                 image=image)
-
-        if item.is_document:
-            return
 
         for child in item.children:
             self._update_tree(child)
@@ -115,17 +111,16 @@ class Remarkable(object):
     #
     def sign_in_event_handler(self, event, data):
         if event == client.EVENT_SUCCESS:
-            root = self.rm_client.get_tree()
-            self._update_tree(root)
+            self.root = self.rm_client.get_root()
+            self._update_tree(self.root)
 
 
     #
     # EVENT HANDLER
     #
     def tree_right_click(self, event):
-        self.iids = self.tree.selection()
-        if self.iids:
-            # mouse pointer over item
+        self.selected_uuids = self.tree.selection()
+        if self.selected_uuids:
             self.context_menu.tk_popup(event.x_root, event.y_root)   
             pass         
         else:
@@ -134,23 +129,25 @@ class Remarkable(object):
 
 
     def btn_delete_click(self):
-        if not self.iids:
+        if not self.selected_uuids:
             return
 
-        for iid in self.iids:
+        for iid in self.selected_uuids:
             self.tree.delete(iid)
 
 
     def btn_move_click(self):
-        if not self.iids:
+        if not self.selected_uuids:
             return 
 
-        for iid in self.iids:
-            self.tree.item(iid, tags="move")
+        for uuid in self.selected_uuids:
+            self.tree.item(uuid, tags="move")
 
 
     def btn_download_click(self):
         self.progressbar.start()
+        for uuid in self.selected_uuids:
+            item = self.rm_client.get_blob_url(uuid)
 
 
     def btn_download_raw_click(self):

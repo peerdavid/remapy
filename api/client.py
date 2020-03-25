@@ -39,6 +39,7 @@ class Client(object):
     def __init__(self):
         self.test = True
         self.sign_in_listener = []
+        self.root = None
 
     #
     # EVENT HANDLER
@@ -88,7 +89,7 @@ class Client(object):
         return auth
     
 
-    def get_tree(self):
+    def get_root(self):
         response = self._request("GET", LIST_DOCS_URL)
 
         if response.ok:
@@ -97,8 +98,42 @@ class Client(object):
             return self.root
         
         return None
-
     
+
+    def get_item(self, uuid):
+        if self.root is None:
+            self.get_root()
+
+        return self._get_item_rec(self.root, uuid)
+    
+
+    def get_blob_url(self, uuid):
+        item = self.get_item(uuid)
+        
+        if item.download_url == None:        
+            response = self._request("GET", LIST_DOCS_URL, params={
+                "doc": uuid,
+                "withBlob": True
+            })
+            
+            if response.ok:
+                items = response.json()
+                item.download_url = items[0]["BlobURLGet"]
+        
+        return item.download_url
+
+
+    def _get_item_rec(self, root, uuid):
+        if root.uuid == uuid:
+            return root
+        
+        for child in root.children:
+            found = self._get_item_rec(child, uuid)
+            if found != None:
+                return found
+
+        return None
+
 
     def _get_device_token(self, one_time_code):
         """ Create a new device for a given one_time_code to be able to 

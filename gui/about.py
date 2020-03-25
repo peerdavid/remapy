@@ -12,19 +12,21 @@ ABOUT = \
    | | \ \ \__/ | | | | | (_| | |   | |_| |
    |_|  \_\___|_| |_| |_|\__,_|_|    \__, |
                                       __| |
-                                     |____|  v1.0 (alpha)
+                                     |____|  v0.2 (alpha)
 
 
    David Peer (2020)           
 
    RemaPy is an open source tool for your remarkable tablet, the source is fully 
    available on https://github.com/peerdavid/remapy. Use this tool on your own 
-   risk. The software is under the Apache 2.0 License which is shown below. Note 
-   also to NOT contact the reMarkable support team if anything doesn't work as 
-   described here. This project is not affiliated with reMarkable AS, Oslo. 
+   risk. The developer tested it only on Ubuntu and for a specific version of 
+   the remarkable tablet that was available. The software is under the 
+   Apache 2.0 License which is shown below. Note also to NOT contact the 
+   reMarkable support team if anything doesn't work as described here. This 
+   project is not affiliated with reMarkable AS, Oslo. 
 
-   Icons made by Freepik, Smashicons, srip, Good ware, prettycons 
-   from www.flaticon.com
+   Icons made by Freepik, Smashicons, Pixel Perfect, srip, 
+   Good ware, prettycons from www.flaticon.com
 
 
 

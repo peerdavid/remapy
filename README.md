@@ -38,4 +38,4 @@ to create a virtual environment and install all necessary packages:
 # Acknowledgments
 [1] Python remarkable api, https://github.com/subutux/rmapy <br />
 [2] Golang remarkable tool, https://github.com/juruen/rmapi/ <br />
-[3] Icons made by Freepik, Smashicons, srip, Good ware, prettycons from www.flaticon.com <br />
+[3] Icons made by Freepik, Smashicons, Pixel Perfect, srip, Good ware, prettycons from www.flaticon.com <br />
