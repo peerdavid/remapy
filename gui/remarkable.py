@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tkinter as tk
 import tkinter.ttk as ttk
 from PIL import ImageTk as itk
@@ -6,6 +7,7 @@ from PIL import Image
 
 import api.client as client
 from api.client import Client
+from api.rm2svg import rm2svg
 
 
 class Remarkable(object):
@@ -67,9 +69,12 @@ class Remarkable(object):
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Open')
         self.context_menu.add_command(label='Download', command=self.btn_download_click)
-        self.context_menu.add_command(label='Download Raw', command=self.btn_download_raw_click)
+        self.context_menu.add_command(label='Svg', command=self.btn_svg_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
+
+        self.tree.bind("<Double-1>", self.tree_double_click)
+
 
         # Footer
         self.lower_frame = tk.Frame(root)
@@ -127,6 +132,10 @@ class Remarkable(object):
             # mouse pointer not over item
             pass
 
+    
+    def tree_double_click(self, event):
+        self.selected_uuids = self.tree.selection()
+        self.open_svg()
 
     def btn_delete_click(self):
         if not self.selected_uuids:
@@ -150,7 +159,17 @@ class Remarkable(object):
             self.tree.item(uuid, values=(item.modified_str(), item.status))
 
 
-    def btn_download_raw_click(self):
+    def btn_svg_click(self):
+        self.open_svg()
+
+    def open_svg(self):
         for uuid in self.selected_uuids:
-            item = self.rm_client.download_file(uuid)
-            self.tree.item(uuid, values=(item.modified_str(), item.status))
+            item = self.rm_client.get_item(uuid)
+
+            if item.status != "Available":
+                item = self.rm_client.download_file(uuid)
+
+            rm_files_path = "%s/%s" % (item.path, item.uuid)
+            out_path = "%s/%s_" % (item.path, item.name)
+            rm2svg(rm_files_path, out_path, background="white")
+            subprocess.call(('xdg-open', out_path + "00001.svg"))

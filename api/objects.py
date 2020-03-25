@@ -51,10 +51,11 @@ class Document(Item):
     def __init__(self, entry, parent: Collection):
         super(Document, self).__init__(entry, parent)
         self.download_url = None
+        self.path = "data/%s" % self.uuid
         self.update_status()
 
     def update_status(self):
-        self.status = "Available" if os.path.exists("data/%s" % self.uuid) else "-"
+        self.status = "Available" if os.path.exists(self.path) else "-"
 
 #
 # HELPER FUNCTIONS

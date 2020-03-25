@@ -135,14 +135,12 @@ class Client(object):
         for chunk in stream.iter_content(chunk_size=8192):
             zip_io.write(chunk)
         
-        path = "data" # ToDo: Create user settings
-        Path(path).mkdir(parents=True, exist_ok=True)
-        file_name = "%s/%s.zip" % (path, item.uuid)
+        file_name = "%s.zip" % item.uuid
         with open(file_name, "wb") as out:
             out.write(zip_io.getbuffer())
         
         with zipfile.ZipFile(file_name, "r") as zip_ref:
-            zip_ref.extractall("%s/%s" % (path, item.uuid))
+            zip_ref.extractall(item.path)
         
         os.remove(file_name)
         item.update_status()

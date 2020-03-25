@@ -4,17 +4,16 @@ Work in progress.
 
 # Features
 [ ] GUI <br />
-[ ] CMD to allow scripting (CUPS, explorer integration etc.)<br />
-[ ] Authentication <br />
+[x] Authentication <br />
 [ ] Settings (Path to templates, sync folder, ) <br />
-[ ] List all folders and files <br />
+[x] List all folders and files <br />
 [ ] Upload file <br />
 [ ] Upload via CUPS printer <br />
-[ ] Download file (zip) <br />
-[ ] Download annotated <br />
-[ ] Download annotated <br />
-[ ] Sync with conflict solving <br />
-[ ] Store annotated and / or zip files <br />
+[x] Download file (zip) <br />
+[x] Download notebook as svg <br />
+[ ] Download notebook as pdf <br />
+[ ] Download annotated pdf <br />
+[ ] Download ebub <br />
 [ ] Create backup <br />
 [ ] Sync Zotero -> Remarkable <br />
 [ ] Sync Remarkable -> Zotero <br />

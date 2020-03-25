@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import tkinter as tk
 from tkinter import *
 from tkinter import scrolledtext
@@ -84,6 +85,7 @@ class Main(object):
 def main():
     window = tk.Tk()
 
+    Path("data").mkdir(parents=True, exist_ok=True)
     rm_client = Client()
     app = Main(window, rm_client)
 
