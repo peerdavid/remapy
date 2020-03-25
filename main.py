@@ -6,6 +6,7 @@ import tkinter.ttk as ttk
 
 from gui.remarkable import Remarkable
 from gui.about import About
+from gui.settings import Settings
 
 from api.client import Client
 
@@ -52,6 +53,7 @@ class Main(object):
         self.notebook.add(frame, text="SSH", state="hidden")
 
         frame = ttk.Frame(self.notebook)
+        self.settings = Settings(frame, rm_client, font_size)
         self.notebook.add(frame, text="Settings")
         
         frame = ttk.Frame(self.notebook)
@@ -59,6 +61,7 @@ class Main(object):
         self.notebook.add(frame, text="About")
 
         # Try to sign in in rm cloud
+        # If it is not possible we get a signal and disable "My remarkable"
         self.rm_client.sign_in()
         
 

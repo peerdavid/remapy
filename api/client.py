@@ -31,12 +31,12 @@ class Client(object):
         config = cfg.load()
 
         if not cfg.exists("remarkable.device_token"):
-            auth = {
-                "device_token": "TEST",
-                "user_token": "TEST"
-            }
-            cfg.save({"remarkable": auth})
-            print("https://my.remarkable.com/connect/remarkable")
+            # auth = {
+            #     "device_token": "TEST",
+            #     "user_token": "TEST"
+            # }
+            # cfg.save({"remarkable": auth})
+            # print("https://my.remarkable.com/connect/remarkable")
 
             # Inform all subscribers that we are successfully loged in        
             for subscriber in self.sign_in_subscribers:

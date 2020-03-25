@@ -101,9 +101,6 @@ class Remarkable(object):
         self.progressbar = ttk.Progressbar(self.lower_frame, orient="horizontal", length=200, mode="determinate")
         self.progressbar.pack(side = tk.LEFT, anchor="w")
 
-        self.btn = tk.Button(self.lower_frame, text="LOG IN", command=self.btn_login_click)
-        self.btn.pack(side = tk.LEFT)
-
 
     #
     # EVENT HANDLER
@@ -117,10 +114,6 @@ class Remarkable(object):
         else:
             # mouse pointer not over item
             pass
-
-
-    def btn_login_click(self):
-        self.rm_client.sign_in()
 
 
     def btn_delete_click(self):
