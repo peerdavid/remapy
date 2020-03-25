@@ -4,6 +4,7 @@ import tkinter.ttk as ttk
 from PIL import ImageTk as itk
 from PIL import Image
 
+import api.client as client
 from api.client import Client
 
 
@@ -62,22 +63,6 @@ class Remarkable(object):
         self.icon_book = self.icon_book.resize((icon_size, icon_size))
         self.icon_book = itk.PhotoImage(self.icon_book)
 
-        # Fill tree with data
-        for i in range(5):
-            # Level 1
-            self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
-            
-            # Level 2
-            another_folder = self.tree.insert(self.folder1, "end", text=" Something", values=("15.03.2019 11:30","Folder",""), image=self.icon_dir)
-            self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Ebub",""), image=self.icon_book)
-            self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Pdf","28%"), image=self.icon_pdf)
-
-            self.tree.insert(another_folder, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
-
-        # Some other docs
-        self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
-        self.tree.insert("", 7, text=" Paper", values=("21.03.2019 11:25","Pdf",""), image=self.icon_pdf)
-
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
@@ -100,6 +85,52 @@ class Remarkable(object):
 
         self.progressbar = ttk.Progressbar(self.lower_frame, orient="horizontal", length=200, mode="determinate")
         self.progressbar.pack(side = tk.LEFT, anchor="w")
+
+        self.rm_client.listen_sign_in(self)
+
+
+    def update_tree(self):
+        tree_data = self.rm_client.get_tree()
+        
+        i = 0
+        structure = {}
+        for i in range(len(tree_data)):
+            item = tree_data[i]
+            structure[item["ID"]] = i
+
+        for item in tree_data:
+            t = item["Type"]
+            if t == "CollectionType":
+                icon = self.icon_dir
+            else:
+                icon = self.icon_note
+
+            self.folder1 = self.tree.insert("", structure[item["ID"]], text=item["VissibleName"], values=(item["ModifiedClient"], t, ""), image=icon)
+            
+
+        # # Fill tree with data
+        # for i in range(5):
+        #     # Level 1
+        #     self.folder1 = self.tree.insert("", i, text=" Folder %d" % i, values=("22.03.2019 11:05","Folder","28%"), image=self.icon_dir)
+            
+        #     # Level 2
+        #     another_folder = self.tree.insert(self.folder1, "end", text=" Something", values=("15.03.2019 11:30","Folder",""), image=self.icon_dir)
+        #     self.tree.insert(self.folder1, "end", text=" C++", values=("15.01.2019 11:28","Ebub",""), image=self.icon_book)
+        #     self.tree.insert(self.folder1, "end", text=" MachineLearning", values=("11.03.2019 11:29","Pdf","28%"), image=self.icon_pdf)
+
+        #     self.tree.insert(another_folder, "end", text=" ComputerVision", values=("15.03.2019 11:30","Notebook",""), image=self.icon_note)
+
+        # # Some other docs
+        # self.tree.insert("", 6, text=" Quick notes", values=("21.03.2019 11:25","Notebook",""), image=self.icon_note)
+        # self.tree.insert("", 7, text=" Paper", values=("21.03.2019 11:25","Pdf",""), image=self.icon_pdf)
+
+
+    #
+    # EVENT HANDLER
+    #
+    def sign_in_event_handler(self, event, data):
+        if event == client.EVENT_SUCCESS:
+            self.update_tree()
 
 
     #

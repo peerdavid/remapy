@@ -87,6 +87,16 @@ class Client(object):
         return auth
     
 
+    def get_tree(self):
+        response = self._request("GET", LIST_DOCS_URL)
+
+        if response.ok:
+            return response.json()
+        
+        return None
+
+    
+
     def _get_device_token(self, one_time_code):
         """ Create a new device for a given one_time_code to be able to 
             connect to the rm cloud
@@ -157,10 +167,9 @@ class Client(object):
             "user-agent": USER_AGENT,
         }
 
-        user_token = cfg.get("remarkable.authentication.usertoken")
+        user_token = cfg.get("remarkable.authentication.user_token")
         if user_token != None:
-            token = self.token_set["usertoken"]
-            _headers["Authorization"] = f"Bearer {token}"
+            _headers["Authorization"] = f"Bearer {user_token}"
         
         for k in headers.keys():
             _headers[k] = headers[k]
