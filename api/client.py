@@ -1,7 +1,10 @@
 
+import os
+import zipfile
 from io import BytesIO
 import requests
 from uuid import uuid4
+from pathlib import Path
 
 import api.config as cfg
 from api.objects import Collection, Document, create_tree
@@ -132,10 +135,17 @@ class Client(object):
         for chunk in stream.iter_content(chunk_size=8192):
             zip_io.write(chunk)
         
-        with open("%s.zip" % item.name, "wb") as out:
+        path = "data" # ToDo: Create user settings
+        Path(path).mkdir(parents=True, exist_ok=True)
+        file_name = "%s/%s.zip" % (path, item.uuid)
+        with open(file_name, "wb") as out:
             out.write(zip_io.getbuffer())
         
-        item.status = "Offline"
+        with zipfile.ZipFile(file_name, "r") as zip_ref:
+            zip_ref.extractall("%s/%s" % (path, item.uuid))
+        
+        os.remove(file_name)
+        item.update_status()
         return item
 
 

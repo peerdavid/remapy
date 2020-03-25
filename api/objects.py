@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 
@@ -24,7 +25,7 @@ class Item(object):
         self.name = entry["VissibleName"]
         self.is_document = entry["Type"] == "DocumentType"
         self.success = entry["Success"]
-        self.status = "Online"
+        self.status = "-"
 
         try:
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -50,11 +51,10 @@ class Document(Item):
     def __init__(self, entry, parent: Collection):
         super(Document, self).__init__(entry, parent)
         self.download_url = None
-        pass
+        self.update_status()
 
-    def start_download(self):
-        pass
-
+    def update_status(self):
+        self.status = "Available" if os.path.exists("data/%s" % self.uuid) else "-"
 
 #
 # HELPER FUNCTIONS
