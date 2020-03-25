@@ -13,6 +13,8 @@ def save(new_config: dict) -> None:
     with open(path, 'w') as f:
         content = yaml.dump(config)
         f.write(content)
+    
+    return config
 
 
 def load() -> dict:

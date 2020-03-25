@@ -8,6 +8,7 @@ from gui.remarkable import Remarkable
 from gui.about import About
 from gui.settings import Settings
 
+import api.client as client
 from api.client import Client
 
 
@@ -23,7 +24,7 @@ class Main(object):
         window_height = 650
 
         # Subscribe to events
-        rm_client.subscribe_sign_in(self)
+        rm_client.listen_sign_in(self)
 
         # Window settings
         window.title("RemaPy")
@@ -60,17 +61,21 @@ class Main(object):
         self.about = About(frame)
         self.notebook.add(frame, text="About")
 
-        # Try to sign in in rm cloud
-        # If it is not possible we get a signal and disable "My remarkable"
+        # Try to sign in to the rm cloud without a onetime code i.e. we 
+        # assume that the user token is already available. If it is not 
+        # possible we get a signal to disable "My remarkable" and settings
+        # are shown...
         self.rm_client.sign_in()
         
 
     #
     # EVENT HANDLER
     #
-    def sign_in_event_handler(self, signed_in):
-        if signed_in:
+    def sign_in_event_handler(self, event, data):
+        if event == client.EVENT_SUCCESS:
             self.notebook.tab(0, state="normal")
+        elif event == client.EVENT_OFFLINE:
+            pass # ToDo: We should show that we are offline...
         else:
             self.notebook.tab(0, state="disabled")
 
