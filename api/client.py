@@ -61,7 +61,6 @@ class Client(object):
                     "user_token": user_token
                 }
             }})
-            print("https://my.remarkable.com/connect/remarkable")
 
 
         # Inform all subscribers that we are successfully loged in        
