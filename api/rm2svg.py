@@ -28,7 +28,7 @@ default_y_width = 1872
 # Mappings
 stroke_colour = {
     0: "darkblue",
-    1: "gray",
+    1: "yellow",
     2: "white",
     3: "yellow"
 }
