@@ -2,15 +2,31 @@
 
 import api.config as cfg
 
-# Events (general)
+# 
+# EVENTS
+#
 EVENT_SUCCESS = 0
 EVENT_FAILED = 1
 
-# Special authentication events
+# Auth events
 EVENT_OFFLINE = 2
 EVENT_ONETIMECODE_NEEDED = 3
 
 
+#
+# CONSTANTS
+#
+USER_AGENT = "remapy"
+BASE_URL = "https://document-storage-production-dot-remarkable-production.appspot.com"
+DEVICE_TOKEN_URL = "https://my.remarkable.com/token/json/2/device/new"
+USER_TOKEN_URL = "https://my.remarkable.com/token/json/2/user/new"
+DEVICE = "desktop-windows"
+SERVICE_MGR_URL = "https://service-manager-production-dot-remarkable-production.appspot.com"
+
+
+#
+# CLIENT
+#
 class Client(object):
     def __init__(self):
         self.test = True
