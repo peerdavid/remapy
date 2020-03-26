@@ -12,24 +12,25 @@ it should (theoretically) also work on Windows and/or Mac.
  - [x] List all folders and files <br />
  - [ ] Delete file <br />
  - [ ] Upload file <br />
+ - [ ] Move file / collection <br />
  - [x] Async backend to keep fronted reactive <br />
- - [ ] Make tool offline ready <br />
+ - [ ] Test offline <br />
  - [x] Download file (zip) <br />
  - [x] Download notebook as svg <br />
  - [ ] Download notebook as pdf <br />
  - [ ] Download annotated pdf <br />
- - [ ] Select specific layers when creating notes <br />
- - [ ] Download ebub <br />
- - [ ] Filter some documents <br />
+ - [ ] Select layers when creating notes <br />
+ - [ ] Filter <br />
+ - [ ] Delete from local cache if no more on remarkable <br />
 
 
 # Future ideas
  - [ ] Create full (or partially folder) backups of raw data <br />
  - [ ] Backup viewer <br />
  - [ ] Restore a backup into the cloud <br /> 
- - [ ] Sync with Zotero <br />
+ - [ ] Select a collection to sync with Zotero <br />
  - [ ] Search also for handwritten text
- - [ ] SSH: Update background etc. <br />
+ - [ ] SSH access: Update background image, live view <br />
 
 
 # How to setup / install RemaPy

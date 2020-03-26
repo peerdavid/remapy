@@ -54,7 +54,9 @@ class Document(Item):
         
         self._download_raw()
         self._write_remapy_metadata()
-        parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
+
+        if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK:
+            parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
 
 
     def _download_raw(self, path=None):
