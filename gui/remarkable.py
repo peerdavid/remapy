@@ -72,6 +72,15 @@ class Remarkable(object):
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
+        btn = tk.Button(self.lower_frame, text="Sync")
+        btn.pack(side = tk.LEFT)
+
+        btn = tk.Button(self.lower_frame, text="Download all")
+        btn.pack(side = tk.LEFT)
+
+        btn = tk.Button(self.lower_frame, text="Clear cache")
+        btn.pack(side = tk.LEFT)
+        
         self.search_text = tk.Entry(self.lower_frame)
         self.search_text.pack(side=tk.LEFT)
 
@@ -173,6 +182,7 @@ class Remarkable(object):
         """
         if item.is_document:
             item.download_raw()
+            self._update_tree_item(item)
             return
 
         for child in item.children:
