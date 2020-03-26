@@ -29,12 +29,13 @@ class Document(Item):
         # Other props
         self.current_page = entry["CurrentPage"]
         self.current_svg_page = self.path_svg + str(self.current_page).zfill(5) + ".svg"
-        self.state = Item.STATE_SYNCED if os.path.exists(self.path) else Item.STATE_ONLINE
+        self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK if os.path.exists(self.path) else Item.STATE_DOCUMENT_ONLINE
         self.download_url = None
         self.blob_url = None
 
 
     def _download_raw(self, path=None):
+        self.state = Item.STATE_DOCUMENT_DOWNLOADING
         path = self.path if path == None else path
 
         if os.path.exists(path):
@@ -51,7 +52,7 @@ class Document(Item):
             zip_ref.extractall(path)
         
         os.remove(self.path_zip)
-        self.state = Item.STATE_SYNCED
+        self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
     
 
     def _write_remapy_metadata(self):
@@ -63,7 +64,7 @@ class Document(Item):
     def sync(self, force=False):
 
         # Download if needed
-        if force or self.state != Item.STATE_SYNCED:
+        if force or self.state != Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
             self._download_raw()
             self._write_remapy_metadata()
 

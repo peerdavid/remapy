@@ -1,5 +1,6 @@
 import os
 import subprocess
+import threading
 import tkinter as tk
 import tkinter.ttk as ttk
 from PIL import ImageTk as itk
@@ -47,20 +48,22 @@ class Remarkable(object):
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        self.icon_collection = self._create_tree_icon("./icons/collection.png", rowheight)
-        self.icon_note = self._create_tree_icon("./icons/notebook.png", rowheight)
-        self.icon_pdf = self._create_tree_icon("./icons/pdf.png", rowheight)
-        self.icon_book = self._create_tree_icon("./icons/book.png", rowheight)
-        self.icon_cloud = self._create_tree_icon("./icons/cloud.png", rowheight)
-        self.icon_unknown = self._create_tree_icon("./icons/unknown.png", rowheight)
-        self.icon_sync = self._create_tree_icon("./icons/sync.png", rowheight)
+        self.icons=[]
+        self.icons.append(self._create_tree_icon("./icons/unknown.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/collection.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_online.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_local_notebook.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_local_pdf.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_local_ebub.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_local_out_of_sync.png", rowheight))
+        self.icons.append(self._create_tree_icon("./icons/document_downloading.png", rowheight))
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Open', command=self.btn_svg_click)
-        self.context_menu.add_command(label='Download', command=self.btn_download_click)
+        self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
         self.context_menu.add_command(label='Clear cache', command=self.btn_delete_click)
@@ -154,67 +157,59 @@ class Remarkable(object):
             self.tree.item(uuid, tags="move")
 
 
-    def btn_download_click(self):
-        for uuid in self.selected_uuids:
-            item = self.item_factory.get_item(uuid)
-            self.download_files_recursively(item)
+    def btn_download_async_click(self):
+
+        def run():
+            for uuid in self.selected_uuids:
+                item = self.item_factory.get_item(uuid)
+                self._download_recursively(item)
+        threading.Thread(target=run).start()
     
 
-    def download_files_recursively(self, item):
-        """ Download file or all child files if it is a folder
+    def _download_recursively(self, item):
+        """ Download file or all child files if it is a folder recursice
         """
         if item.is_document:
             self._sync_item(item, True)
             return
 
         for child in item.children:
-            self.download_files_recursively(child)
+            self._download_recursively(child)
     
 
     def _update_tree_item(self, item):
-        image, current_page = self._get_item_tree_infos(item)
-        self.tree.item(item.uuid, image=image, text=" " + item.name,
-                       values=(item.modified_str(), current_page))
+        self.tree.item(
+            item.uuid, 
+            image=self.icons[item.state], 
+            text=" " + item.name,
+            values=(item.modified_str(), item.current_page))
 
 
-    def _get_item_tree_infos(self, item):
-        image = self.icon_collection
-        current_page = "-"
-
-        if item.is_document:
-            current_page = item.current_page
-            if item.state == Item.STATE_UNKNOWN:
-                image = self.icon_unknown
-            elif item.state == Item.STATE_ONLINE:
-                image = self.icon_cloud
-            elif item.state == Item.STATE_SYNCED_OUT_OF_SYNC:
-                image = self.icon_sync
-            else:
-                image = self.icon_note
-            
-        return image, current_page
-
-
-    def _sync_item(self, item, force):    
+    def _sync_item(self, item, force):   
+        item.state = Item.STATE_DOCUMENT_DOWNLOADING
+        self._update_tree_item(item) 
         item.sync(force=force)
         self._update_tree_item(item)
 
 
     def tree_double_click(self, event):
         self.selected_uuids = self.tree.selection()
-        self._open_svg()
-
+        self._open_svg_async()
 
     def btn_svg_click(self):
-        self._open_svg()
+        self._open_svg_async()
 
 
-    def _open_svg(self):
-        for uuid in self.selected_uuids:
-            item = self.item_factory.get_item(uuid)
-            if not item.is_document:
-                continue
+    def _open_svg_async(self):
+        def run():
+            for uuid in self.selected_uuids:
+                item = self.item_factory.get_item(uuid)
+                if not item.is_document:
+                    continue
+                
+                self._sync_item(item, False)
+                subprocess.call(('xdg-open', item.current_svg_page))
+        threading.Thread(target=run).start()
+        
 
-            self._sync_item(item, False)
-            subprocess.call(('xdg-open', item.current_svg_page))
     

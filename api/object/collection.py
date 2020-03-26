@@ -8,3 +8,4 @@ class Collection(Item):
 
     def add_child(self, child: Item):
         self.children.append(child)
+        self.state = Item.STATE_COLLECTION

@@ -6,9 +6,13 @@ from api.client import Client
 class Item(object):
 
     STATE_UNKNOWN = 0
-    STATE_ONLINE = 1
-    STATE_SYNCED = 2
-    STATE_SYNCED_OUT_OF_SYNC = 3
+    STATE_COLLECTION = 1
+    STATE_DOCUMENT_ONLINE = 2
+    STATE_DOCUMENT_LOCAL_NOTEBOOK = 3
+    STATE_DOCUMENT_LOCAL_PDF = 4
+    STATE_DOCUMENT_LOCAL_EBUB = 5
+    STATE_DOCUMENT_OUT_OF_SYNC = 6
+    STATE_DOCUMENT_DOWNLOADING = 7
 
     def __init__(self, entry, parent=None):
         self.children = []
@@ -27,6 +31,7 @@ class Item(object):
         self.is_document = entry["Type"] == "DocumentType"
         self.success = entry["Success"]
         self.state = self.STATE_UNKNOWN
+        self.current_page = "-"
 
         try:
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%S.%fZ")
