@@ -7,7 +7,7 @@ from PIL import Image
 
 import api.client as client
 from api.client import Client
-from api.rm2svg import rm2svg
+import api.parser as parser
 
 
 class Remarkable(object):
@@ -155,9 +155,21 @@ class Remarkable(object):
 
     def btn_download_click(self):
         for uuid in self.selected_uuids:
-            item = self.rm_client.download_file(uuid)
-            self.tree.item(uuid, values=(item.modified_str(), item.status))
+            item = self.rm_client.get_item(uuid)
+            self.download_files_recursively(item)
+    
 
+    def download_files_recursively(self, item):
+        """ Download file or all child files if it is a folder
+        """
+        if item.is_document:
+            item = self.rm_client.download_file(item.uuid)
+            self.tree.item(item.uuid, values=(item.modified_str(), item.status))
+            return
+
+        for child in item.children:
+            self.download_files_recursively(child)
+        
 
     def btn_svg_click(self):
         self.open_svg()
@@ -171,5 +183,5 @@ class Remarkable(object):
 
             rm_files_path = "%s/%s" % (item.path, item.uuid)
             out_path = "%s/%s_" % (item.path, item.name)
-            rm2svg(rm_files_path, out_path, background="white")
+            parser.rm_to_svg(rm_files_path, out_path, background="white")
             subprocess.call(('xdg-open', out_path + str(item.current_page).zfill(5) + ".svg"))

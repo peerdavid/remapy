@@ -3,16 +3,17 @@
 Work in progress.
 
 # Features
-[ ] GUI <br />
 [x] Authentication <br />
-[ ] Settings (Path to templates, sync folder, ) <br />
+[x] Settings page (Path to templates, sync folder, ) <br />
+[A] About page <br />
 [x] List all folders and files <br />
+[ ] Delete file <br />
 [ ] Upload file <br />
-[ ] Upload via CUPS printer <br />
 [x] Download file (zip) <br />
 [x] Download notebook as svg <br />
 [ ] Download notebook as pdf <br />
 [ ] Download annotated pdf <br />
+[ ] Select specific layers when creating notes <br />
 [ ] Download ebub <br />
 [ ] Create backup <br />
 [ ] Sync Zotero -> Remarkable <br />

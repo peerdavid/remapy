@@ -1,16 +1,3 @@
-#!/usr/bin/env python3
-#
-# Script for converting a reMarkable tablet lines file to an SVG
-# image.  Originally from
-#
-#    https://github.com/lschwetlick/maxio/tree/master/tools
-#
-# but hacked to allow for specification of desired size of resulting
-# SVG image in terms of width and height.  Log of changes at the end
-# of the file.
-#
-# Changed by Eric S Fraga;
-# Changed by Peer David;
 import sys
 import struct
 import os.path
@@ -18,8 +5,9 @@ import argparse
 
 
 # Size
-default_x_width = 1404
-default_y_width = 1872
+DEFAULT_WIDTH = 1404
+DEFAULT_HEIGHT = 1872
+
 
 # Mappings
 stroke_colour = {
@@ -30,14 +18,14 @@ stroke_colour = {
 }
 
 
-def rm2svg(path, output_name, coloured_annotations=False,
-              x_width=default_x_width, y_width=default_y_width,
+def rm_to_svg(path, output_name, coloured_annotations=False,
+              width=DEFAULT_WIDTH, height=DEFAULT_HEIGHT,
               background=None):
 
     if output_name.endswith(".svg"):
         output_name = output_name[:-4]
-
     used_pages = []
+
     # Iterate through pages (There is at least one)
     for f in os.listdir(path):
         if(not f.endswith(".rm")):
@@ -67,12 +55,12 @@ def rm2svg(path, output_name, coloured_annotations=False,
             return
 
         output = open("{}{:05}.svg".format(output_name, page), 'w')
-        output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(y_width, x_width)) # BEGIN page
+        output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(height, width)) # BEGIN page
         
         if background != None:
             output.write('<rect width="100%%" height="100%%" fill="%s"/>' % background)
 
-        # Iterate through layers on the page (There is at least one)
+        # Iterate through every layer on the page (There is at least one)
         for layer in range(nlayers):
             fmt = '<I'
             (nstrokes,) = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
@@ -95,7 +83,7 @@ def rm2svg(path, output_name, coloured_annotations=False,
                     pass
                 elif (pen == 2 or pen == 15) or (pen == 4 or pen == 17): # BallPoint | Fineliner
                     width = 32 * width * width - 116 * width + 107
-                    if(x_width == default_x_width and y_width == default_y_width):
+                    if(width == DEFAULT_WIDTH and height == DEFAULT_HEIGHT):
                         width *= 1.8
                 elif (pen == 3 or pen == 16): # Marker
                     width = 64 * width - 112
@@ -128,13 +116,13 @@ def rm2svg(path, output_name, coloured_annotations=False,
                     xpos, ypos, pressure, tilt, i_unk2, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
                     #xpos += 60
                     #ypos -= 20
-                    ratio = (y_width/x_width)/(1872/1404)
+                    ratio = (height/width)/(1872/1404)
                     if ratio > 1:
-                        xpos = ratio*((xpos*x_width)/1404)
-                        ypos = (ypos*y_width)/1872
+                        xpos = ratio*((xpos*width)/1404)
+                        ypos = (ypos*height)/1872
                     else:
-                        xpos = (xpos*x_width)/1404
-                        ypos = (1/ratio)*(ypos*y_width)/1872
+                        xpos = (xpos*width)/1404
+                        ypos = (1/ratio)*(ypos*height)/1872
                     if pen == 0:
                         if 0 == segment % 8:
                             segment_width = (5. * tilt) * (6. * width - 10) * (1 + 2. * pressure * pressure * pressure)
@@ -162,19 +150,6 @@ def rm2svg(path, output_name, coloured_annotations=False,
         output.write('</svg>') # END page
         output.close()
 
-
-    # For every intermediate page that is empty create a blank page
-    if len(used_pages) == 0:
-        return
-
-    for page in range(max(used_pages)+2):   # Note: last page is iterated by pdftk, so also add blank there
-        if page in used_pages:
-            continue
-
-        output = open("{}{:05}.svg".format(output_name, page+1), 'w')
-        output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(y_width, x_width)) # BEGIN page
-        output.write('</svg>') # END page
-        output.close()
 
 
 if __name__ == "__main__":
