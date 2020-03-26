@@ -24,12 +24,12 @@ class Document(Item):
 
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
-        self.path_svg = "%s/%s_" % (self.path_remapy, self.name)
+        self.path_svg = "%s/svg/" % self.path_remapy
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
 
         # Other props
         self.current_page = entry["CurrentPage"]
-        self.current_svg_page = self.path_svg + str(self.current_page).zfill(5) + ".svg"
+        self.current_svg_page = "%s%s.svg" %(self.path_svg, str(self.current_page).zfill(5))
         self.download_url = None
         self.blob_url = None
 
@@ -46,11 +46,14 @@ class Document(Item):
 
     def sync(self, force=False):
 
-        # Download if needed
-        if force or self.state != Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
-            self._download_raw()
-            self._write_remapy_metadata()
-
+        must_sync = (self.state == self.STATE_DOCUMENT_ONLINE) or \
+                    (self.state == self.STATE_DOCUMENT_OUT_OF_SYNC)
+        
+        if not force and not must_sync:
+            return 
+        
+        self._download_raw()
+        self._write_remapy_metadata()
         parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
 
 
@@ -101,6 +104,7 @@ class Document(Item):
 
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
+        Path(self.path_svg).mkdir(parents=True, exist_ok=True)
         with open("%s/metadata.yaml" % self.path_remapy, "w") as out:
             out.write(self.modified_str())
 
