@@ -12,7 +12,7 @@ it should (theoretically) also work on Windows and/or Mac.
  - [x] List all folders and files <br />
  - [ ] Delete file <br />
  - [ ] Upload file <br />
- - [ ] Async backend to keep fronted reactive <br />
+ - [x] Async backend to keep fronted reactive <br />
  - [ ] Make tool offline ready <br />
  - [x] Download file (zip) <br />
  - [x] Download notebook as svg <br />

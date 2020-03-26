@@ -33,11 +33,13 @@ class Document(Item):
         self.download_url = None
         self.blob_url = None
 
+        self.state_listener = []
+
 
     def clear_cache(self):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
-        self.state = Item.STATE_DOCUMENT_ONLINE
+        self.update_state(Item.STATE_DOCUMENT_ONLINE)
 
 
     def sync(self, force=False):
@@ -49,8 +51,9 @@ class Document(Item):
 
         parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
 
+
     def _download_raw(self, path=None):
-        self.state = Item.STATE_DOCUMENT_DOWNLOADING
+        self.update_state(Item.STATE_DOCUMENT_DOWNLOADING)
         path = self.path if path == None else path
 
         if os.path.exists(path):
@@ -67,8 +70,19 @@ class Document(Item):
             zip_ref.extractall(path)
         
         os.remove(self.path_zip)
-        self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
+        self.update_state(Item.STATE_DOCUMENT_LOCAL_NOTEBOOK)
+
+
+    def add_state_listener(self, listener):
+        self.state_listener.append(listener)
     
+
+    def update_state(self, state):
+        self.state = state
+        
+        for listener in self.state_listener:
+            listener(self)
+
 
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)

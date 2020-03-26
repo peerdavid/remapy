@@ -101,6 +101,9 @@ class Remarkable(object):
     def _update_tree(self, item):
         is_root = not item.is_document and item.parent is None
 
+        if item.is_document:
+           item.add_state_listener(self._update_tree_item)
+
         if not is_root:
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
@@ -151,8 +154,6 @@ class Remarkable(object):
         for uuid in self.selected_uuids:
             item = self.item_factory.get_item(uuid)
             item.clear_cache()
-            self._update_tree_item(item)
-
 
 
     def btn_move_click(self):
@@ -183,10 +184,7 @@ class Remarkable(object):
 
 
     def _sync_item(self, item, force):   
-        item.state = Item.STATE_DOCUMENT_DOWNLOADING
-        self._update_tree_item(item) 
         item.sync(force=force)
-        self._update_tree_item(item)
 
 
     def tree_double_click(self, event):
@@ -197,12 +195,10 @@ class Remarkable(object):
     def btn_svg_click(self):
         self._open_svg_async()
 
-
     def btn_clear_all_cache_click(self):
-        def fun(item):
-            item.clear_cache()
-            self._update_tree_item(item)
-        self.item_factory.depth_search(fun=fun)
+        self.item_factory.depth_search(
+            fun=lambda item: item.clear_cache()
+        )
 
     def _open_svg_async(self):
         def run():
