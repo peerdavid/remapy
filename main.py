@@ -11,7 +11,7 @@ from gui.settings import Settings
 
 import api.client as client
 from api.client import Client
-from api.objects import ItemFactory
+from api.object.item_factory import ItemFactory
 
 class Main(object):
 

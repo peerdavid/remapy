@@ -7,7 +7,7 @@ from PIL import Image
 
 import api.client
 from api.client import Client
-from api.objects import ItemFactory
+from api.object.item_factory import ItemFactory
 
 
 class Remarkable(object):
