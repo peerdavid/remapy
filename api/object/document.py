@@ -25,21 +25,23 @@ class Document(Item):
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
         self.path_svg = "%s/%s_" % (self.path_remapy, self.name)
+        self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
 
         # Other props
         self.current_page = entry["CurrentPage"]
         self.current_svg_page = self.path_svg + str(self.current_page).zfill(5) + ".svg"
-        self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK if os.path.exists(self.path) else Item.STATE_DOCUMENT_ONLINE
         self.download_url = None
         self.blob_url = None
 
+        # Set correct state of document
         self.state_listener = []
+        self._update_state()
 
 
     def clear_cache(self):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
-        self.update_state(Item.STATE_DOCUMENT_ONLINE)
+        self._update_state()
 
 
     def sync(self, force=False):
@@ -53,7 +55,7 @@ class Document(Item):
 
 
     def _download_raw(self, path=None):
-        self.update_state(Item.STATE_DOCUMENT_DOWNLOADING)
+        self._update_state(Item.STATE_DOCUMENT_DOWNLOADING)
         path = self.path if path == None else path
 
         if os.path.exists(path):
@@ -70,15 +72,28 @@ class Document(Item):
             zip_ref.extractall(path)
         
         os.remove(self.path_zip)
-        self.update_state(Item.STATE_DOCUMENT_LOCAL_NOTEBOOK)
+
+        # Update state
+        self._update_state()
 
 
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
     
 
-    def update_state(self, state):
-        self.state = state
+    def _update_state(self, state=None):
+
+        if state is None:
+            if not os.path.exists(self.path):
+                self.state = Item.STATE_DOCUMENT_ONLINE
+            
+            elif os.path.exists(self.path_original_pdf):
+                self.state = Item.STATE_DOCUMENT_LOCAL_PDF
+
+            else:
+                self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
+        else:
+            self.state = state
         
         for listener in self.state_listener:
             listener(self)
