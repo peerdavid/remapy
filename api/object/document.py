@@ -20,7 +20,7 @@ class Document(Item):
 
         self.current_page = entry["CurrentPage"]
         self.current_svg_page = self.path_svg + str(self.current_page).zfill(5) + ".svg"
-        self.status = "Available" if os.path.exists(self.path_raw) else "-"
+        self.state = Item.STATE_OFFLINE if os.path.exists(self.path_raw) else Item.STATE_ONLINE
         self.download_url = None
         self.blob_url = None
 
@@ -38,11 +38,11 @@ class Document(Item):
             zip_ref.extractall(self.path_raw)
         
         os.remove(self.path_zip)
-        self.update_status = "Available"
+        self.state = "Available"
     
 
     def download_svg(self):
-        if self.status != "Available":
+        if self.state != "Available":
             self.download_raw()
 
         parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")

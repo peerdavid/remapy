@@ -5,27 +5,27 @@ import argparse
 
 
 # Size
-DEFAULT_WIDTH = 1404
-DEFAULT_HEIGHT = 1872
+DEFAULT_IMAGE_WIDTH = 1404
+DEFAULT_IMAGE_HEIGHT = 1872
 
 
 # Mappings
 stroke_colour = {
     0: "darkblue",
-    1: "yellow",
+    1: "green",
     2: "white",
-    3: "yellow"
+    3: "grey"
 }
 
 
 def rm_to_svg(path, output_name, coloured_annotations=False,
-              width=DEFAULT_WIDTH, height=DEFAULT_HEIGHT,
+              image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAULT_IMAGE_HEIGHT,
               background=None):
 
     if output_name.endswith(".svg"):
         output_name = output_name[:-4]
-    used_pages = []
 
+    used_pages = []
     # Iterate through pages (There is at least one)
     for f in os.listdir(path):
         if(not f.endswith(".rm")):
@@ -55,12 +55,13 @@ def rm_to_svg(path, output_name, coloured_annotations=False,
             return
 
         output = open("{}{:05}.svg".format(output_name, page), 'w')
-        output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(height, width)) # BEGIN page
-        
-        if background != None:
-            output.write('<rect width="100%%" height="100%%" fill="%s"/>' % background)
+        output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(image_height, image_width)) # BEGIN page
 
-        # Iterate through every layer on the page (There is at least one)
+        if background != None:
+           output.write('<rect width="100%%" height="100%%" fill="%s"/>' % background)
+
+
+        # Iterate through layers on the page (There is at least one)
         for layer in range(nlayers):
             fmt = '<I'
             (nstrokes,) = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
@@ -83,7 +84,7 @@ def rm_to_svg(path, output_name, coloured_annotations=False,
                     pass
                 elif (pen == 2 or pen == 15) or (pen == 4 or pen == 17): # BallPoint | Fineliner
                     width = 32 * width * width - 116 * width + 107
-                    if(width == DEFAULT_WIDTH and height == DEFAULT_HEIGHT):
+                    if(image_width == DEFAULT_IMAGE_WIDTH and image_height == DEFAULT_IMAGE_HEIGHT):
                         width *= 1.8
                 elif (pen == 3 or pen == 16): # Marker
                     width = 64 * width - 112
@@ -116,13 +117,13 @@ def rm_to_svg(path, output_name, coloured_annotations=False,
                     xpos, ypos, pressure, tilt, i_unk2, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
                     #xpos += 60
                     #ypos -= 20
-                    ratio = (height/width)/(1872/1404)
+                    ratio = (image_height/image_width)/(1872/1404)
                     if ratio > 1:
-                        xpos = ratio*((xpos*width)/1404)
-                        ypos = (ypos*height)/1872
+                        xpos = ratio*((xpos*image_width)/1404)
+                        ypos = (ypos*image_height)/1872
                     else:
-                        xpos = (xpos*width)/1404
-                        ypos = (1/ratio)*(ypos*height)/1872
+                        xpos = (xpos*image_width)/1404
+                        ypos = (1/ratio)*(ypos*image_height)/1872
                     if pen == 0:
                         if 0 == segment % 8:
                             segment_width = (5. * tilt) * (6. * width - 10) * (1 + 2. * pressure * pressure * pressure)

@@ -25,8 +25,8 @@ ABOUT = \
    reMarkable support team if anything doesn't work as described here. This 
    project is not affiliated with reMarkable AS, Oslo. 
 
-   Icons made by Freepik, Smashicons, Pixel Perfect, srip, 
-   Good ware, prettycons from www.flaticon.com
+   Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, Good ware, 
+   prettycons from www.flaticon.com
 
 
 

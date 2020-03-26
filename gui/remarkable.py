@@ -8,7 +8,7 @@ from PIL import Image
 import api.client
 from api.client import Client
 from api.object.item_factory import ItemFactory
-
+from api.object.item import Item
 
 class Remarkable(object):
     def __init__(self, root, font_size=14, rowheight=14):
@@ -39,30 +39,21 @@ class Remarkable(object):
         self.tree["columns"]=("#1","#2")
         self.tree.column("#0", minwidth=250)
         self.tree.column("#1", width=180, minwidth=180, stretch=tk.NO)
-        self.tree.column("#2", width=150, minwidth=150, stretch=tk.NO)
+        self.tree.column("#2", width=150, minwidth=150, anchor="center", stretch=tk.NO)
 
-        self.tree.heading("#0",text="Name",anchor=tk.W)
-        self.tree.heading("#1", text="Date modified",anchor=tk.W)
-        self.tree.heading("#2", text="Status",anchor=tk.W)
+        self.tree.heading("#0",text="Name", anchor="center")
+        self.tree.heading("#1", text="Date modified", anchor="center")
+        self.tree.heading("#2", text="Current Page", anchor="center")
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        icon_size = rowheight-4
-        self.icon_dir = Image.open("./icons/folder.png")
-        self.icon_dir = self.icon_dir.resize((icon_size, icon_size))
-        self.icon_dir = itk.PhotoImage(self.icon_dir)
-
-        self.icon_note = Image.open("./icons/notebook.png")
-        self.icon_note = self.icon_note.resize((icon_size, icon_size))
-        self.icon_note = itk.PhotoImage(self.icon_note)
-
-        self.icon_pdf = Image.open("./icons/pdf.png")
-        self.icon_pdf = self.icon_pdf.resize((icon_size, icon_size))
-        self.icon_pdf = itk.PhotoImage(self.icon_pdf)
-
-        self.icon_book = Image.open("./icons/book.png")
-        self.icon_book = self.icon_book.resize((icon_size, icon_size))
-        self.icon_book = itk.PhotoImage(self.icon_book)
+        self.icon_collection = self._create_tree_icon("./icons/collection.png", rowheight)
+        self.icon_note = self._create_tree_icon("./icons/notebook.png", rowheight)
+        self.icon_pdf = self._create_tree_icon("./icons/pdf.png", rowheight)
+        self.icon_book = self._create_tree_icon("./icons/book.png", rowheight)
+        self.icon_cloud = self._create_tree_icon("./icons/cloud.png", rowheight)
+        self.icon_unknown = self._create_tree_icon("./icons/unknown.png", rowheight)
+        self.icon_sync = self._create_tree_icon("./icons/sync.png", rowheight)
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
@@ -93,23 +84,44 @@ class Remarkable(object):
         self.rm_client.listen_sign_in(self)
 
 
+    def _create_tree_icon(self, path, row_height):
+        icon = Image.open(path)
+        icon = icon.resize((row_height-4, row_height-4))
+        return itk.PhotoImage(icon)
+
+
     
     def _update_tree(self, item):
         is_root = not item.is_document and item.parent is None
 
         if not is_root:
-            image = self.icon_note if item.is_document else self.icon_dir
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
                 item.parent.uuid, 
                 pos, 
-                item.uuid, 
-                text=item.name, 
-                values=(item.modified_str(), item.status), 
-                image=image)
+                item.uuid)
+            self._update_tree_item(item)
 
         for child in item.children:
             self._update_tree(child)
+
+
+    def _get_item_tree_infos(self, item):
+        image = self.icon_collection
+        current_page = "-"
+
+        if item.is_document:
+            current_page = item.current_page
+            if item.state == Item.STATE_UNKNOWN:
+                image = self.icon_unknown
+            elif item.state == Item.STATE_ONLINE:
+                image = self.icon_cloud
+            elif item.state == Item.STATE_OFFLINE_OUT_OF_SYNC:
+                image = self.icon_sync
+            else:
+                image = self.icon_note
+            
+        return image, current_page
 
 
     #
@@ -161,16 +173,22 @@ class Remarkable(object):
         """
         if item.is_document:
             item.download_raw()
-            self.tree.item(item.uuid, values=(item.modified_str(), item.status))
             return
 
         for child in item.children:
             self.download_files_recursively(child)
-        
+    
+
+    def _update_tree_item(self, item):
+        image, current_page = self._get_item_tree_infos(item)
+        self.tree.item(item.uuid, image=image, text=" " + item.name,
+                       values=(item.modified_str(), current_page))
+
 
     def tree_double_click(self, event):
         self.selected_uuids = self.tree.selection()
         self._open_svg()
+
 
     def btn_svg_click(self):
         self._open_svg()
@@ -183,5 +201,6 @@ class Remarkable(object):
                 continue
             
             item.download_svg()
+            self._update_tree_item(item)
             subprocess.call(('xdg-open', item.current_svg_page))
     

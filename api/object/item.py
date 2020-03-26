@@ -1,7 +1,15 @@
 from datetime import datetime
 from api.client import Client
 
+
+
 class Item(object):
+
+    STATE_UNKNOWN = 0
+    STATE_ONLINE = 1
+    STATE_OFFLINE = 2
+    STATE_OFFLINE_OUT_OF_SYNC = 3
+
     def __init__(self, entry, parent=None):
         self.children = []
         is_root = entry is None
@@ -18,7 +26,7 @@ class Item(object):
         self.name = entry["VissibleName"]
         self.is_document = entry["Type"] == "DocumentType"
         self.success = entry["Success"]
-        self.status = "-"
+        self.state = self.STATE_UNKNOWN
 
         try:
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%S.%fZ")
