@@ -17,10 +17,6 @@ import os.path
 import argparse
 
 
-__prog_name__ = "rM2svg"
-__version__ = "0.0.1beta $Revision: 1.7 $"
-
-
 # Size
 default_x_width = 1404
 default_y_width = 1872
@@ -70,7 +66,7 @@ def rm2svg(path, output_name, coloured_annotations=False,
             abort('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
             return
 
-        output = open("{}{:05}.svg".format(output_name, page+1), 'w')
+        output = open("{}{:05}.svg".format(output_name, page), 'w')
         output.write('<svg xmlns="http://www.w3.org/2000/svg" height="{}" width="{}">\n'.format(y_width, x_width)) # BEGIN page
         
         if background != None:

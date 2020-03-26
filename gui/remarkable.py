@@ -172,4 +172,4 @@ class Remarkable(object):
             rm_files_path = "%s/%s" % (item.path, item.uuid)
             out_path = "%s/%s_" % (item.path, item.name)
             rm2svg(rm_files_path, out_path, background="white")
-            subprocess.call(('xdg-open', out_path + "00001.svg"))
+            subprocess.call(('xdg-open', out_path + str(item.current_page).zfill(5) + ".svg"))

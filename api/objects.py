@@ -53,6 +53,7 @@ class Document(Item):
         self.download_url = None
         self.path = "data/%s" % self.uuid
         self.update_status()
+        self.current_page = entry["CurrentPage"]
 
     def update_status(self):
         self.status = "Available" if os.path.exists(self.path) else "-"
