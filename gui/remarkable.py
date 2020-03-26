@@ -59,11 +59,11 @@ class Remarkable(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open')
+        self.context_menu.add_command(label='Open', command=self.btn_svg_click)
         self.context_menu.add_command(label='Download', command=self.btn_download_click)
-        self.context_menu.add_command(label='Svg', command=self.btn_svg_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
+        self.context_menu.add_command(label='Clear cache', command=self.btn_delete_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -75,7 +75,7 @@ class Remarkable(object):
         btn = tk.Button(self.lower_frame, text="Sync")
         btn.pack(side = tk.LEFT)
 
-        btn = tk.Button(self.lower_frame, text="Download all")
+        btn = tk.Button(self.lower_frame, text="Download")
         btn.pack(side = tk.LEFT)
 
         btn = tk.Button(self.lower_frame, text="Clear cache")
@@ -114,23 +114,6 @@ class Remarkable(object):
         for child in item.children:
             self._update_tree(child)
 
-
-    def _get_item_tree_infos(self, item):
-        image = self.icon_collection
-        current_page = "-"
-
-        if item.is_document:
-            current_page = item.current_page
-            if item.state == Item.STATE_UNKNOWN:
-                image = self.icon_unknown
-            elif item.state == Item.STATE_ONLINE:
-                image = self.icon_cloud
-            elif item.state == Item.STATE_OFFLINE_OUT_OF_SYNC:
-                image = self.icon_sync
-            else:
-                image = self.icon_note
-            
-        return image, current_page
 
 
     #
@@ -181,8 +164,7 @@ class Remarkable(object):
         """ Download file or all child files if it is a folder
         """
         if item.is_document:
-            item.download_raw()
-            self._update_tree_item(item)
+            self._sync_item(item, True)
             return
 
         for child in item.children:
@@ -193,6 +175,29 @@ class Remarkable(object):
         image, current_page = self._get_item_tree_infos(item)
         self.tree.item(item.uuid, image=image, text=" " + item.name,
                        values=(item.modified_str(), current_page))
+
+
+    def _get_item_tree_infos(self, item):
+        image = self.icon_collection
+        current_page = "-"
+
+        if item.is_document:
+            current_page = item.current_page
+            if item.state == Item.STATE_UNKNOWN:
+                image = self.icon_unknown
+            elif item.state == Item.STATE_ONLINE:
+                image = self.icon_cloud
+            elif item.state == Item.STATE_SYNCED_OUT_OF_SYNC:
+                image = self.icon_sync
+            else:
+                image = self.icon_note
+            
+        return image, current_page
+
+
+    def _sync_item(self, item, force):    
+        item.sync(force=force)
+        self._update_tree_item(item)
 
 
     def tree_double_click(self, event):
@@ -209,8 +214,7 @@ class Remarkable(object):
             item = self.item_factory.get_item(uuid)
             if not item.is_document:
                 continue
-            
-            item.download_svg()
-            self._update_tree_item(item)
+
+            self._sync_item(item, False)
             subprocess.call(('xdg-open', item.current_svg_page))
     

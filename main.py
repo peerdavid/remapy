@@ -12,6 +12,7 @@ from gui.settings import Settings
 import api.client as client
 from api.client import Client
 from api.object.item_factory import ItemFactory
+from api.object.document import Document
 
 class Main(object):
 
@@ -83,7 +84,7 @@ class Main(object):
 #
 def main():
     window = tk.Tk()
-    Path("data").mkdir(parents=True, exist_ok=True)
+    Path(Document.PATH).mkdir(parents=True, exist_ok=True)
     app = Main(window)
     window.mainloop()
 

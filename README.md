@@ -13,6 +13,7 @@ it should (theoretically) also work on Windows and/or Mac.
  - [ ] Delete file <br />
  - [ ] Upload file <br />
  - [ ] Async backend to keep fronted reactive <br />
+ - [ ] Make tool offline ready <br />
  - [x] Download file (zip) <br />
  - [x] Download notebook as svg <br />
  - [ ] Download notebook as pdf <br />

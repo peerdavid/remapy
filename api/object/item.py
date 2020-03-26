@@ -7,8 +7,8 @@ class Item(object):
 
     STATE_UNKNOWN = 0
     STATE_ONLINE = 1
-    STATE_OFFLINE = 2
-    STATE_OFFLINE_OUT_OF_SYNC = 3
+    STATE_SYNCED = 2
+    STATE_SYNCED_OUT_OF_SYNC = 3
 
     def __init__(self, entry, parent=None):
         self.children = []
