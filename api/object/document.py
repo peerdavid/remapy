@@ -55,7 +55,7 @@ class Document(Item):
         self._download_raw()
         self._write_remapy_metadata()
 
-        if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK:
+        if os.path.exists(self.path_rm_files):
             parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
 
 
