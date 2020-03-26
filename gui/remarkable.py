@@ -1,6 +1,8 @@
 import os
 import subprocess
 import threading
+import shutil
+from pathlib import Path
 import tkinter as tk
 import tkinter.ttk as ttk
 from PIL import ImageTk as itk
@@ -10,6 +12,8 @@ import api.client
 from api.client import Client
 from api.object.item_factory import ItemFactory
 from api.object.item import Item
+from api.object.document import Document
+
 
 class Remarkable(object):
     def __init__(self, root, font_size=14, rowheight=14):
@@ -66,7 +70,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
-        self.context_menu.add_command(label='Clear cache', command=self.btn_delete_click)
+        self.context_menu.add_command(label='Clear cache', command=self.btn_clear_cache_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -81,18 +85,9 @@ class Remarkable(object):
         btn = tk.Button(self.lower_frame, text="Download")
         btn.pack(side = tk.LEFT)
 
-        btn = tk.Button(self.lower_frame, text="Clear cache")
+        btn = tk.Button(self.lower_frame, text="Clear cache", command=self.btn_clear_all_cache_click)
         btn.pack(side = tk.LEFT)
         
-        self.search_text = tk.Entry(self.lower_frame)
-        self.search_text.pack(side=tk.LEFT)
-
-        self.btn = tk.Button(self.lower_frame, text="Filter")
-        self.btn.pack(side = tk.LEFT)
-
-        self.progressbar = ttk.Progressbar(self.lower_frame, orient="horizontal", length=200, mode="determinate")
-        self.progressbar.pack(side = tk.LEFT, anchor="w")
-
         self.rm_client.listen_sign_in(self)
 
 
@@ -147,6 +142,17 @@ class Remarkable(object):
 
         for iid in self.selected_uuids:
             self.tree.delete(iid)
+    
+
+    def btn_clear_cache_click(self):
+        if not self.selected_uuids:
+            return
+
+        for uuid in self.selected_uuids:
+            item = self.item_factory.get_item(uuid)
+            item.clear_cache()
+            self._update_tree_item(item)
+
 
 
     def btn_move_click(self):
@@ -158,26 +164,17 @@ class Remarkable(object):
 
 
     def btn_download_async_click(self):
-
         def run():
             for uuid in self.selected_uuids:
-                item = self.item_factory.get_item(uuid)
-                self._download_recursively(item)
+                self.item_factory.depth_search(
+                    fun = lambda i: self._sync_item(i, True),
+                    item = self.item_factory.get_item(uuid)
+                )
         threading.Thread(target=run).start()
     
 
-    def _download_recursively(self, item):
-        """ Download file or all child files if it is a folder recursice
-        """
-        if item.is_document:
-            self._sync_item(item, True)
-            return
-
-        for child in item.children:
-            self._download_recursively(child)
-    
-
     def _update_tree_item(self, item):
+        # ToDo: This should work via callbacks from the document object
         self.tree.item(
             item.uuid, 
             image=self.icons[item.state], 
@@ -196,9 +193,16 @@ class Remarkable(object):
         self.selected_uuids = self.tree.selection()
         self._open_svg_async()
 
+
     def btn_svg_click(self):
         self._open_svg_async()
 
+
+    def btn_clear_all_cache_click(self):
+        def fun(item):
+            item.clear_cache()
+            self._update_tree_item(item)
+        self.item_factory.depth_search(fun=fun)
 
     def _open_svg_async(self):
         def run():

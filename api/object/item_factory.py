@@ -5,28 +5,25 @@ from api.helper import Singleton
 
 class ItemFactory(metaclass=Singleton):
     
-
     def __init__(self,):
         self.rm_client = Client()
         self.root = None
 
 
-    def get_item(self, uuid):
+    def get_item(self, uuid, item=None):
         if self.root is None:
             self.get_root()
-
-        return self._get_item_rec(self.root, uuid)
         
+        item = self.root if item is None else item
 
-    def _get_item_rec(self, item, uuid):
         if item.uuid == uuid:
             return item
         
         for child in item.children:
-            found = self._get_item_rec(child, uuid)
+            found = self.get_item(uuid, child)
             if found != None:
                 return found
-
+        
         return None
 
 
@@ -34,6 +31,21 @@ class ItemFactory(metaclass=Singleton):
         entries = self.rm_client.list_metadata()
         self.root = self._create_tree(entries)
         return self.root
+
+
+    def depth_search(self, fun, item=None, document_only=True, collection_only=False):
+        item = self.root if item == None else item
+        
+        for child in item.children:
+            self.depth_search(fun, child)
+        
+        if collection_only and item.is_document:
+            return
+        
+        if document_only and not item.is_document:
+            return
+
+        fun(item)
 
 
     def _create_tree(self, entries):
@@ -48,13 +60,15 @@ class ItemFactory(metaclass=Singleton):
             "": root
         }
 
+        # We do this for every element, because _create_item_and_parents
+        # only ensures that all parents already exist
         for i in range(len(entries)):
-            self._create_tree_recursive(i, entries, items, lookup_table)
+            self._create_item_and_parents(i, entries, items, lookup_table)
 
         return root
 
 
-    def _create_tree_recursive(self, i, entries, items, lookup_table):
+    def _create_item_and_parents(self, i, entries, items, lookup_table):
         entry = entries[i]
         parent_uuid = entry["Parent"]
 
@@ -67,7 +81,7 @@ class ItemFactory(metaclass=Singleton):
                 parent_uuid = ""
             else:
                 parent_id = lookup_table[parent_uuid]
-                self._create_tree_recursive(parent_id, entries, items, lookup_table)
+                self._create_item_and_parents(parent_id, entries, items, lookup_table)
 
         parent = items[parent_uuid]
         new_object = self._item_factory(entry, parent)

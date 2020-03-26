@@ -34,6 +34,21 @@ class Document(Item):
         self.blob_url = None
 
 
+    def clear_cache(self):
+        if os.path.exists(self.path):
+            shutil.rmtree(self.path)
+        self.state = Item.STATE_DOCUMENT_ONLINE
+
+
+    def sync(self, force=False):
+
+        # Download if needed
+        if force or self.state != Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
+            self._download_raw()
+            self._write_remapy_metadata()
+
+        parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
+
     def _download_raw(self, path=None):
         self.state = Item.STATE_DOCUMENT_DOWNLOADING
         path = self.path if path == None else path
@@ -60,16 +75,3 @@ class Document(Item):
         with open("%s/metadata.yaml" % self.path_remapy, "w") as out:
             out.write(self.modified_str())
 
-
-    def sync(self, force=False):
-
-        # Download if needed
-        if force or self.state != Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
-            self._download_raw()
-            self._write_remapy_metadata()
-
-        # Try to create svg and pdf files
-        #try:
-        parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
-        # except e:
-        #     print("(Warning) Could not create svg files for " + self.name)
