@@ -5,15 +5,16 @@ import tkinter.ttk as ttk
 from PIL import ImageTk as itk
 from PIL import Image
 
-import api.client as client
+import api.client
 from api.client import Client
-import api.parser as parser
+from api.objects import ItemFactory
 
 
 class Remarkable(object):
-    def __init__(self, root, rm_client, font_size=14, rowheight=14):
+    def __init__(self, root, font_size=14, rowheight=14):
         self.nodes = dict()
-        self.rm_client = rm_client
+        self.rm_client = Client()
+        self.item_factory = ItemFactory()
 
         style = ttk.Style()
         style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
@@ -115,8 +116,8 @@ class Remarkable(object):
     # EVENT HANDLER
     #
     def sign_in_event_handler(self, event, data):
-        if event == client.EVENT_SUCCESS:
-            self.root = self.rm_client.get_root()
+        if event == api.client.EVENT_SUCCESS:
+            self.root = self.item_factory.get_root()
             self._update_tree(self.root)
 
 
@@ -132,10 +133,6 @@ class Remarkable(object):
             # mouse pointer not over item
             pass
 
-    
-    def tree_double_click(self, event):
-        self.selected_uuids = self.tree.selection()
-        self.open_svg()
 
     def btn_delete_click(self):
         if not self.selected_uuids:
@@ -155,7 +152,7 @@ class Remarkable(object):
 
     def btn_download_click(self):
         for uuid in self.selected_uuids:
-            item = self.rm_client.get_item(uuid)
+            item = self.item_factory.get_item(uuid)
             self.download_files_recursively(item)
     
 
@@ -163,7 +160,7 @@ class Remarkable(object):
         """ Download file or all child files if it is a folder
         """
         if item.is_document:
-            item = self.rm_client.download_file(item.uuid)
+            item.download_raw()
             self.tree.item(item.uuid, values=(item.modified_str(), item.status))
             return
 
@@ -171,17 +168,20 @@ class Remarkable(object):
             self.download_files_recursively(child)
         
 
+    def tree_double_click(self, event):
+        self.selected_uuids = self.tree.selection()
+        self._open_svg()
+
     def btn_svg_click(self):
-        self.open_svg()
+        self._open_svg()
 
-    def open_svg(self):
+
+    def _open_svg(self):
         for uuid in self.selected_uuids:
-            item = self.rm_client.get_item(uuid)
-
-            if item.status != "Available":
-                item = self.rm_client.download_file(uuid)
-
-            rm_files_path = "%s/%s" % (item.path, item.uuid)
-            out_path = "%s/%s_" % (item.path, item.name)
-            parser.rm_to_svg(rm_files_path, out_path, background="white")
-            subprocess.call(('xdg-open', out_path + str(item.current_page).zfill(5) + ".svg"))
+            item = self.item_factory.get_item(uuid)
+            if not item.is_document:
+                continue
+            
+            item.download_svg()
+            subprocess.call(('xdg-open', item.current_svg_page))
+    

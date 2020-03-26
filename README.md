@@ -21,9 +21,10 @@ it should (theoretically) also work on Windows and/or Mac.
  - [ ] Filter some documents <br />
 
 
-# Future ideas and features
- - [ ] Create full backups of raw data <br />
- - [ ] Viewer for backups <br />
+# Future ideas
+ - [ ] Create full (or partially folder) backups of raw data <br />
+ - [ ] Backup viewer <br />
+ - [ ] Restore a backup into the cloud <br /> 
  - [ ] Sync with Zotero <br />
  - [ ] Search also for handwritten text
  - [ ] SSH: Update background etc. <br />

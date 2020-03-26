@@ -1,13 +1,12 @@
 
 import os
-import zipfile
 from io import BytesIO
 import requests
 from uuid import uuid4
 from pathlib import Path
 
 import api.config as cfg
-from api.objects import Collection, Document, create_tree
+from api.helper import Singleton
 
 # 
 # EVENTS
@@ -40,11 +39,10 @@ DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 #
 # CLIENT
 #
-class Client(object):
+class Client(metaclass=Singleton):
     def __init__(self):
         self.test = True
         self.sign_in_listener = []
-        self.root = None
 
     #
     # EVENT HANDLER
@@ -92,27 +90,9 @@ class Client(object):
         # Inform all subscriber
         self.publish(self.sign_in_listener, EVENT_SUCCESS, auth)
         return auth
-    
-
-    def get_root(self):
-        response = self._request("GET", LIST_DOCS_URL)
-
-        if response.ok:
-            items = response.json()
-            self.root = create_tree(items)
-            return self.root
         
-        return None
-    
 
-    def get_item(self, uuid):
-        if self.root is None:
-            self.get_root()
-
-        return self._get_item_rec(self.root, uuid)
-    
-
-    def _get_blob_url(self, uuid):
+    def get_blob_url(self, uuid):
         
         response = self._request("GET", LIST_DOCS_URL, params={
             "doc": uuid,
@@ -126,38 +106,25 @@ class Client(object):
         return None
     
 
-    def download_file(self, uuid):
-        item = self.get_item(uuid)
-        blob_url = self._get_blob_url(uuid)
+    def list_metadata(self):
+        response = self._request("GET", LIST_DOCS_URL)
 
+        if response.ok:
+            items = response.json()
+            return items
+        return None
+    
+
+    def get_raw_file(self, blob_url):
         stream = self._request("GET", blob_url, stream=True)
         zip_io = BytesIO()
         for chunk in stream.iter_content(chunk_size=8192):
             zip_io.write(chunk)
-        
-        file_name = "%s.zip" % item.uuid
-        with open(file_name, "wb") as out:
-            out.write(zip_io.getbuffer())
-        
-        with zipfile.ZipFile(file_name, "r") as zip_ref:
-            zip_ref.extractall(item.path)
-        
-        os.remove(file_name)
-        item.update_status()
-        return item
+        return zip_io.getbuffer()
 
-
-    def _get_item_rec(self, root, uuid):
-        if root.uuid == uuid:
-            return root
-        
-        for child in root.children:
-            found = self._get_item_rec(child, uuid)
-            if found != None:
-                return found
-
-        return None
-
+    #
+    # HELPER
+    #
 
     def _get_device_token(self, one_time_code):
         """ Create a new device for a given one_time_code to be able to 

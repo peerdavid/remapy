@@ -24,7 +24,7 @@ def load() -> dict:
 
     with open(path, "r") as f:
         content = f.read()
-        yml = yaml.load(content)
+        yml = yaml.load(content, Loader=yaml.FullLoader)
         return dict(yml)
 
 

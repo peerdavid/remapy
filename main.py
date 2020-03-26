@@ -11,12 +11,12 @@ from gui.settings import Settings
 
 import api.client as client
 from api.client import Client
-
+from api.objects import ItemFactory
 
 class Main(object):
 
-    def __init__(self, window, rm_client):
-        self.rm_client = rm_client
+    def __init__(self, window):
+        self.rm_client = Client()
 
         # Define app settings
         font_size = 38
@@ -25,7 +25,7 @@ class Main(object):
         window_height = 650
 
         # Subscribe to events
-        rm_client.listen_sign_in(self)
+        self.rm_client.listen_sign_in(self)
 
         # Window settings
         window.title("RemaPy")
@@ -38,8 +38,7 @@ class Main(object):
         self.notebook.pack(expand=1, fill="both")
 
         frame = ttk.Frame(self.notebook)
-        self.remarkable = Remarkable(frame, rm_client, 
-            font_size=font_size, rowheight=rowheight)
+        self.remarkable = Remarkable(frame, font_size=font_size, rowheight=rowheight)
         self.notebook.add(frame, text="My Remarkable")
 
         frame = ttk.Frame(self.notebook)
@@ -55,7 +54,7 @@ class Main(object):
         self.notebook.add(frame, text="SSH", state="hidden")
 
         frame = ttk.Frame(self.notebook)
-        self.settings = Settings(frame, rm_client, font_size)
+        self.settings = Settings(frame, font_size)
         self.notebook.add(frame, text="Settings")
         
         frame = ttk.Frame(self.notebook)
@@ -84,11 +83,8 @@ class Main(object):
 #
 def main():
     window = tk.Tk()
-
     Path("data").mkdir(parents=True, exist_ok=True)
-    rm_client = Client()
-    app = Main(window, rm_client)
-
+    app = Main(window)
     window.mainloop()
 
 
