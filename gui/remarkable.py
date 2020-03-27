@@ -220,7 +220,10 @@ class Remarkable(object):
 
     def tree_double_click(self, event):
         self.selected_uuids = self.tree.selection()
-        self._open_async()
+        item = self.item_factory.get_item(self.selected_uuids[0])
+        
+        if item.is_document:
+            self._open_async()
 
 
     def btn_open_click(self):
@@ -238,8 +241,13 @@ class Remarkable(object):
 
     def _open_async(self):
 
-        def open_uuid(uuid):
-            item = self.item_factory.get_item(uuid)
+        def open_uuid(item):
+            for child in item.children:
+                open_uuid(child)
+            
+            if not item.is_document:
+                return
+
             self._sync_item(item, False)
 
             if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
@@ -247,19 +255,12 @@ class Remarkable(object):
             elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
                 subprocess.call(('xdg-open', item.path_annotated_pdf))
 
-        def open_recursive_uuids():
-            for uuid in self.selected_uuids: # ToDo: Refactor uuids to items
+        def open_all_uuids():
+            for uuid in self.selected_uuids:
                 item = self.item_factory.get_item(uuid)
+                open_uuid(item)
 
-                # Open all children
-                if not item.is_document:
-                    for child in item.children:
-                        open_uuid(child.uuid)
-                    continue
-                
-                open_uuid(uuid)
-
-        threading.Thread(target=open_recursive_uuids).start()
+        threading.Thread(target=open_all_uuids).start()
         
 
     
