@@ -2,7 +2,6 @@
 import yaml
 from pathlib import Path
 
-
 def save(new_config: dict) -> None:
     path = _get_path()
 

@@ -26,6 +26,7 @@ class Document(Item):
         self.path_remapy = "%s/.remapy" % self.path
         self.path_svg = "%s/svg/" % self.path_remapy
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
+        self.path_annotated_pdf = "%s/%s_annotated.pdf" % (self.path, self.uuid)
 
         # Other props
         self.current_page = entry["CurrentPage"]
@@ -55,8 +56,17 @@ class Document(Item):
         self._download_raw()
         self._write_remapy_metadata()
 
-        if os.path.exists(self.path_rm_files):
+        annotations_exist = os.path.exists(self.path_rm_files)
+
+        if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK and annotations_exist:
             parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
+            return
+        
+        if self.state == self.STATE_DOCUMENT_LOCAL_PDF:
+            if annotations_exist:
+                parser.rm_to_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
+            else:
+                pass # ToDo: rename raw file?
 
 
     def _download_raw(self, path=None):

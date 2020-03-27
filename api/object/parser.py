@@ -2,6 +2,10 @@ import sys
 import struct
 import os.path
 import argparse
+import io
+from PyPDF2 import PdfFileWriter, PdfFileReader
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
 
 
 # Size
@@ -11,27 +15,26 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 # Mappings
 stroke_colour = {
-    0: "darkblue",
-    1: "green",
-    2: "white",
-    3: "grey"
+    0: "darkblue",  # Pen color 1
+    1: "grey",      # Pen color 2
+    2: "white",     # Eraser
+    3: "yellow"     # Highlighter
 }
 
 
-def rm_to_svg(path, output_name, coloured_annotations=False,
-              image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAULT_IMAGE_HEIGHT,
-              background=None):
+def rm_to_svg(rm_files_path, output_name, image_width=DEFAULT_IMAGE_WIDTH, 
+              image_height=DEFAULT_IMAGE_HEIGHT, background=None):
 
     if output_name.endswith(".svg"):
         output_name = output_name[:-4]
 
     used_pages = []
     # Iterate through pages (There is at least one)
-    for f in os.listdir(path):
+    for f in os.listdir(rm_files_path):
         if(not f.endswith(".rm")):
             continue
 
-        input_file = "%s/%s" % (path, f)
+        input_file = "%s/%s" % (rm_files_path, f)
         page = int(f[:-3])
         used_pages.append(page)
 
@@ -92,8 +95,7 @@ def rm_to_svg(path, output_name, coloured_annotations=False,
                 elif (pen == 5 or pen == 18): # Highlighter
                     width = 30
                     opacity = 0.2
-                    if coloured_annotations:
-                        colour = 3
+                    colour = 3
                 elif (pen == 6): # Eraser
                     width = 1280 * width * width - 4800 * width + 4510
                     colour = 2
@@ -151,6 +153,31 @@ def rm_to_svg(path, output_name, coloured_annotations=False,
         output.write('</svg>') # END page
         output.close()
 
+
+def rm_to_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
+    
+    packet = io.BytesIO()
+    # create a new PDF with Reportlab
+    can = canvas.Canvas(packet, pagesize=letter)
+    can.drawString(10, 100, "Hello world")
+    can.line(0,0, 100, 100)
+    can.save()
+    annotations_pdf = PdfFileReader(packet)
+
+    #move to the beginning of the StringIO buffer
+    packet.seek(0)
+    new_pdf = PdfFileReader(packet)
+
+    input_pdf = PdfFileReader(open(path_original_pdf, "rb"))
+    output_pdf = PdfFileWriter()
+
+    page = input_pdf.getPage(0)
+    page.mergePage(annotations_pdf.getPage(0))
+    output_pdf.addPage(page)
+
+    outputStream = open(path_annotated_pdf, "wb")
+    output_pdf.write(outputStream)
+    outputStream.close()
 
 
 if __name__ == "__main__":

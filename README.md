@@ -31,6 +31,7 @@ it should (theoretically) also work on Windows and/or Mac.
  - [ ] Select a collection to sync with Zotero <br />
  - [ ] Search also for handwritten text
  - [ ] SSH access: Update background image, live view <br />
+ - [ ] Decrypt encrypted pdf's to be compatible with the RM <br />
 
 
 # How to setup / install RemaPy
