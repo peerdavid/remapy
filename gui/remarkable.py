@@ -36,6 +36,7 @@ class Remarkable(object):
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
 
         self.root.bind_all('<Control-v>', self.key_binding_paste)
+        self.root.bind_all('<Control-c>', self.key_binding_copy)
         self.root.bind_all('<Return>', self.key_binding_return)
         self.root.bind_all('<Delete>', self.key_binding_delete)
 
@@ -81,7 +82,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Clear cache', command=self.btn_clear_cache_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Copy')
+        self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')
 
@@ -202,7 +203,7 @@ class Remarkable(object):
 
     def btn_download_async_click(self):
         selected_uuids = self.tree.selection()
-        
+
         def run():
             for uuid in selected_uuids:
                 self.item_factory.depth_search(
@@ -236,11 +237,12 @@ class Remarkable(object):
 
 
     def key_binding_return(self, event):
-        self._open_async()
+        self.btn_open_click()
 
 
     def btn_open_click(self):
         self._open_async()
+
 
     def btn_clear_all_cache_click(self):
         # Clean everything, also if some (old) things exist
@@ -294,3 +296,25 @@ class Remarkable(object):
             return
         
         print("Upload file")
+
+
+    def key_binding_copy(self, event):
+        self.btn_copy_async_click()
+
+
+    def btn_copy_async_click(self):
+        self.root.clipboard_clear()
+        selected_uuids = self.tree.selection()
+
+        def sync_and_copy(item):
+            self._sync_item(item, force=False)
+            self.root.clipboard_append(item.path_annotated_pdf)
+
+        def run():
+            for uuid in selected_uuids:
+                self.item_factory.depth_search(
+                    fun=lambda item: sync_and_copy(item),
+                    item = self.item_factory.get_item(uuid))
+        threading.Thread(target=run).start()
+        self.root.update()
+            

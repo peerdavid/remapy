@@ -26,7 +26,7 @@ class Document(Item):
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
-        self.path_annotated_pdf = "%s/%s_annotated.pdf" % (self.path, self.uuid)
+        self.path_annotated_pdf = "%s/%s.pdf" % (self.path, self.name)
 
         # Other props
         self.current_page = entry["CurrentPage"]
