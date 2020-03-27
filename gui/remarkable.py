@@ -208,7 +208,13 @@ class Remarkable(object):
                     continue
                 
                 self._sync_item(item, False)
-                subprocess.call(('xdg-open', item.current_svg_page))
+
+                if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
+                    #ToDo: This will not work on windows, mac os.
+                    subprocess.call(('xdg-open', item.current_svg_page))
+                elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
+                    subprocess.call(('xdg-open', item.path_annotated_pdf))
+
         threading.Thread(target=run).start()
         
 
