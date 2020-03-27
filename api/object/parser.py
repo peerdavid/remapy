@@ -31,29 +31,29 @@ def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
 
     # Parse remarkable files and write into pdf
     annotations_pdf = []
-    page_layout = base_pdf.pages[0].MediaBox
+
+    # NOTE: The first page is in books often smaller, therefore we use the 
+    #       second page if it exists...
+    page_layout = base_pdf.pages[0].MediaBox if len(base_pdf.pages) <= 1 else base_pdf.pages[1].MediaBox
     image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
     for page_nr in range(len(base_pdf.pages)):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
-            annotations_pdf.append(None)
+            annotations_pdf.append(_blank_page())
             continue
 
         packet = _parse_rm_file(rm_file, image_width=image_width, image_height=image_height)
-        annotations_pdf.append(PdfReader(packet))
+        annotated_page = PdfReader(packet)
+        if len(annotated_page.pages) <= 0:
+            annotations_pdf.append(_blank_page())
+        else:
+            annotations_pdf.append(annotated_page.pages[0])
        
     # Merge annotations pdf and original pdf
     for i in range(len(base_pdf.pages)):
-        
-        if annotations_pdf[i] == None:
-            continue
-        
-        annotated_page = annotations_pdf[i].pages[0]
-
         merger = PageMerge(base_pdf.pages[i])
-        merger.add(annotated_page).render()
-        
+        merger.add(annotations_pdf[i]).render()
     writer = PdfWriter()
     writer.write(path_annotated_pdf, base_pdf)
 
