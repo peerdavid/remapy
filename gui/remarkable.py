@@ -19,6 +19,10 @@ from api.object.document import Document
 
 class Remarkable(object):
     def __init__(self, root, font_size=14, rowheight=14):
+        
+        self.root = root
+
+        # Create tkinter elements
         self.nodes = dict()
         self.rm_client = Client()
         self.item_factory = ItemFactory()
@@ -30,6 +34,10 @@ class Remarkable(object):
         
         self.upper_frame = tk.Frame(root)
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
+
+        self.root.bind_all('<Control-v>', self.key_binding_paste)
+        self.root.bind_all('<Return>', self.key_binding_return)
+        self.root.bind_all('<Delete>', self.key_binding_delete)
 
         # Add tree and scrollbars
         self.tree = ttk.Treeview(self.upper_frame, style="remapy.style.Treeview")
@@ -70,9 +78,12 @@ class Remarkable(object):
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Open', command=self.btn_open_click)
         self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
-        self.context_menu.add_command(label='Move', command=self.btn_move_click)
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
         self.context_menu.add_command(label='Clear cache', command=self.btn_clear_cache_click)
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label='Copy')
+        self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
+        self.context_menu.add_command(label='Cut')
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -122,17 +133,17 @@ class Remarkable(object):
     #
     def sign_in_event_handler(self, event, data):
         if event == api.client.EVENT_SUCCESS:
-            self.root = self.item_factory.get_root()
-            self._update_tree(self.root)
+            root = self.item_factory.get_root()
+            self._update_tree(root)
 
 
     #
     # EVENT HANDLER
     #
     def tree_right_click(self, event):
-        self.selected_uuids = self.tree.selection()
-        if self.selected_uuids:
-            items = [self.item_factory.get_item(uuid) for uuid in self.selected_uuids]
+        selected_uuids = self.tree.selection()
+        if selected_uuids:
+            items = [self.item_factory.get_item(uuid) for uuid in selected_uuids]
             for item in items:
                 for possile_child in items:
                     if not item.is_parent_of(possile_child):
@@ -149,11 +160,14 @@ class Remarkable(object):
         else:
             # mouse pointer not over item
             pass
+        
 
+    def key_binding_delete(self, event):
+        self.btn_delete_async_click()
 
     def btn_delete_async_click(self):
-
-        items = [self.item_factory.get_item(uuid) for uuid in self.selected_uuids]
+        selected_uuids = self.tree.selection()
+        items = [self.item_factory.get_item(uuid) for uuid in selected_uuids]
         
         count = [0, 0]
         for item in items:
@@ -178,24 +192,19 @@ class Remarkable(object):
     
 
     def btn_clear_cache_click(self):
-        for uuid in self.selected_uuids:
+        selected_uuids = self.tree.selection()
+        for uuid in selected_uuids:
             self.item_factory.depth_search(
                 fun = lambda item: item.clear_cache(),
                 item = self.item_factory.get_item(uuid)
         )
 
 
-    def btn_move_click(self):
-        if not self.selected_uuids:
-            return 
-
-        for uuid in self.selected_uuids:
-            self.tree.item(uuid, tags="move")
-
-
     def btn_download_async_click(self):
+        selected_uuids = self.tree.selection()
+        
         def run():
-            for uuid in self.selected_uuids:
+            for uuid in selected_uuids:
                 self.item_factory.depth_search(
                     fun = lambda i: self._sync_item(i, True),
                     item = self.item_factory.get_item(uuid)
@@ -219,11 +228,15 @@ class Remarkable(object):
 
 
     def tree_double_click(self, event):
-        self.selected_uuids = self.tree.selection()
-        item = self.item_factory.get_item(self.selected_uuids[0])
+        selected_uuids = self.tree.selection()
+        item = self.item_factory.get_item(selected_uuids[0])
         
         if item.is_document:
             self._open_async()
+
+
+    def key_binding_return(self, event):
+        self._open_async()
 
 
     def btn_open_click(self):
@@ -240,7 +253,7 @@ class Remarkable(object):
 
 
     def _open_async(self):
-
+        selected_uuids = self.tree.selection()
         def open_uuid(item):
             for child in item.children:
                 open_uuid(child)
@@ -255,12 +268,29 @@ class Remarkable(object):
             elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
                 subprocess.call(('xdg-open', item.path_annotated_pdf))
 
+
         def open_all_uuids():
-            for uuid in self.selected_uuids:
+            for uuid in selected_uuids:
                 item = self.item_factory.get_item(uuid)
                 open_uuid(item)
 
         threading.Thread(target=open_all_uuids).start()
         
 
-    
+    #
+    # Copy, Paste, Cut
+    #
+    def key_binding_paste(self, event):
+        self.btn_paste_async_click()
+
+    def btn_paste_async_click(self):
+        file_path = self.root.clipboard_get()
+        if not os.path.exists(file_path):
+            messagebox.showerror("Paste error", "No file found to upload.")
+            return
+        
+        if not file_path.endswith(".pdf"):
+            messagebox.showerror("Paste error", "Only .pdf files are supported.")
+            return
+        
+        print("Upload file")
