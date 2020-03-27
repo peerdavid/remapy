@@ -10,18 +10,19 @@ it should (theoretically) also work on Windows and/or Mac.
  - [x] Settings page (Path to templates, sync folder, ) <br />
  - [x] About page <br />
  - [x] List all folders and files <br />
- - [ ] Delete file <br />
+ - [x] Delete file <br />
  - [ ] Upload file <br />
  - [ ] Move file / collection <br />
+ - [ ] Check and show if files are our of sync <br />
+ - [x] Open collection (all files of collection with one click)
  - [x] Async backend to keep fronted reactive <br />
  - [ ] Test offline <br />
  - [x] Download file (zip) <br />
  - [x] Download notebook as svg <br />
  - [ ] Download notebook as pdf <br />
- - [ ] Download annotated pdf <br />
- - [ ] Select layers when creating notes <br />
- - [ ] Filter <br />
- - [ ] Delete from local cache if no more on remarkable <br />
+ - [x] Download annotated pdf <br />
+ - [ ] Filter / Search documents <br />
+ - [ ] Delete local cache if not available more on remarkable <br />
 
 
 # Future ideas
