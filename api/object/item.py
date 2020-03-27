@@ -13,6 +13,7 @@ class Item(object):
     STATE_DOCUMENT_LOCAL_EBUB = 5
     STATE_DOCUMENT_OUT_OF_SYNC = 6
     STATE_DOCUMENT_DOWNLOADING = 7
+    STATE_DELETED = 99
 
     def __init__(self, entry, parent=None):
         self.children = []
@@ -32,6 +33,7 @@ class Item(object):
         self.success = entry["Success"]
         self.state = self.STATE_UNKNOWN
         self.current_page = "-"
+        self.state_listener = []
 
         try:
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -41,3 +43,12 @@ class Item(object):
 
     def modified_str(self):
         return self.modified_client.strftime("%Y-%m-%d %H:%M:%S")
+
+
+    def add_state_listener(self, listener):
+        self.state_listener.append(listener)
+    
+
+    def _update_state_listener(self):
+        for listener in self.state_listener:
+            listener(self)

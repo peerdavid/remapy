@@ -34,7 +34,6 @@ class Document(Item):
         self.blob_url = None
 
         # Set correct state of document
-        self.state_listener = []
         self._update_state()
 
 
@@ -42,6 +41,18 @@ class Document(Item):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         self._update_state()
+    
+
+    def delete(self):
+        ok = self.rm_client.delete_item(self.uuid, self.version)
+
+        if ok:
+            self._update_state(state=self.STATE_DELETED)
+        return ok
+
+
+    def is_parent_of(self, item):
+        return False
 
 
     def sync(self, force=False):
@@ -72,6 +83,7 @@ class Document(Item):
         
         self._update_state()
 
+
     def _download_raw(self, path=None):
         self._update_state(state=Item.STATE_DOCUMENT_DOWNLOADING)
         path = self.path if path == None else path
@@ -93,13 +105,11 @@ class Document(Item):
 
         # Update state
         self._update_state(inform_listener=False)
-
-
-    def add_state_listener(self, listener):
-        self.state_listener.append(listener)
     
+
     def update_state(self):
         self._update_state(inform_listener=True, state=None)
+
 
     def _update_state(self, inform_listener=True, state=None):
 
@@ -118,8 +128,7 @@ class Document(Item):
         if not inform_listener:
             return 
 
-        for listener in self.state_listener:
-            listener(self)
+        self._update_state_listener()
 
 
     def _write_remapy_metadata(self):

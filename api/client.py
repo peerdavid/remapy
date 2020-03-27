@@ -104,6 +104,19 @@ class Client(metaclass=Singleton):
             return items[0]["BlobURLGet"]
         
         return None
+
+    
+    def delete_item(self, uuid, version):
+        
+        response = self._request("PUT", DELETE_ENTRY_URL, body=[{
+            "ID": uuid,
+            "Version": version
+        }])
+        
+        if response.ok:
+            return True
+        
+        return False
     
 
     def list_metadata(self):

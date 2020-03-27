@@ -2,9 +2,11 @@ import os
 import subprocess
 import threading
 import shutil
+import numpy as np
 from pathlib import Path
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter import messagebox
 from PIL import ImageTk as itk
 from PIL import Image
 
@@ -52,15 +54,15 @@ class Remarkable(object):
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        self.icons=[]
-        self.icons.append(self._create_tree_icon("./icons/unknown.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/collection.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_online.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_local_notebook.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_local_pdf.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_local_ebub.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_local_out_of_sync.png", rowheight))
-        self.icons.append(self._create_tree_icon("./icons/document_downloading.png", rowheight))
+        self.icons={}
+        self.icons[Item.STATE_UNKNOWN] = self._create_tree_icon("./icons/unknown.png", rowheight)
+        self.icons[Item.STATE_COLLECTION] = self._create_tree_icon("./icons/collection.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_ONLINE] = self._create_tree_icon("./icons/document_online.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_NOTEBOOK] = self._create_tree_icon("./icons/document_local_notebook.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_PDF] = self._create_tree_icon("./icons/document_local_pdf.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_EBUB] = self._create_tree_icon("./icons/document_local_ebub.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_OUT_OF_SYNC] = self._create_tree_icon("./icons/document_local_out_of_sync.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_DOWNLOADING] = self._create_tree_icon("./icons/document_downloading.png", rowheight)
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
@@ -69,7 +71,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Open', command=self.btn_open_click)
         self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
         self.context_menu.add_command(label='Clear cache', command=self.btn_clear_cache_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
@@ -100,10 +102,6 @@ class Remarkable(object):
     
     def _update_tree(self, item):
         is_root = not item.is_document and item.parent is None
-
-        if item.is_document:
-           item.add_state_listener(self._update_tree_item)
-
         if not is_root:
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
@@ -111,6 +109,8 @@ class Remarkable(object):
                 pos, 
                 item.uuid)
             self._update_tree_item(item)
+
+            item.add_state_listener(self._update_tree_item)    
 
         for child in item.children:
             self._update_tree(child)
@@ -132,6 +132,18 @@ class Remarkable(object):
     def tree_right_click(self, event):
         self.selected_uuids = self.tree.selection()
         if self.selected_uuids:
+            items = [self.item_factory.get_item(uuid) for uuid in self.selected_uuids]
+            for item in items:
+                for possile_child in items:
+                    if not item.is_parent_of(possile_child):
+                        continue 
+                    
+                    messagebox.showerror(
+                        "Invalid operation", 
+                        "Your selection is invalid. You can not perform an \
+                            action on a folder and one of its child items.")
+                    return
+
             self.context_menu.tk_popup(event.x_root, event.y_root)   
             pass         
         else:
@@ -139,21 +151,38 @@ class Remarkable(object):
             pass
 
 
-    def btn_delete_click(self):
-        if not self.selected_uuids:
+    def btn_delete_async_click(self):
+
+        items = [self.item_factory.get_item(uuid) for uuid in self.selected_uuids]
+        
+        count = [0, 0]
+        for item in items:
+            if item.is_document:
+                count[0] += 1
+                continue
+            
+            child_count = item.get_exact_children_count()
+            count = np.add(count, child_count)
+        
+        message = "Do you really want to delete %d collection(s) and %d file(s)?" % (count[1], count[0])
+        result = messagebox.askquestion("Delete", message, icon='warning')
+
+        if result != "yes":
             return
 
-        for iid in self.selected_uuids:
-            self.tree.delete(iid)
+        def run():
+            for item in items:
+                item.delete()
+        threading.Thread(target=run).start()
+            
     
 
     def btn_clear_cache_click(self):
-        if not self.selected_uuids:
-            return
-
         for uuid in self.selected_uuids:
-            item = self.item_factory.get_item(uuid)
-            item.clear_cache()
+            self.item_factory.depth_search(
+                fun = lambda item: item.clear_cache(),
+                item = self.item_factory.get_item(uuid)
+        )
 
 
     def btn_move_click(self):
@@ -175,12 +204,14 @@ class Remarkable(object):
     
 
     def _update_tree_item(self, item):
-        # ToDo: This should work via callbacks from the document object
-        self.tree.item(
-            item.uuid, 
-            image=self.icons[item.state], 
-            text=" " + item.name,
-            values=(item.modified_str(), item.current_page))
+        if item.state == Item.STATE_DELETED:
+            self.tree.delete(item.uuid)
+        else:
+            self.tree.item(
+                item.uuid, 
+                image=self.icons[item.state], 
+                text=" " + item.name,
+                values=(item.modified_str(), item.current_page))
 
 
     def _sync_item(self, item, force):   
@@ -206,20 +237,29 @@ class Remarkable(object):
 
 
     def _open_async(self):
-        def run():
-            for uuid in self.selected_uuids:
+
+        def open_uuid(uuid):
+            item = self.item_factory.get_item(uuid)
+            self._sync_item(item, False)
+
+            if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
+                subprocess.call(('xdg-open', item.path_annotated_pdf))
+            elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
+                subprocess.call(('xdg-open', item.path_annotated_pdf))
+
+        def open_recursive_uuids():
+            for uuid in self.selected_uuids: # ToDo: Refactor uuids to items
                 item = self.item_factory.get_item(uuid)
+
+                # Open all children
                 if not item.is_document:
+                    for child in item.children:
+                        open_uuid(child.uuid)
                     continue
                 
-                self._sync_item(item, False)
+                open_uuid(uuid)
 
-                if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
-                    subprocess.call(('xdg-open', item.path_annotated_pdf))
-                elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
-                    subprocess.call(('xdg-open', item.path_annotated_pdf))
-
-        threading.Thread(target=run).start()
+        threading.Thread(target=open_recursive_uuids).start()
         
 
     
