@@ -3,7 +3,7 @@ import struct
 import os.path
 import argparse
 import io
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from pdfrw import PdfReader, PdfWriter, PageMerge, IndirectPdfDict, PdfDict
 from reportlab.graphics import renderPDF
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -27,36 +27,35 @@ stroke_color = {
 
 def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     
-    input_pdf = PdfFileReader(open(path_original_pdf, "rb"))
+    base_pdf = PdfReader(open(path_original_pdf, "rb"))
 
     # Parse remarkable files and write into pdf
     annotations_pdf = []
-    page_layout = input_pdf.getPage(0).mediaBox
+    page_layout = base_pdf.pages[0].MediaBox
     image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
-    for page_nr in range(input_pdf.getNumPages()):
+    for page_nr in range(len(base_pdf.pages)):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
             annotations_pdf.append(None)
             continue
 
         packet = _parse_rm_file(rm_file, image_width=image_width, image_height=image_height)
-        annotations_pdf.append(PdfFileReader(packet))
-        packet.seek(0)
+        annotations_pdf.append(PdfReader(packet))
        
     # Merge annotations pdf and original pdf
-    new_pdf = PdfFileReader(packet)
-    output_pdf = PdfFileWriter()
+    for i in range(len(base_pdf.pages)):
+        
+        if annotations_pdf[i] == None:
+            continue
+        
+        annotated_page = annotations_pdf[i].pages[0]
 
-    for page_nr in range(input_pdf.getNumPages()):
-        page = input_pdf.getPage(page_nr)
-        if annotations_pdf[page_nr] != None:
-            page.mergePage(annotations_pdf[page_nr].getPage(0))
-        output_pdf.addPage(page)
-
-    outputStream = open(path_annotated_pdf, "wb")
-    output_pdf.write(outputStream)
-    outputStream.close()
+        merger = PageMerge(base_pdf.pages[i])
+        merger.add(annotated_page).render()
+        
+    writer = PdfWriter()
+    writer.write(path_annotated_pdf, base_pdf)
 
 
 def parse_notebook(path, uuid, path_annotated_pdf, path_templates=None):
@@ -69,54 +68,65 @@ def parse_notebook(path, uuid, path_annotated_pdf, path_templates=None):
         
         rm_file = "%s/%s" % (rm_files_path, file_name)
         packet = _parse_rm_file(rm_file)
-        annotations_pdf.append(PdfFileReader(packet))
-        packet.seek(0)
+        annotations_pdf.append(PdfReader(packet))
     
-    output_pdf = PdfFileWriter()
+    # Write empty notebook notes containing blank pages or templates
+    writer = PdfWriter()
     templates = _get_templates_per_page(path, uuid, path_templates)
+    for template in templates:
+        if template == None:
+            writer.addpage(_blank_page())
+        else:
+            writer.addpage(template.pages[0])
+    writer.write(path_annotated_pdf)
+    
+    # Overlay empty notebook with annotations
+    templates_pdf = PdfReader(path_annotated_pdf)
     for i in range(len(annotations_pdf)):
 
-        empty_page = annotations_pdf[i].getNumPages() <= 0
+        empty_page = len(annotations_pdf[i].pages) <= 0
         if empty_page:
             continue 
 
-        annotated_page = annotations_pdf[i].getPage(0)
-
+        annotated_page = annotations_pdf[i].pages[0]
         if templates != None:
-            template = templates[i].getPage(0)
-            template.mergePage(annotated_page)
-            output_pdf.addPage(template)
+            merger = PageMerge(templates_pdf.pages[i])
+            merger.add(annotated_page).render()
         else:
             output_pdf.addPage(annotated_page)
+    
+    writer = PdfWriter()
+    writer.write(path_annotated_pdf, templates_pdf)
 
-    outputStream = open(path_annotated_pdf, "wb")
-    output_pdf.write(outputStream)
-    outputStream.close()
 
 
 def _get_templates_per_page(path, uuid, path_templates):
-    if path_templates == None or not os.path.exists(path_templates):
-        return None
-    
-    pagedata_file = "%s/%s.pagedata" % (path, uuid)
-    if not os.path.exists(pagedata_file):
-        return None 
 
+    pagedata_file = "%s/%s.pagedata" % (path, uuid)
     with open(pagedata_file, 'r') as f:
         template_paths = ["%s/%s.png" % (path_templates, l.rstrip('\n')) for l in f] 
         
     templates = []
     for template_path in template_paths:
         if not os.path.exists(template_path):
-            return None
+            templates.append(None)
+            continue
 
         packet = io.BytesIO()
         can = canvas.Canvas(packet, pagesize=(DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT))
         can.drawImage(template_path, 0, 0)
         can.save()
-        templates.append(PdfFileReader(packet))
         packet.seek(0)
+        templates.append(PdfReader(packet))
+
     return templates
+
+
+def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
+    blank = PageMerge()
+    blank.mbox = [0, 0, width, height] # 8.5 x 11
+    blank = blank.render()
+    return blank
 
 
 def _parse_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAULT_IMAGE_HEIGHT):
@@ -229,6 +239,7 @@ def _parse_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAUL
             renderPDF.draw(drawing, can, 0, 0)
     
     can.save()
+    packet.seek(0)
     return packet
 
 
