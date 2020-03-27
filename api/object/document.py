@@ -63,17 +63,17 @@ class Document(Item):
                 self.uuid, 
                 self.path_annotated_pdf,
                 path_templates=cfg.get("general.templates"))
-            return
         
-        if self.state == self.STATE_DOCUMENT_LOCAL_PDF:
+        elif self.state == self.STATE_DOCUMENT_LOCAL_PDF:
             if annotations_exist:
                 parser.parse_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
             else:
                 shutil.copyfile(self.path_original_pdf, self.path_annotated_pdf)
-
+        
+        self._update_state()
 
     def _download_raw(self, path=None):
-        self._update_state(Item.STATE_DOCUMENT_DOWNLOADING)
+        self._update_state(state=Item.STATE_DOCUMENT_DOWNLOADING)
         path = self.path if path == None else path
 
         if os.path.exists(path):
@@ -92,14 +92,16 @@ class Document(Item):
         os.remove(self.path_zip)
 
         # Update state
-        self._update_state()
+        self._update_state(inform_listener=False)
 
 
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
     
+    def update_state(self):
+        self._update_state(inform_listener=True, state=None)
 
-    def _update_state(self, state=None):
+    def _update_state(self, inform_listener=True, state=None):
 
         if state is None:
             if not os.path.exists(self.path):
@@ -113,6 +115,9 @@ class Document(Item):
         else:
             self.state = state
         
+        if not inform_listener:
+            return 
+
         for listener in self.state_listener:
             listener(self)
 

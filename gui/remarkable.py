@@ -196,9 +196,14 @@ class Remarkable(object):
         self._open_async()
 
     def btn_clear_all_cache_click(self):
+        # Clean everything, also if some (old) things exist
+        shutil.rmtree(Document.PATH, ignore_errors=True)
+        Path(Document.PATH).mkdir(parents=True, exist_ok=True)
+
         self.item_factory.depth_search(
-            fun=lambda item: item.clear_cache()
+            fun=lambda item: item.update_state()
         )
+
 
     def _open_async(self):
         def run():
