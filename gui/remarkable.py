@@ -66,7 +66,7 @@ class Remarkable(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open', command=self.btn_svg_click)
+        self.context_menu.add_command(label='Open', command=self.btn_open_click)
         self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
         self.context_menu.add_command(label='Move', command=self.btn_move_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_click)
@@ -189,18 +189,18 @@ class Remarkable(object):
 
     def tree_double_click(self, event):
         self.selected_uuids = self.tree.selection()
-        self._open_svg_async()
+        self._open_async()
 
 
-    def btn_svg_click(self):
-        self._open_svg_async()
+    def btn_open_click(self):
+        self._open_async()
 
     def btn_clear_all_cache_click(self):
         self.item_factory.depth_search(
             fun=lambda item: item.clear_cache()
         )
 
-    def _open_svg_async(self):
+    def _open_async(self):
         def run():
             for uuid in self.selected_uuids:
                 item = self.item_factory.get_item(uuid)
@@ -210,8 +210,7 @@ class Remarkable(object):
                 self._sync_item(item, False)
 
                 if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
-                    #ToDo: This will not work on windows, mac os.
-                    subprocess.call(('xdg-open', item.current_svg_page))
+                    subprocess.call(('xdg-open', item.path_annotated_pdf))
                 elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
                     subprocess.call(('xdg-open', item.path_annotated_pdf))
 

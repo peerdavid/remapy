@@ -9,6 +9,7 @@ from api.helper import Singleton
 import api.object.parser as parser
 from api.object.item import Item
 from api.object.collection import Collection
+import api.config as cfg
 
 class Document(Item):
     
@@ -24,13 +25,11 @@ class Document(Item):
 
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
-        self.path_svg = "%s/svg/" % self.path_remapy
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
         self.path_annotated_pdf = "%s/%s_annotated.pdf" % (self.path, self.uuid)
 
         # Other props
         self.current_page = entry["CurrentPage"]
-        self.current_svg_page = "%s%s.svg" %(self.path_svg, str(self.current_page).zfill(5))
         self.download_url = None
         self.blob_url = None
 
@@ -59,14 +58,18 @@ class Document(Item):
         annotations_exist = os.path.exists(self.path_rm_files)
 
         if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK and annotations_exist:
-            parser.rm_to_svg(self.path_rm_files, self.path_svg, background="white")
+            parser.parse_notebook(
+                self.path, 
+                self.uuid, 
+                self.path_annotated_pdf,
+                path_templates=cfg.get("remarkable.general.templates"))
             return
         
         if self.state == self.STATE_DOCUMENT_LOCAL_PDF:
             if annotations_exist:
-                parser.rm_to_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
+                parser.parse_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
             else:
-                pass # ToDo: rename raw file?
+                shutil.copyfile(self.path_original_pdf, self.path_annotated_pdf)
 
 
     def _download_raw(self, path=None):
@@ -116,7 +119,6 @@ class Document(Item):
 
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
-        Path(self.path_svg).mkdir(parents=True, exist_ok=True)
         with open("%s/metadata.yaml" % self.path_remapy, "w") as out:
             out.write(self.modified_str())
 
