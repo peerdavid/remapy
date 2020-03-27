@@ -65,7 +65,7 @@ class Client(metaclass=Singleton):
             one time code from https://my.remarkable.com/connect/remarkable
         """ 
         # Get device token if not stored local
-        device_token = cfg.get("remarkable.authentication.device_token")
+        device_token = cfg.get("authentication.device_token")
         if device_token == None:
             if onetime_code is None or onetime_code == "":
                 self.publish(self.sign_in_listener, EVENT_ONETIMECODE_NEEDED)
@@ -85,7 +85,7 @@ class Client(metaclass=Singleton):
         # Save tokens to config
         auth = {"device_token": device_token,
                 "user_token": user_token}
-        cfg.save({"remarkable": {"authentication": auth}})
+        cfg.save({"authentication": auth})
 
         # Inform all subscriber
         self.publish(self.sign_in_listener, EVENT_SUCCESS, auth)
@@ -196,7 +196,7 @@ class Client(metaclass=Singleton):
             "user-agent": USER_AGENT,
         }
 
-        user_token = cfg.get("remarkable.authentication.user_token")
+        user_token = cfg.get("authentication.user_token")
         if user_token != None:
             _headers["Authorization"] = f"Bearer {user_token}"
         

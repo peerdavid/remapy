@@ -13,7 +13,7 @@ import api.config as cfg
 
 class Document(Item):
     
-    PATH = ".remapy"
+    PATH = Path.joinpath(Path.home(), ".remapy/cache")
 
     def __init__(self, entry, parent: Collection):
         super(Document, self).__init__(entry, parent)
@@ -62,7 +62,7 @@ class Document(Item):
                 self.path, 
                 self.uuid, 
                 self.path_annotated_pdf,
-                path_templates=cfg.get("remarkable.general.templates"))
+                path_templates=cfg.get("general.templates"))
             return
         
         if self.state == self.STATE_DOCUMENT_LOCAL_PDF:

@@ -5,6 +5,7 @@ import tkinter.ttk as ttk
 
 import api.client
 from api.client import Client
+import api.config as cfg
 
 
 class Settings(object):
@@ -45,11 +46,21 @@ class Settings(object):
         self.entry_onetime_code = tk.Entry(root, textvariable=self.entry_onetime_code_text)
         self.entry_onetime_code.grid(row=3, column=4, sticky="W")        
 
-        self.btn_sign_in = tk.Button(root, text="SIGN IN", command=self.btn_sign_in_click, width=17)
+        self.btn_sign_in = tk.Button(root, text="Sign In", command=self.btn_sign_in_click, width=17)
         self.btn_sign_in.grid(row=4, column=4, sticky="W")
 
-        label = tk.Label(root, text="Zotero", font="Helvetica 14 bold")
+        label = tk.Label(root, text="General", font="Helvetica 14 bold")
         label.grid(row=6, column=2, sticky="W")
+
+        label = tk.Label(root, text="Templates path:")
+        label.grid(row=7, column=2, sticky="W")
+        self.entry_templates_text = tk.StringVar()
+        self.entry_templates_text.set(cfg.get("general.templates", default=""))
+        self.entry_templates = tk.Entry(root, textvariable=self.entry_templates_text)
+        self.entry_templates.grid(row=7, column=4, sticky="W")        
+
+        self.btn_save_ = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
+        self.btn_save_.grid(row=8, column=4, sticky="W")
 
         # Subscribe to sign in event. Outer logic (i.e. main) can try to 
         # sign in automatically...
@@ -84,6 +95,14 @@ class Settings(object):
         else:
             self.label_auth_status.config(text="Sorry, an error occurred.", fg="red")
 
+
     def btn_sign_in_click(self):
         onetime_code = self.entry_onetime_code_text.get()
         self.rm_client.sign_in(onetime_code)
+    
+
+    def btn_save_click(self):
+        general = {
+            "templates": self.entry_templates_text.get()
+        }
+        cfg.save({"general": general})

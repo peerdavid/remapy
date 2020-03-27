@@ -3,6 +3,11 @@ import yaml
 from pathlib import Path
 
 def save(new_config: dict) -> None:
+    """ Updates a complete section!
+    For example if {general:{ ... }} is given, 
+    the complete general section is overwritten.
+    """
+
     path = _get_path()
 
     # Update keys and keep all old keys
@@ -40,12 +45,12 @@ def exists(config_path) -> bool:
     return True
 
 
-def get(config_path):
+def get(config_path, default=None):
     config = load()
     levels = config_path.split(".")
     for level in levels:
         if not level in config:
-            return None
+            return default
         
         config = config[level]
 
@@ -55,5 +60,5 @@ def get(config_path):
 #
 # HELPER
 #
-def _get_path() -> Path:
-    return Path.joinpath(Path.home(), ".remapy")
+def _get_path():
+    return Path.joinpath(Path.home(), ".remapy/config")
