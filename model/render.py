@@ -224,48 +224,37 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                     xpos = (xpos*image_width) / DEFAULT_IMAGE_WIDTH
                     ypos = (1/ratio)*(ypos*image_height) / DEFAULT_IMAGE_HEIGHT
 
-                points.append([xpos, image_height-ypos])
+                points.extend([xpos, image_height-ypos])
 
             if is_eraser_area:
                 continue
             
-            # Heuristic to smoothen artefacts of PolyLine especially 
-            # for the highlighter...
-            flatten_points = []
-            for i in range(len(points)-1):
-                x2 = (points[i+1][0] - points[i][0])**2
-                y2 = (points[i+1][1] - points[i][1])**2
-                d = math.sqrt(x2 + y2)
-
-                if d > 0.01:
-                    flatten_points.extend(points[i])
-
-            # Draw polyline from segments
+            # Draw polyline from segments for everything but not highlighter, 
+            # because of artefact
             drawing = Drawing(image_width, image_height)
-            opacity = 0.2 if is_highlighter else 1.0
+            opacity = 0.15 if is_highlighter else 1.0
 
-            if len(flatten_points) > 0:
-                
-                # This is looks really nice but rendering is too slow.
-                # The polyline + smoothening heuristic is a better compromise.
-                # for i in range(0, len(flatten_points)-4, 2):
-                #     x1 = flatten_points[i]
-                #     y1 = flatten_points[i+1]
-                #     x2 = flatten_points[i+2]
-                #     y2 = flatten_points[i+3]
-                #     line = Line(x1, y1, x2, y2, 
-                #         strokeWidth=width, 
-                #         strokeColor=stroke_color[color],
-                #         strokeOpacity=opacity)  
-                #     drawing.add(line)
-
-
+            if not is_highlighter:
                 poly_line = PolyLine(
-                    flatten_points, 
+                    points, 
                     strokeWidth=width, 
                     strokeColor=stroke_color[color],
                     strokeOpacity=opacity)
                 drawing.add(poly_line)
+            else:
+            # This is looks really nice but rendering is slow.
+            # Therefore we use it only for highlighter
+                for i in range(0, len(points)-2, 2):
+                    x1 = points[i]
+                    y1 = points[i+1]
+                    x2 = points[i+2]
+                    y2 = points[i+3]
+                    line = Line(x1, y1, x2, y2, 
+                        strokeWidth=width, 
+                        strokeColor=stroke_color[color],
+                        strokeOpacity=opacity)  
+                    drawing.add(line)
+
             renderPDF.draw(drawing, can, 0, 0)
     can.save()
     packet.seek(0)
