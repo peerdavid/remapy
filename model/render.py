@@ -141,7 +141,6 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
         data = f.read()
     offset = 0
 
-    start = time.time()
     # Is this a reMarkable .lines file?
     expected_header_v3=b'reMarkable .lines file, version=3          '
     expected_header_v5=b'reMarkable .lines file, version=5          '
@@ -236,8 +235,9 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
             for i in range(len(points)-1):
                 x2 = (points[i+1][0] - points[i][0])**2
                 y2 = (points[i+1][1] - points[i][1])**2
+                d = math.sqrt(x2 + y2)
 
-                if math.sqrt(x2 + y2) > 0.6:
+                if d > 0.01:
                     flatten_points.extend(points[i])
 
             # Draw polyline from segments
@@ -267,7 +267,6 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                     strokeOpacity=opacity)
                 drawing.add(poly_line)
             renderPDF.draw(drawing, can, 0, 0)
-    print("Render time: " + str(time.time() - start))
     can.save()
     packet.seek(0)
     return packet

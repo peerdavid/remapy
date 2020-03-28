@@ -25,6 +25,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Download epub (with annotations as pdf)
  - [x] Upload pdf file
  - [x] Upload epub file
+ - [x] Show download progress bar
  - [ ] Better rendering for highlighter
  - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Create new folder
