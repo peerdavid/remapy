@@ -1,9 +1,12 @@
 # RemaPy Explorer
 
-An open source explorer for your remarkable tablet to 
-show, upload or delete files via the remarkable cloud. Although the RemaPy Explorer 
-is only tested and evaluated on Linux, it should theoretically also 
-work on Windows and / or Mac.
+RemaPy is an open source file explorer for your reMarkable tablet.  You can upload documents via copy and paste from your local file explorer, open notebooks and annotated pdfs and delete documents or collections. Feel free to write an issue if you find a bug or if you have an idea for new features. A list of some todo's and future ideas that I want to implement is shown below, but every help is welcome ;)
+
+*WARNING:* This project is not affiliated with reMarkable AS, Oslo and you use this tool on your own risk.
+
+<img src="doc/explorer.png" />
+
+
 
 # ToDo's
  - [x] Authentication
