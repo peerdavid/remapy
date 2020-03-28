@@ -2,13 +2,15 @@ import sys
 import struct
 import os.path
 import argparse
+import math
 import io
+import time
 from pdfrw import PdfReader, PdfWriter, PageMerge, IndirectPdfDict, PdfDict
 from reportlab.graphics import renderPDF
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
-from reportlab.graphics.shapes import PolyLine, Drawing
+from reportlab.graphics.shapes import PolyLine, Drawing, Line
 
 
 # Size
@@ -25,7 +27,7 @@ stroke_color = {
 }
 
 
-def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
+def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     
     base_pdf = PdfReader(open(path_original_pdf, "rb"))
 
@@ -43,7 +45,7 @@ def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
             annotations_pdf.append(_blank_page())
             continue
 
-        packet = _parse_rm_file(rm_file, image_width=image_width, image_height=image_height)
+        packet = _render_rm_file(rm_file, image_width=image_width, image_height=image_height)
         annotated_page = PdfReader(packet)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(_blank_page())
@@ -58,7 +60,7 @@ def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     writer.write(path_annotated_pdf, base_pdf)
 
 
-def parse_notebook(path, id, path_annotated_pdf, path_templates=None):
+def notebook(path, id, path_annotated_pdf, path_templates=None):
     
     rm_files_path = "%s/%s" % (path, id)
     annotations_pdf = []
@@ -67,7 +69,7 @@ def parse_notebook(path, id, path_annotated_pdf, path_templates=None):
             continue
         
         rm_file = "%s/%s" % (rm_files_path, file_name)
-        packet = _parse_rm_file(rm_file)
+        packet = _render_rm_file(rm_file)
         annotations_pdf.append(PdfReader(packet))
     
     # Write empty notebook notes containing blank pages or templates
@@ -129,7 +131,8 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     return blank
 
 
-def _parse_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAULT_IMAGE_HEIGHT):
+def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, 
+        image_height=DEFAULT_IMAGE_HEIGHT):
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     ratio = (image_height/image_width) / (DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH)
@@ -138,6 +141,7 @@ def _parse_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAUL
         data = f.read()
     offset = 0
 
+    start = time.time()
     # Is this a reMarkable .lines file?
     expected_header_v3=b'reMarkable .lines file, version=3          '
     expected_header_v5=b'reMarkable .lines file, version=5          '
@@ -221,23 +225,49 @@ def _parse_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, image_height=DEFAUL
                     xpos = (xpos*image_width) / DEFAULT_IMAGE_WIDTH
                     ypos = (1/ratio)*(ypos*image_height) / DEFAULT_IMAGE_HEIGHT
 
-                points.extend([xpos, image_height-ypos])
+                points.append([xpos, image_height-ypos])
 
             if is_eraser_area:
                 continue
             
+            # Heuristic to smoothen artefacts of PolyLine especially 
+            # for the highlighter...
+            flatten_points = []
+            for i in range(len(points)-1):
+                x2 = (points[i+1][0] - points[i][0])**2
+                y2 = (points[i+1][1] - points[i][1])**2
+
+                if math.sqrt(x2 + y2) > 0.6:
+                    flatten_points.extend(points[i])
+
             # Draw polyline from segments
             drawing = Drawing(image_width, image_height)
             opacity = 0.2 if is_highlighter else 1.0
-            poly_line = PolyLine(
-                points, 
-                strokeWidth=width, 
-                strokeColor=stroke_color[color],
-                strokeOpacity=opacity)
 
-            drawing.add(poly_line)
+            if len(flatten_points) > 0:
+                
+                # This is looks really nice but rendering is too slow.
+                # The polyline + smoothening heuristic is a better compromise.
+                # for i in range(0, len(flatten_points)-4, 2):
+                #     x1 = flatten_points[i]
+                #     y1 = flatten_points[i+1]
+                #     x2 = flatten_points[i+2]
+                #     y2 = flatten_points[i+3]
+                #     line = Line(x1, y1, x2, y2, 
+                #         strokeWidth=width, 
+                #         strokeColor=stroke_color[color],
+                #         strokeOpacity=opacity)  
+                #     drawing.add(line)
+
+
+                poly_line = PolyLine(
+                    flatten_points, 
+                    strokeWidth=width, 
+                    strokeColor=stroke_color[color],
+                    strokeOpacity=opacity)
+                drawing.add(poly_line)
             renderPDF.draw(drawing, can, 0, 0)
-    
+    print("Render time: " + str(time.time() - start))
     can.save()
     packet.seek(0)
     return packet

@@ -25,6 +25,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Download epub (with annotations as pdf)
  - [x] Upload pdf file
  - [x] Upload epub file
+ - [ ] Better rendering for highlighter
  - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Create new folder
  - [ ] Create new notebook
@@ -39,10 +40,10 @@ A list of some todo's and future ideas that I want to implement is given below.
 
 
 # Future ideas
+ - [ ] Zotero sync
  - [ ] Create full (or partially folder) backups of raw data
  - [ ] Backup viewer
  - [ ] Restore a backup into the cloud 
- - [ ] Select a collection to sync with Zotero
  - [ ] Search also for handwritten text
  - [ ] SSH access: Update background image, live view
  - [ ] Decrypt encrypted pdf's to be compatible with the RM

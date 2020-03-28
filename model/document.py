@@ -11,7 +11,7 @@ import json
 
 from api.remarkable_client import RemarkableClient
 from utils.helper import Singleton
-import model.parser as parser
+import model.render as render
 import model.item
 from model.item import Item
 from model.collection import Collection
@@ -93,7 +93,7 @@ class Document(Item):
         annotations_exist = os.path.exists(self.path_rm_files)
 
         if self.type == TYPE_NOTEBOOK and annotations_exist:
-            parser.parse_notebook(
+            render.notebook(
                 self.path, 
                 self.id, 
                 self.path_annotated_pdf,
@@ -103,7 +103,7 @@ class Document(Item):
             if annotations_exist:
                 # Also for epubs a pdf file exists which we can annotate :)
                 # We will then show the pdf rather than the epub...
-                parser.parse_pdf(
+                render.pdf(
                     self.path_rm_files, 
                     self.path_original_pdf,
                     self.path_annotated_pdf)
