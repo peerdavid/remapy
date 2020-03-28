@@ -4,7 +4,7 @@ RemaPy is an open source file explorer for your reMarkable tablet.  You can uplo
 
 *WARNING:* This project is not affiliated with reMarkable AS, Oslo and you use this tool on your own risk.
 
-<img src="doc/explorer.png" />
+<img src="doc/explorer.png" alt="Image" />
 
 
 
