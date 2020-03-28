@@ -2,6 +2,10 @@
 import yaml
 from pathlib import Path
 
+
+PATH = Path.joinpath(Path.home(), ".remapy/data")
+
+
 def save(new_config: dict) -> None:
     """ Updates a complete section!
     For example if {general:{ ... }} is given, 

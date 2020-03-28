@@ -16,20 +16,34 @@ from model.item import Item
 from model.collection import Collection
 import utils.config as cfg
 
+
+# Document type states
+TYPE_UNKNOWN = 0       # If it is only online we don't know the state
+TYPE_NOTEBOOK = 1
+TYPE_PDF = 2
+TYPE_EBUB = 3
+
+# Synced with cloud states
+STATE_NOT_SYNCED = 0
+STATE_SYNCING = 1
+STATE_SYNCED = 2
+STATE_OUT_OF_SYNC = 3
+
+
 class Document(Item):
-    
-    PATH = Path.joinpath(Path.home(), ".remapy/data")
+
 
     def __init__(self, entry, parent: Collection):
         super(Document, self).__init__(entry, parent)
         
         # Remarkable tablet paths
-        self.path = "%s/%s" % (self.PATH, self.id)
+        self.path = "%s/%s" % (cfg.PATH, self.id)
         self.path_zip = "%s.zip" % self.path
         self.path_rm_files = "%s/%s" % (self.path, self.id)
 
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
+        self.path_metadata_local = "%s/metadata.local" % self.path_remapy
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
         self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
         self.path_original_ebub = "%s/%s.ebub" % (self.path, self.id)
@@ -53,7 +67,8 @@ class Document(Item):
         ok = self.rm_client.delete_item(self.id, self.version)
 
         if ok:
-            self._update_state(state=self.STATE_DELETED)
+            self.state = STATE_DELETED
+            self._update_state_listener()
         return ok
 
 
@@ -63,25 +78,25 @@ class Document(Item):
 
     def sync(self, force=False):
 
-        must_sync = (self.state == self.STATE_DOCUMENT_ONLINE) or \
-                    (self.state == self.STATE_DOCUMENT_OUT_OF_SYNC)
-        
-        if not force and not must_sync:
+        if not force and self.state == STATE_SYNCED:
             return 
-        
+        self.state = STATE_SYNCING
+        self._update_state_listener()
+
         self._download_raw()
         self._write_remapy_metadata()
+        self._update_state(inform_listener=False)
 
         annotations_exist = os.path.exists(self.path_rm_files)
 
-        if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK and annotations_exist:
+        if self.type == TYPE_NOTEBOOK and annotations_exist:
             parser.parse_notebook(
                 self.path, 
                 self.id, 
                 self.path_annotated_pdf,
                 path_templates=cfg.get("general.templates"))
         
-        elif self.state == self.STATE_DOCUMENT_LOCAL_PDF:
+        elif self.type == TYPE_PDF:
             if annotations_exist:
                 parser.parse_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
             else:
@@ -91,7 +106,6 @@ class Document(Item):
 
 
     def _download_raw(self, path=None):
-        self._update_state(state=Item.STATE_DOCUMENT_DOWNLOADING)
         path = self.path if path == None else path
 
         if os.path.exists(path):
@@ -114,35 +128,42 @@ class Document(Item):
     
 
     def update_state(self):
-        self._update_state(inform_listener=True, state=None)
+        self._update_state(inform_listener=True)
 
 
-    def _update_state(self, inform_listener=True, state=None):
+    def _update_state(self, inform_listener=True):
         
-        self.state = self._evaluate_current_state() if state is None else state
+        # Not synced
+        if not os.path.exists(self.path) or not os.path.exists(self.path_metadata_local):
+            self.type = TYPE_UNKNOWN
+            self.state = STATE_NOT_SYNCED
+        
+        # If synced get file type
+        else:
+            with open(self.path_metadata_local, encoding='utf-8') as f:
+                local_metadata = json.loads(f.read())
 
+            self.state = STATE_SYNCED if local_metadata["Version"] == self.version else STATE_OUT_OF_SYNC
+            is_pdf = os.path.exists(self.path_original_pdf)
+            is_ebub = os.path.exists(self.path_original_ebub)
+
+            if is_pdf:
+                self.type = TYPE_PDF
+            elif is_ebub:
+                self.type = TYPE_EBUB
+            else:
+                self.type = TYPE_NOTEBOOK
+
+        # Inform listener if needed
         if not inform_listener:
             return 
 
         self._update_state_listener()
 
 
-    def _evaluate_current_state(self):
-        if not os.path.exists(self.path):
-            return Item.STATE_DOCUMENT_ONLINE
-
-        synced = True
-
-        if os.path.exists(self.path_original_pdf):
-            return Item.STATE_DOCUMENT_LOCAL_PDF
-
-        else:
-            return Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
-
-
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
-        with open("%s/metadata.local" % self.path_remapy, "w") as out:
+        with open(self.path_metadata_local, "w") as out:
             out.write(
                 json.dumps({
                     "ID": self.id,

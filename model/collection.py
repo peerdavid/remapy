@@ -1,18 +1,21 @@
 import numpy as np
+import model.item
 from model.item import Item
+
+
+STATE_COLLECTION = 100
 
 class Collection(Item):
 
     def __init__(self, entry, parent):
         super(Collection, self).__init__(entry, parent)
-        self.state = Item.STATE_COLLECTION
+        self.state = STATE_COLLECTION
         pass
 
 
     def add_child(self, child: Item):
         self.children.append(child)
         child.add_state_listener(self.listen_child_state_change)
-    
 
 
     def delete(self):
@@ -24,7 +27,7 @@ class Collection(Item):
 
         ok = self.rm_client.delete_item(self.id, self.version)
         if ok:
-            self._update_state(state=self.STATE_DELETED)
+            self._update_state(state=STATE_DELETED)
         return ok
 
 
@@ -61,5 +64,5 @@ class Collection(Item):
         return False
     
     def listen_child_state_change(self, item):
-        if item.state == Item.STATE_DELETED:
+        if item.state == model.item.STATE_DELETED:
             self.children.remove(item)

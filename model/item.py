@@ -2,17 +2,11 @@ from datetime import datetime
 from api.remarkable_client import RemarkableClient
 import time
 
-class Item(object):
 
-    STATE_UNKNOWN = 0
-    STATE_COLLECTION = 1
-    STATE_DOCUMENT_ONLINE = 2
-    STATE_DOCUMENT_LOCAL_NOTEBOOK = 3
-    STATE_DOCUMENT_LOCAL_PDF = 4
-    STATE_DOCUMENT_LOCAL_EBUB = 5
-    STATE_DOCUMENT_OUT_OF_SYNC = 6
-    STATE_DOCUMENT_DOWNLOADING = 7
-    STATE_DELETED = 99
+STATE_DELETED = 170591
+
+
+class Item(object):
 
     def __init__(self, entry, parent=None):
         self.children = []
@@ -30,7 +24,6 @@ class Item(object):
         self.name = entry["VissibleName"]
         self.is_document = entry["Type"] == "DocumentType"
         self.success = entry["Success"]
-        self.state = self.STATE_UNKNOWN
         self.current_page = "-"
         self.state_listener = []
 

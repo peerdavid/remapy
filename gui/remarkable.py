@@ -14,8 +14,9 @@ import api.remarkable_client
 from api.remarkable_client import RemarkableClient
 from model.item_factory import ItemFactory
 from model.item import Item
+import model.document
 from model.document import Document, create_document_zip
-
+import utils.config
 
 class Remarkable(object):
     def __init__(self, root, window, font_size=14, rowheight=14):
@@ -63,15 +64,12 @@ class Remarkable(object):
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        self.icons={}
-        self.icons[Item.STATE_UNKNOWN] = self._create_tree_icon("./gui/icons/unknown.png", rowheight)
-        self.icons[Item.STATE_COLLECTION] = self._create_tree_icon("./gui/icons/collection.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_ONLINE] = self._create_tree_icon("./gui/icons/document_online.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_NOTEBOOK] = self._create_tree_icon("./gui/icons/document_local_notebook.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_PDF] = self._create_tree_icon("./gui/icons/document_local_pdf.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_EBUB] = self._create_tree_icon("./gui/icons/document_local_ebub.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_OUT_OF_SYNC] = self._create_tree_icon("./gui/icons/document_local_out_of_sync.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_DOWNLOADING] = self._create_tree_icon("./gui/icons/document_downloading.png", rowheight)
+        self.icon_cloud = self._create_tree_icon("./gui/icons/cloud.png", rowheight)
+        self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
+        self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
+        self.icon_ebub = self._create_tree_icon("./gui/icons/ebub.png", rowheight)
+        self.icon_pdf = self._create_tree_icon("./gui/icons/pdf.png", rowheight)
+        self.icon_syncing = self._create_tree_icon("./gui/icons/syncing.png", rowheight)
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
@@ -211,14 +209,35 @@ class Remarkable(object):
     
 
     def _update_tree_item(self, item):
-        if item.state == Item.STATE_DELETED:
+        if item.state == model.item.STATE_DELETED:
             self.tree.delete(item.id)
         else:
+            icon = self._get_icon(item)
             self.tree.item(
                 item.id, 
-                image=self.icons[item.state], 
+                image=icon, 
                 text=" " + item.name,
                 values=(item.local_modified_time(), item.current_page))
+
+    def _get_icon(self, item):
+        if not item.is_document:
+            return self.icon_collection
+        
+
+        if item.state == model.document.STATE_NOT_SYNCED:
+            return self.icon_cloud
+        
+        elif item.state == model.document.STATE_SYNCING:
+            return self.icon_syncing
+
+        #if item.state == model.document.STATE_SYNCED:
+        #if item.state == model.document.STATE_OUT_OF_SYNC:
+        if item.type == model.document.TYPE_PDF:
+            return self.icon_pdf
+        elif item.type == model.document.TYPE_EBUB:
+            return self.icon_ebub
+        else: 
+            return self.icon_notebook
 
 
     def _sync_item(self, item, force):   
@@ -243,8 +262,8 @@ class Remarkable(object):
 
     def btn_delete_local_all_click(self):
         # Clean everything, also if some (old) things exist
-        shutil.rmtree(Document.PATH, ignore_errors=True)
-        Path(Document.PATH).mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(utils.config.PATH, ignore_errors=True)
+        Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
 
         self.item_factory.depth_search(
             fun=lambda item: item.update_state()
@@ -261,11 +280,7 @@ class Remarkable(object):
                 return
 
             self._sync_item(item, False)
-
-            if item.state == Item.STATE_DOCUMENT_LOCAL_NOTEBOOK:
-                subprocess.call(('xdg-open', item.path_annotated_pdf))
-            elif item.state == Item.STATE_DOCUMENT_LOCAL_PDF:
-                subprocess.call(('xdg-open', item.path_annotated_pdf))
+            subprocess.call(('xdg-open', item.path_annotated_pdf))
 
 
         def open_all_ids():

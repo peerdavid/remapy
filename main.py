@@ -9,10 +9,9 @@ from gui.remarkable import Remarkable
 from gui.about import About
 from gui.settings import Settings
 
-import api.remarkable_client as client
+import api.remarkable_client
 from api.remarkable_client import RemarkableClient
-from model.item_factory import ItemFactory
-from model.document import Document
+import utils.config
 
 class Main(object):
 
@@ -73,7 +72,7 @@ class Main(object):
     # EVENT HANDLER
     #
     def sign_in_event_handler(self, event, data):
-        if event == client.EVENT_SUCCESS:
+        if event == api.remarkable_client.EVENT_SUCCESS:
             self.notebook.tab(0, state="normal")
         else:
             self.notebook.tab(0, state="disabled")
@@ -84,7 +83,7 @@ class Main(object):
 #
 def main():
     window = tk.Tk()
-    Path(Document.PATH).mkdir(parents=True, exist_ok=True)
+    Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
     app = Main(window)
     window.mainloop()
 
