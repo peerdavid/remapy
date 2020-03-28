@@ -14,7 +14,7 @@ RemaPy is an open source file explorer for your reMarkable tablet.  You can uplo
  - [x] Delete file
  - [x] Open collection (all files of collection with one click)
  - [x] Async backend to keep fronted reactive
- - [ ] Check and show if files are our of sync
+ - [x] Check and show if files are our of sync
  - [x] Download file (zip)
  - [x] Download notebook as pdf
  - [x] Download annotated pdf
