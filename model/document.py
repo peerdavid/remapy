@@ -12,6 +12,7 @@ import json
 from api.remarkable_client import RemarkableClient
 from utils.helper import Singleton
 import model.parser as parser
+import model.item
 from model.item import Item
 from model.collection import Collection
 import utils.config as cfg
@@ -67,7 +68,7 @@ class Document(Item):
         ok = self.rm_client.delete_item(self.id, self.version)
 
         if ok:
-            self.state = STATE_DELETED
+            self.state = model.item.STATE_DELETED
             self._update_state_listener()
         return ok
 

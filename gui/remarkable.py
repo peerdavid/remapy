@@ -65,11 +65,16 @@ class Remarkable(object):
         self.tree.tag_configure('move', background='#FF9800')    
         
         self.icon_cloud = self._create_tree_icon("./gui/icons/cloud.png", rowheight)
+        self.icon_syncing = self._create_tree_icon("./gui/icons/syncing.png", rowheight)
         self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
         self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
         self.icon_ebub = self._create_tree_icon("./gui/icons/ebub.png", rowheight)
         self.icon_pdf = self._create_tree_icon("./gui/icons/pdf.png", rowheight)
-        self.icon_syncing = self._create_tree_icon("./gui/icons/syncing.png", rowheight)
+        self.icon_notebook_out_of_sync = self._create_tree_icon("./gui/icons/notebook_out_of_sync.png", rowheight)
+        self.icon_ebub_out_of_sync = self._create_tree_icon("./gui/icons/ebub_out_of_sync.png", rowheight)
+        self.icon_pdf_out_of_sync = self._create_tree_icon("./gui/icons/pdf_out_of_sync.png", rowheight)
+        self.icon_weird = self._create_tree_icon("./gui/icons/weird.png", rowheight)
+        
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
@@ -230,14 +235,23 @@ class Remarkable(object):
         elif item.state == model.document.STATE_SYNCING:
             return self.icon_syncing
 
-        #if item.state == model.document.STATE_SYNCED:
-        #if item.state == model.document.STATE_OUT_OF_SYNC:
-        if item.type == model.document.TYPE_PDF:
-            return self.icon_pdf
-        elif item.type == model.document.TYPE_EBUB:
-            return self.icon_ebub
-        else: 
-            return self.icon_notebook
+        if item.state == model.document.STATE_SYNCED:
+            if item.type == model.document.TYPE_PDF:
+                return self.icon_pdf
+            elif item.type == model.document.TYPE_EBUB:
+                return self.icon_ebub
+            else: 
+                return self.icon_notebook
+
+        if item.state == model.document.STATE_OUT_OF_SYNC:
+            if item.type == model.document.TYPE_PDF:
+                return self.icon_pdf_out_of_sync
+            elif item.type == model.document.TYPE_EBUB:
+                return self.icon_ebub_out_of_sync
+            else: 
+                return self.icon_notebook_out_of_sync
+        
+        return self.icon_weird
 
 
     def _sync_item(self, item, force):   
