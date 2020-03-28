@@ -10,17 +10,17 @@ class ItemFactory(metaclass=Singleton):
         self.root = None
 
 
-    def get_item(self, uuid, item=None):
+    def get_item(self, id, item=None):
         if self.root is None:
             self.get_root()
         
         item = self.root if item is None else item
 
-        if item.uuid == uuid:
+        if item.id == id:
             return item
         
         for child in item.children:
-            found = self.get_item(uuid, child)
+            found = self.get_item(id, child)
             if found != None:
                 return found
         
@@ -70,22 +70,22 @@ class ItemFactory(metaclass=Singleton):
 
     def _create_item_and_parents(self, i, entries, items, lookup_table):
         entry = entries[i]
-        parent_uuid = entry["Parent"]
+        parent_id = entry["Parent"]
 
         if i < 0 or len(entries) <= 0 or entry["ID"] in items:
             return
 
-        if not parent_uuid in items:
-            if not parent_uuid in lookup_table:
+        if not parent_id in items:
+            if not parent_id in lookup_table:
                 print("(Warning) No parent for item %s" % entry["VissibleName"])
-                parent_uuid = ""
+                parent_id = ""
             else:
-                parent_id = lookup_table[parent_uuid]
-                self._create_item_and_parents(parent_id, entries, items, lookup_table)
+                parent_pos = lookup_table[parent_id]
+                self._create_item_and_parents(parent_pos, entries, items, lookup_table)
 
-        parent = items[parent_uuid]
+        parent = items[parent_id]
         new_object = self.create_item(entry, parent)
-        items[new_object.uuid] = new_object
+        items[new_object.id] = new_object
             
 
     def create_item(self, entry, parent):

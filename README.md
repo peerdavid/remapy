@@ -29,7 +29,7 @@ work on Windows and / or Mac.
  - [ ] Logging
  - [ ] Test offline
  - [ ] Filter / Search documents
- - [ ] Delete local cache if doc is not available on remarkable 
+ - [ ] Delete local if doc is not available on remarkable 
  - [ ] Create installer
 
 

@@ -18,20 +18,21 @@ import utils.config as cfg
 
 class Document(Item):
     
-    PATH = Path.joinpath(Path.home(), ".remapy/cache")
+    PATH = Path.joinpath(Path.home(), ".remapy/data")
 
     def __init__(self, entry, parent: Collection):
         super(Document, self).__init__(entry, parent)
         
         # Remarkable tablet paths
-        self.path = "%s/%s" % (self.PATH, self.uuid)
+        self.path = "%s/%s" % (self.PATH, self.id)
         self.path_zip = "%s.zip" % self.path
-        self.path_rm_files = "%s/%s" % (self.path, self.uuid)
+        self.path_rm_files = "%s/%s" % (self.path, self.id)
 
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
-        self.path_original_pdf = "%s/%s.pdf" % (self.path, self.uuid)
-        self.path_annotated_pdf = "%s/%s.pdf" % (self.path, self.name)
+        self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
+        self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
+        self.path_original_ebub = "%s/%s.ebub" % (self.path, self.id)
 
         # Other props
         self.current_page = entry["CurrentPage"]
@@ -42,14 +43,14 @@ class Document(Item):
         self._update_state()
 
 
-    def clear_cache(self):
+    def delete_local(self):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         self._update_state()
     
 
     def delete(self):
-        ok = self.rm_client.delete_item(self.uuid, self.version)
+        ok = self.rm_client.delete_item(self.id, self.version)
 
         if ok:
             self._update_state(state=self.STATE_DELETED)
@@ -76,7 +77,7 @@ class Document(Item):
         if self.state == self.STATE_DOCUMENT_LOCAL_NOTEBOOK and annotations_exist:
             parser.parse_notebook(
                 self.path, 
-                self.uuid, 
+                self.id, 
                 self.path_annotated_pdf,
                 path_templates=cfg.get("general.templates"))
         
@@ -97,7 +98,7 @@ class Document(Item):
             shutil.rmtree(path)
 
         if self.blob_url == None:
-            self.blob_url = self.rm_client.get_item(self.uuid)["BlobURLGet"]
+            self.blob_url = self.rm_client.get_item(self.id)["BlobURLGet"]
 
         raw_file = self.rm_client.get_raw_file(self.blob_url)
         with open(self.path_zip, "wb") as out:
@@ -117,33 +118,42 @@ class Document(Item):
 
 
     def _update_state(self, inform_listener=True, state=None):
-
-        if state is None:
-            if not os.path.exists(self.path):
-                self.state = Item.STATE_DOCUMENT_ONLINE
-            
-            elif os.path.exists(self.path_original_pdf):
-                self.state = Item.STATE_DOCUMENT_LOCAL_PDF
-
-            else:
-                self.state = Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
-        else:
-            self.state = state
         
+        self.state = self._evaluate_current_state() if state is None else state
+
         if not inform_listener:
             return 
 
         self._update_state_listener()
 
 
+    def _evaluate_current_state(self):
+        if not os.path.exists(self.path):
+            return Item.STATE_DOCUMENT_ONLINE
+
+        synced = True
+
+        if os.path.exists(self.path_original_pdf):
+            return Item.STATE_DOCUMENT_LOCAL_PDF
+
+        else:
+            return Item.STATE_DOCUMENT_LOCAL_NOTEBOOK
+
+
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
-        with open("%s/metadata.yaml" % self.path_remapy, "w") as out:
-            out.write(self.local_modified_time())
+        with open("%s/metadata.local" % self.path_remapy, "w") as out:
+            out.write(
+                json.dumps({
+                    "ID": self.id,
+                    "ModifiedClient": str(self.modified_client),
+                    "Version": self.version 
+                }, indent=4)
+            )
 
         
 def create_document_zip( file_path, file_type="pdf", parent_id=""):
-    ID = str(uuid.uuid4())
+    id = str(uuid.uuid4())
 
     # .content file
     content_file = json.dumps({
@@ -170,7 +180,7 @@ def create_document_zip( file_path, file_type="pdf", parent_id=""):
         #"synced": True,
         "Type": "DocumentType",
         "Version": 1,
-        "ID": ID,
+        "ID": id,
         "Parent": parent_id,
         "ModifiedClient": timestamp
     }
@@ -178,12 +188,12 @@ def create_document_zip( file_path, file_type="pdf", parent_id=""):
     mf = BytesIO()
     mf.seek(0)
     with ZipFile(mf, mode='w', compression=zipfile.ZIP_DEFLATED ) as zf:
-        zf.write(file_path, arcname="%s.%s" % (ID, file_type))
-        zf.writestr("%s.content" % ID, content_file)
-        zf.writestr("%s.pagedata" % ID, "")
+        zf.write(file_path, arcname="%s.%s" % (id, file_type))
+        zf.writestr("%s.content" % id, content_file)
+        zf.writestr("%s.pagedata" % id, "")
 
     # with open("test.zip", "wb") as f:
     #     f.write(mf.getvalue())
     mf.seek(0)
-    return ID, metadata, mf
+    return id, metadata, mf
 

@@ -85,7 +85,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Cut')
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Sync local', command=self.btn_download_async_click)
-        self.context_menu.add_command(label='Delete local', command=self.btn_clear_cache_click)
+        self.context_menu.add_command(label='Delete local', command=self.btn_delete_local_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -96,7 +96,7 @@ class Remarkable(object):
         btn = tk.Button(self.lower_frame, text="Sync local")
         btn.pack(side = tk.LEFT)
 
-        btn = tk.Button(self.lower_frame, text="Delete local", command=self.btn_clear_all_cache_click)
+        btn = tk.Button(self.lower_frame, text="Delete local", command=self.btn_delete_local_all_click)
         btn.pack(side = tk.LEFT)
         
         self.rm_client.listen_sign_in(self)
@@ -114,9 +114,9 @@ class Remarkable(object):
         if not is_root:
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
-                item.parent.uuid, 
+                item.parent.id, 
                 pos, 
-                item.uuid)
+                item.id)
             self._update_tree_item(item)
 
             item.add_state_listener(self._update_tree_item)    
@@ -139,9 +139,9 @@ class Remarkable(object):
     # EVENT HANDLER
     #
     def tree_right_click(self, event):
-        selected_uuids = self.tree.selection()
-        if selected_uuids:
-            items = [self.item_factory.get_item(uuid) for uuid in selected_uuids]
+        selected_ids = self.tree.selection()
+        if selected_ids:
+            items = [self.item_factory.get_item(id) for id in selected_ids]
             for item in items:
                 for possile_child in items:
                     if not item.is_parent_of(possile_child):
@@ -164,8 +164,8 @@ class Remarkable(object):
         self.btn_delete_async_click()
 
     def btn_delete_async_click(self):
-        selected_uuids = self.tree.selection()
-        items = [self.item_factory.get_item(uuid) for uuid in selected_uuids]
+        selected_ids = self.tree.selection()
+        items = [self.item_factory.get_item(id) for id in selected_ids]
         
         count = [0, 0]
         for item in items:
@@ -189,33 +189,33 @@ class Remarkable(object):
             
     
 
-    def btn_clear_cache_click(self):
-        selected_uuids = self.tree.selection()
-        for uuid in selected_uuids:
+    def btn_delete_local_click(self):
+        selected_ids = self.tree.selection()
+        for id in selected_ids:
             self.item_factory.depth_search(
-                fun = lambda item: item.clear_cache(),
-                item = self.item_factory.get_item(uuid)
+                fun = lambda item: item.delete_local(),
+                item = self.item_factory.get_item(id)
         )
 
 
     def btn_download_async_click(self):
-        selected_uuids = self.tree.selection()
+        selected_ids = self.tree.selection()
 
         def run():
-            for uuid in selected_uuids:
+            for id in selected_ids:
                 self.item_factory.depth_search(
                     fun = lambda i: self._sync_item(i, True),
-                    item = self.item_factory.get_item(uuid)
+                    item = self.item_factory.get_item(id)
                 )
         threading.Thread(target=run).start()
     
 
     def _update_tree_item(self, item):
         if item.state == Item.STATE_DELETED:
-            self.tree.delete(item.uuid)
+            self.tree.delete(item.id)
         else:
             self.tree.item(
-                item.uuid, 
+                item.id, 
                 image=self.icons[item.state], 
                 text=" " + item.name,
                 values=(item.local_modified_time(), item.current_page))
@@ -226,8 +226,8 @@ class Remarkable(object):
 
 
     def tree_double_click(self, event):
-        selected_uuids = self.tree.selection()
-        item = self.item_factory.get_item(selected_uuids[0])
+        selected_ids = self.tree.selection()
+        item = self.item_factory.get_item(selected_ids[0])
         
         if item.is_document:
             self._open_async()
@@ -241,7 +241,7 @@ class Remarkable(object):
         self._open_async()
 
 
-    def btn_clear_all_cache_click(self):
+    def btn_delete_local_all_click(self):
         # Clean everything, also if some (old) things exist
         shutil.rmtree(Document.PATH, ignore_errors=True)
         Path(Document.PATH).mkdir(parents=True, exist_ok=True)
@@ -252,10 +252,10 @@ class Remarkable(object):
 
 
     def _open_async(self):
-        selected_uuids = self.tree.selection()
-        def open_uuid(item):
+        selected_ids = self.tree.selection()
+        def open_id(item):
             for child in item.children:
-                open_uuid(child)
+                open_id(child)
             
             if not item.is_document:
                 return
@@ -268,12 +268,12 @@ class Remarkable(object):
                 subprocess.call(('xdg-open', item.path_annotated_pdf))
 
 
-        def open_all_uuids():
-            for uuid in selected_uuids:
-                item = self.item_factory.get_item(uuid)
-                open_uuid(item)
+        def open_all_ids():
+            for id in selected_ids:
+                item = self.item_factory.get_item(id)
+                open_id(item)
 
-        threading.Thread(target=open_all_uuids).start()
+        threading.Thread(target=open_all_ids).start()
         
 
     #
@@ -283,15 +283,15 @@ class Remarkable(object):
         self.btn_paste_async_click()
 
     def btn_paste_async_click(self):
-        selected_uuids = self.tree.selection()
+        selected_ids = self.tree.selection()
 
-        if len(selected_uuids) > 1:
+        if len(selected_ids) > 1:
             messagebox.showerror("Paste error", "Can paste only into one collection.")
             return
         
-        elif len(selected_uuids) == 1:
-            item = self.item_factory.get_item(selected_uuids[0])
-            parent_id = str(item.parent.uuid if item.is_document else item.uuid)
+        elif len(selected_ids) == 1:
+            item = self.item_factory.get_item(selected_ids[0])
+            parent_id = str(item.parent.id if item.is_document else item.id)
         
         else:
             parent_id = ""      
@@ -305,8 +305,8 @@ class Remarkable(object):
             messagebox.showerror("Paste error", "Only .pdf files are supported.")
             return
         
-        ID, metadata, mf = create_document_zip(file_path, parent_id = parent_id)
-        metadata = self.rm_client.upload(ID, metadata, mf)
+        id, metadata, mf = create_document_zip(file_path, parent_id = parent_id)
+        metadata = self.rm_client.upload(id, metadata, mf)
 
         # Add to tree
         parent = self.item_factory.get_item(parent_id)
@@ -321,17 +321,17 @@ class Remarkable(object):
 
     def btn_copy_async_click(self):
         self.root.clipboard_clear()
-        selected_uuids = self.tree.selection()
+        selected_ids = self.tree.selection()
 
         def sync_and_copy(item):
             self._sync_item(item, force=False)
             self.root.clipboard_append(item.path_annotated_pdf)
 
         def run():
-            for uuid in selected_uuids:
+            for id in selected_ids:
                 self.item_factory.depth_search(
                     fun=lambda item: sync_and_copy(item),
-                    item = self.item_factory.get_item(uuid))
+                    item = self.item_factory.get_item(id))
         threading.Thread(target=run).start()
         self.root.update()
             

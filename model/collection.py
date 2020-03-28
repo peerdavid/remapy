@@ -22,7 +22,7 @@ class Collection(Item):
             if not ok:
                 return False
 
-        ok = self.rm_client.delete_item(self.uuid, self.version)
+        ok = self.rm_client.delete_item(self.id, self.version)
         if ok:
             self._update_state(state=self.STATE_DELETED)
         return ok
@@ -52,7 +52,7 @@ class Collection(Item):
 
     def is_parent_of(self, item):
         for child in self.children:
-            if child.uuid == item.uuid:
+            if child.id == item.id:
                 return True
             
             if child.is_parent_of(item):

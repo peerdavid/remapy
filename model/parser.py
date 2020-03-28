@@ -58,9 +58,9 @@ def parse_pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     writer.write(path_annotated_pdf, base_pdf)
 
 
-def parse_notebook(path, uuid, path_annotated_pdf, path_templates=None):
+def parse_notebook(path, id, path_annotated_pdf, path_templates=None):
     
-    rm_files_path = "%s/%s" % (path, uuid)
+    rm_files_path = "%s/%s" % (path, id)
     annotations_pdf = []
     for file_name in sorted(os.listdir(rm_files_path)):
         if(not file_name.endswith(".rm")):
@@ -72,7 +72,7 @@ def parse_notebook(path, uuid, path_annotated_pdf, path_templates=None):
     
     # Write empty notebook notes containing blank pages or templates
     writer = PdfWriter()
-    templates = _get_templates_per_page(path, uuid, path_templates)
+    templates = _get_templates_per_page(path, id, path_templates)
     for template in templates:
         if template == None:
             writer.addpage(_blank_page())
@@ -100,9 +100,9 @@ def parse_notebook(path, uuid, path_annotated_pdf, path_templates=None):
 
 
 
-def _get_templates_per_page(path, uuid, path_templates):
+def _get_templates_per_page(path, id, path_templates):
 
-    pagedata_file = "%s/%s.pagedata" % (path, uuid)
+    pagedata_file = "%s/%s.pagedata" % (path, id)
     with open(pagedata_file, 'r') as f:
         template_paths = ["%s/%s.png" % (path_templates, l.rstrip('\n')) for l in f] 
         

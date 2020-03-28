@@ -92,10 +92,10 @@ class RemarkableClient(metaclass=Singleton):
         return auth
         
 
-    def get_item(self, uuid):
+    def get_item(self, id):
         
         response = self._request("GET", LIST_DOCS_URL, params={
-            "doc": uuid,
+            "doc": id,
             "withBlob": True
         })
         
@@ -106,10 +106,10 @@ class RemarkableClient(metaclass=Singleton):
         return None
 
     
-    def delete_item(self, uuid, version):
+    def delete_item(self, id, version):
         
         response = self._request("PUT", DELETE_ENTRY_URL, body=[{
-            "ID": uuid,
+            "ID": id,
             "Version": version
         }])
         
@@ -136,10 +136,10 @@ class RemarkableClient(metaclass=Singleton):
         return zip_io.getbuffer()
     
 
-    def upload(self, ID, metadata, zip_file):
+    def upload(self, id, metadata, zip_file):
         response = self._request("PUT", "/document-storage/json/2/upload/request",
                            body=[{
-                               "ID": ID,
+                               "ID": id,
                                "Type": "DocumentType",
                                "Version": 1
                            }])
@@ -161,7 +161,7 @@ class RemarkableClient(metaclass=Singleton):
             print("(Error) Upload request failed")
             return 
 
-        return self.get_item(ID)
+        return self.get_item(id)
         
 
     #

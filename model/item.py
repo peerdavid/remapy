@@ -18,14 +18,14 @@ class Item(object):
         self.children = []
         is_root = entry is None
         if is_root:
-            self.uuid = ""
+            self.id = ""
             self.is_document = False
             self.parent = None
             return 
 
         self.rm_client = RemarkableClient()
         self.parent = parent
-        self.uuid = entry["ID"]
+        self.id = entry["ID"]
         self.version = entry["Version"]
         self.name = entry["VissibleName"]
         self.is_document = entry["Type"] == "DocumentType"
@@ -44,10 +44,12 @@ class Item(object):
         local_time = self._from_utc_to_local_time(self.modified_client)
         return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
+
     def _from_utc_to_local_time(self, utc):
         epoch = time.mktime(utc.timetuple())
         offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
         return utc + offset
+
 
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
