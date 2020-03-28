@@ -21,9 +21,10 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Download file (zip)
  - [x] Download notebook as pdf
  - [x] Download annotated pdf
- - [ ] Download ebub (without annotations)
+ - [x] Download epub (without annotations)
+ - [x] Download epub (with annotations as pdf)
  - [x] Upload pdf file
- - [ ] Upload ebub file
+ - [x] Upload epub file
  - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Create new folder
  - [ ] Create new notebook

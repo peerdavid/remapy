@@ -68,19 +68,20 @@ class Remarkable(object):
         self.icon_syncing = self._create_tree_icon("./gui/icons/syncing.png", rowheight)
         self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
         self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
-        self.icon_ebub = self._create_tree_icon("./gui/icons/ebub.png", rowheight)
+        self.icon_epub = self._create_tree_icon("./gui/icons/epub.png", rowheight)
         self.icon_pdf = self._create_tree_icon("./gui/icons/pdf.png", rowheight)
         self.icon_notebook_out_of_sync = self._create_tree_icon("./gui/icons/notebook_out_of_sync.png", rowheight)
-        self.icon_ebub_out_of_sync = self._create_tree_icon("./gui/icons/ebub_out_of_sync.png", rowheight)
+        self.icon_epub_out_of_sync = self._create_tree_icon("./gui/icons/epub_out_of_sync.png", rowheight)
         self.icon_pdf_out_of_sync = self._create_tree_icon("./gui/icons/pdf_out_of_sync.png", rowheight)
         self.icon_weird = self._create_tree_icon("./gui/icons/weird.png", rowheight)
-        
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open', command=self.btn_open_click)
+        self.context_menu.add_command(label='Open with annotations', command=self.btn_open_click)
+        self.context_menu.add_command(label='Open without annotations', command=self.btn_open_original_click)
+        self.context_menu.add_command(label='Rename')
         self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
@@ -238,16 +239,16 @@ class Remarkable(object):
         if item.state == model.document.STATE_SYNCED:
             if item.type == model.document.TYPE_PDF:
                 return self.icon_pdf
-            elif item.type == model.document.TYPE_EBUB:
-                return self.icon_ebub
+            elif item.type == model.document.TYPE_EPUB:
+                return self.icon_epub
             else: 
                 return self.icon_notebook
 
         if item.state == model.document.STATE_OUT_OF_SYNC:
             if item.type == model.document.TYPE_PDF:
                 return self.icon_pdf_out_of_sync
-            elif item.type == model.document.TYPE_EBUB:
-                return self.icon_ebub_out_of_sync
+            elif item.type == model.document.TYPE_EPUB:
+                return self.icon_epub_out_of_sync
             else: 
                 return self.icon_notebook_out_of_sync
         
@@ -272,6 +273,10 @@ class Remarkable(object):
 
     def btn_open_click(self):
         self._open_async()
+    
+
+    def btn_open_original_click(self):
+        self._open_async(open_original_file=True)
 
 
     def btn_delete_local_all_click(self):
@@ -284,7 +289,7 @@ class Remarkable(object):
         )
 
 
-    def _open_async(self):
+    def _open_async(self, open_original_file = False):
         selected_ids = self.tree.selection()
         def open_id(item):
             for child in item.children:
@@ -294,8 +299,9 @@ class Remarkable(object):
                 return
 
             self._sync_item(item, False)
-            subprocess.call(('xdg-open', item.path_annotated_pdf))
-
+            file_to_open = item.get_original_file() if open_original_file \
+                           else item.get_annotated_or_original_file()
+            subprocess.call(('xdg-open', file_to_open))
 
         def open_all_ids():
             for id in selected_ids:
@@ -303,7 +309,7 @@ class Remarkable(object):
                 open_id(item)
 
         threading.Thread(target=open_all_ids).start()
-        
+
 
     #
     # Copy, Paste, Cut
@@ -330,11 +336,19 @@ class Remarkable(object):
             messagebox.showerror("Paste error", "No file found to upload.")
             return
 
-        if not file_path.endswith(".pdf"):
-            messagebox.showerror("Paste error", "Only .pdf files are supported.")
+        is_pdf = file_path.endswith(".pdf")
+        is_epub = file_path.endswith(".epub")
+        filetype = "pdf" if is_pdf else "epub" if is_epub else None
+
+        if filetype is None:
+            messagebox.showerror("Paste error", "Only .pdf and .epub files are supported.")
             return
         
-        id, metadata, mf = create_document_zip(file_path, parent_id = parent_id)
+        # Upload file
+        id, metadata, mf = create_document_zip(
+            file_path, 
+            file_type=filetype, 
+            parent_id = parent_id)
         metadata = self.rm_client.upload(id, metadata, mf)
 
         # Add to tree

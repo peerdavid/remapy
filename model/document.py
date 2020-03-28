@@ -22,7 +22,7 @@ import utils.config as cfg
 TYPE_UNKNOWN = 0       # If it is only online we don't know the state
 TYPE_NOTEBOOK = 1
 TYPE_PDF = 2
-TYPE_EBUB = 3
+TYPE_EPUB = 3
 
 # Synced with cloud states
 STATE_NOT_SYNCED = 0
@@ -45,14 +45,16 @@ class Document(Item):
         # RemaPy paths
         self.path_remapy = "%s/.remapy" % self.path
         self.path_metadata_local = "%s/metadata.local" % self.path_remapy
-        self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
         self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
-        self.path_original_ebub = "%s/%s.ebub" % (self.path, self.id)
+        self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
+        self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
 
         # Other props
         self.current_page = entry["CurrentPage"]
         self.download_url = None
         self.blob_url = None
+        self.state = None       # Synced, out of sync etc.
+        self.type = None        # Unknown (not downloaded yet), pdf, epub or notebook
 
         # Set correct state of document
         self._update_state()
@@ -97,13 +99,32 @@ class Document(Item):
                 self.path_annotated_pdf,
                 path_templates=cfg.get("general.templates"))
         
-        elif self.type == TYPE_PDF:
+        else:
             if annotations_exist:
-                parser.parse_pdf(self.path_rm_files, self.path_original_pdf, self.path_annotated_pdf)
-            else:
-                shutil.copyfile(self.path_original_pdf, self.path_annotated_pdf)
-        
+                # Also for epubs a pdf file exists which we can annotate :)
+                # We will then show the pdf rather than the epub...
+                parser.parse_pdf(
+                    self.path_rm_files, 
+                    self.path_original_pdf,
+                    self.path_annotated_pdf)
+
         self._update_state()
+
+
+    def get_annotated_or_original_file(self):
+        if os.path.exists(self.path_annotated_pdf):
+            return self.path_annotated_pdf
+        
+        return self.get_original_file()
+    
+
+    def get_original_file(self):
+        if self.type == TYPE_EPUB:
+            return self.path_original_epub
+        if self.type == TYPE_NOTEBOOK:
+            return self.path_annotated_pdf
+        else:
+            return self.path_original_pdf
 
 
     def _download_raw(self, path=None):
@@ -145,13 +166,13 @@ class Document(Item):
                 local_metadata = json.loads(f.read())
 
             self.state = STATE_SYNCED if local_metadata["Version"] == self.version else STATE_OUT_OF_SYNC
-            is_pdf = os.path.exists(self.path_original_pdf)
-            is_ebub = os.path.exists(self.path_original_ebub)
+            is_epub = os.path.exists(self.path_original_epub)
+            is_pdf = not is_epub and os.path.exists(self.path_original_pdf)
 
-            if is_pdf:
+            if is_epub:
+                self.type = TYPE_EPUB
+            elif is_pdf:
                 self.type = TYPE_PDF
-            elif is_ebub:
-                self.type = TYPE_EBUB
             else:
                 self.type = TYPE_NOTEBOOK
 
@@ -174,7 +195,7 @@ class Document(Item):
             )
 
         
-def create_document_zip( file_path, file_type="pdf", parent_id=""):
+def create_document_zip(file_path, file_type, parent_id=""):
     id = str(uuid.uuid4())
 
     # .content file
