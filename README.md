@@ -11,7 +11,7 @@ it should (theoretically) also work on Windows and/or Mac.
  - [x] About page <br />
  - [x] List all folders and files <br />
  - [x] Delete file <br />
- - [ ] Upload pdf file <br />
+ - [x] Upload pdf file <br />
  - [ ] Upload ebub file <br />
  - [ ] Upload raw zip file (i.e. restore from backup) <br />
  - [ ] Rename collection / documents
