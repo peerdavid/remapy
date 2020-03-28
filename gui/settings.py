@@ -3,14 +3,14 @@ import webbrowser
 import tkinter as tk
 import tkinter.ttk as ttk
 
-import api.client
-from api.client import Client
-import api.config as cfg
+import api.remarkable_client
+from api.remarkable_client import RemarkableClient
+import utils.config as cfg
 
 
 class Settings(object):
     def __init__(self, root, font_size):
-        self.rm_client=Client()
+        self.rm_client=RemarkableClient()
 
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)
@@ -76,20 +76,20 @@ class Settings(object):
         self.entry_onetime_code.config(state="normal")
         self.label_onetime_code.config(text="")
 
-        if event == api.client.EVENT_SUCCESS:
+        if event == api.remarkable_client.EVENT_SUCCESS:
             self.btn_sign_in.config(state="disabled")
             self.label_auth_status.config(text="Successfully signed in", fg="green")
             self.entry_onetime_code.config(state="disabled")
             
-        elif event == api.client.EVENT_USER_TOKEN_FAILED:
+        elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.label_auth_status.config(text="Could not renew user token (please try again).", fg="red")
             self.entry_onetime_code.config(state="disabled")
 
-        elif event == api.client.EVENT_ONETIMECODE_NEEDED:
+        elif event == api.remarkable_client.EVENT_ONETIMECODE_NEEDED:
             self.label_auth_status.config(text="Enter one-time code from:", fg="red")
             self.label_onetime_code.config(text=self.onetime_code_link)
         
-        elif event == api.client.EVENT_USER_TOKEN_FAILED:
+        elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.label_auth_status.config(text="Could not fetch device token (please try again).", fg="red")
             
         else:

@@ -1,5 +1,5 @@
 import numpy as np
-from api.object.item import Item
+from model.item import Item
 
 class Collection(Item):
 

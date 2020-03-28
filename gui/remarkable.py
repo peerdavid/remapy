@@ -10,21 +10,21 @@ from tkinter import messagebox
 from PIL import ImageTk as itk
 from PIL import Image
 
-import api.client
-from api.client import Client
-from api.object.item_factory import ItemFactory
-from api.object.item import Item
-from api.object.document import Document, create_document_zip
+import api.remarkable_client
+from api.remarkable_client import RemarkableClient
+from model.item_factory import ItemFactory
+from model.item import Item
+from model.document import Document, create_document_zip
 
 
 class Remarkable(object):
-    def __init__(self, root, font_size=14, rowheight=14):
+    def __init__(self, root, window, font_size=14, rowheight=14):
         
         self.root = root
 
         # Create tkinter elements
         self.nodes = dict()
-        self.rm_client = Client()
+        self.rm_client = RemarkableClient()
         self.item_factory = ItemFactory()
 
         style = ttk.Style()
@@ -35,10 +35,10 @@ class Remarkable(object):
         self.upper_frame = tk.Frame(root)
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
 
-        self.root.bind_all('<Control-v>', self.key_binding_paste)
-        self.root.bind_all('<Control-c>', self.key_binding_copy)
-        self.root.bind_all('<Return>', self.key_binding_return)
-        self.root.bind_all('<Delete>', self.key_binding_delete)
+        window.bind('<Control-v>', self.key_binding_paste)
+        window.bind('<Control-c>', self.key_binding_copy)
+        window.bind('<Return>', self.key_binding_return)
+        window.bind('<Delete>', self.key_binding_delete)
 
         # Add tree and scrollbars
         self.tree = ttk.Treeview(self.upper_frame, style="remapy.style.Treeview")
@@ -64,42 +64,39 @@ class Remarkable(object):
         self.tree.tag_configure('move', background='#FF9800')    
         
         self.icons={}
-        self.icons[Item.STATE_UNKNOWN] = self._create_tree_icon("./icons/unknown.png", rowheight)
-        self.icons[Item.STATE_COLLECTION] = self._create_tree_icon("./icons/collection.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_ONLINE] = self._create_tree_icon("./icons/document_online.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_NOTEBOOK] = self._create_tree_icon("./icons/document_local_notebook.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_PDF] = self._create_tree_icon("./icons/document_local_pdf.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_LOCAL_EBUB] = self._create_tree_icon("./icons/document_local_ebub.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_OUT_OF_SYNC] = self._create_tree_icon("./icons/document_local_out_of_sync.png", rowheight)
-        self.icons[Item.STATE_DOCUMENT_DOWNLOADING] = self._create_tree_icon("./icons/document_downloading.png", rowheight)
+        self.icons[Item.STATE_UNKNOWN] = self._create_tree_icon("./gui/icons/unknown.png", rowheight)
+        self.icons[Item.STATE_COLLECTION] = self._create_tree_icon("./gui/icons/collection.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_ONLINE] = self._create_tree_icon("./gui/icons/document_online.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_NOTEBOOK] = self._create_tree_icon("./gui/icons/document_local_notebook.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_PDF] = self._create_tree_icon("./gui/icons/document_local_pdf.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_LOCAL_EBUB] = self._create_tree_icon("./gui/icons/document_local_ebub.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_OUT_OF_SYNC] = self._create_tree_icon("./gui/icons/document_local_out_of_sync.png", rowheight)
+        self.icons[Item.STATE_DOCUMENT_DOWNLOADING] = self._create_tree_icon("./gui/icons/document_downloading.png", rowheight)
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Open', command=self.btn_open_click)
-        self.context_menu.add_command(label='Download', command=self.btn_download_async_click)
-        self.context_menu.add_command(label='Clear cache', command=self.btn_clear_cache_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label='Sync local', command=self.btn_download_async_click)
+        self.context_menu.add_command(label='Delete local', command=self.btn_clear_cache_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
-
 
         # Footer
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
-        btn = tk.Button(self.lower_frame, text="Sync")
+        btn = tk.Button(self.lower_frame, text="Sync local")
         btn.pack(side = tk.LEFT)
 
-        btn = tk.Button(self.lower_frame, text="Download")
-        btn.pack(side = tk.LEFT)
-
-        btn = tk.Button(self.lower_frame, text="Clear cache", command=self.btn_clear_all_cache_click)
+        btn = tk.Button(self.lower_frame, text="Delete local", command=self.btn_clear_all_cache_click)
         btn.pack(side = tk.LEFT)
         
         self.rm_client.listen_sign_in(self)
@@ -133,7 +130,7 @@ class Remarkable(object):
     # EVENT HANDLER
     #
     def sign_in_event_handler(self, event, data):
-        if event == api.client.EVENT_SUCCESS:
+        if event == api.remarkable_client.EVENT_SUCCESS:
             root = self.item_factory.get_root()
             self._update_tree(root)
 

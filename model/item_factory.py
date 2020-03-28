@@ -1,12 +1,12 @@
-from api.client import Client
-from api.object.collection import Collection
-from api.object.document import Document
-from api.helper import Singleton
+from api.remarkable_client import RemarkableClient
+from model.collection import Collection
+from model.document import Document
+from utils.helper import Singleton
 
 class ItemFactory(metaclass=Singleton):
     
     def __init__(self,):
-        self.rm_client = Client()
+        self.rm_client = RemarkableClient()
         self.root = None
 
 

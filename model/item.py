@@ -1,5 +1,5 @@
 from datetime import datetime
-from api.client import Client
+from api.remarkable_client import RemarkableClient
 import time
 
 class Item(object):
@@ -23,7 +23,7 @@ class Item(object):
             self.parent = None
             return 
 
-        self.rm_client = Client()
+        self.rm_client = RemarkableClient()
         self.parent = parent
         self.uuid = entry["ID"]
         self.version = entry["Version"]

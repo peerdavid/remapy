@@ -9,15 +9,15 @@ from gui.remarkable import Remarkable
 from gui.about import About
 from gui.settings import Settings
 
-import api.client as client
-from api.client import Client
-from api.object.item_factory import ItemFactory
-from api.object.document import Document
+import api.remarkable_client as client
+from api.remarkable_client import RemarkableClient
+from model.item_factory import ItemFactory
+from model.document import Document
 
 class Main(object):
 
     def __init__(self, window):
-        self.rm_client = Client()
+        self.rm_client = RemarkableClient()
 
         # Define app settings
         font_size = 38
@@ -29,7 +29,7 @@ class Main(object):
         self.rm_client.listen_sign_in(self)
 
         # Window settings
-        window.title("RemaPy")
+        window.title("RemaPy Explorer")
         x = (window.winfo_screenwidth() / 4 * 3) - (window_width / 2)
         y = (window.winfo_screenheight() / 2) - (window_height / 2)
         window.geometry("%dx%d+%d+%d" % (window_width, window_height, x, y))
@@ -39,8 +39,8 @@ class Main(object):
         self.notebook.pack(expand=1, fill="both")
 
         frame = ttk.Frame(self.notebook)
-        self.remarkable = Remarkable(frame, font_size=font_size, rowheight=rowheight)
-        self.notebook.add(frame, text="My Remarkable")
+        self.remarkable = Remarkable(frame, window, font_size=font_size, rowheight=rowheight)
+        self.notebook.add(frame, text="File Explorer")
 
         frame = ttk.Frame(self.notebook)
         self.notebook.add(frame, text="Backup", state="hidden")

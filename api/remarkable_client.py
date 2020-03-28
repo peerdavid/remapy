@@ -5,8 +5,8 @@ import requests
 from uuid import uuid4
 from pathlib import Path
 
-import api.config as cfg
-from api.helper import Singleton
+import utils.config as cfg
+from utils.helper import Singleton
 
 # 
 # EVENTS
@@ -39,7 +39,7 @@ DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 #
 # CLIENT
 #
-class Client(metaclass=Singleton):
+class RemarkableClient(metaclass=Singleton):
     def __init__(self):
         self.test = True
         self.sign_in_listener = []

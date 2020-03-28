@@ -1,44 +1,46 @@
-# RemaPy
+# RemaPy Explorer
 
-An open source tool to manage documents of your remarkable tablet.
-This tool provides a gui as well as an easy to use python api to write 
-simple scripts. Although it is only tested and evaluated on Linux, 
-it should (theoretically) also work on Windows and/or Mac.
+An open source explorer for your remarkable tablet to 
+show, upload or delete files via the remarkable cloud. Although the RemaPy Explorer 
+is only tested and evaluated on Linux, it should theoretically also 
+work on Windows and / or Mac.
 
 # ToDo's
- - [x] Authentication <br />
- - [x] Settings page (Path to templates, sync folder, ) <br />
- - [x] About page <br />
- - [x] List all folders and files <br />
- - [x] Delete file <br />
- - [x] Upload pdf file <br />
- - [ ] Upload ebub file <br />
- - [ ] Upload raw zip file (i.e. restore from backup) <br />
+ - [x] Authentication
+ - [x] Settings page (Path to templates, sync folder, )
+ - [x] About page
+ - [x] List all folders and files
+ - [x] Delete file
+ - [x] Open collection (all files of collection with one click)
+ - [x] Async backend to keep fronted reactive
+ - [ ] Check and show if files are our of sync
+ - [x] Download file (zip)
+ - [x] Download notebook as pdf
+ - [x] Download annotated pdf
+ - [ ] Download ebub (without annotations)
+ - [x] Upload pdf file
+ - [ ] Upload ebub file
+ - [ ] Upload raw zip file (i.e. restore from backup)
+ - [ ] Create new folder
+ - [ ] Create new notebook
  - [ ] Rename collection / documents
- - [ ] Move collection / documents <br />
- - [ ] Check and show if files are our of sync <br />
+ - [ ] Move collection / documents
  - [ ] Better error handling
  - [ ] Logging
- - [x] Open collection (all files of collection with one click)
- - [x] Async backend to keep fronted reactive <br />
- - [ ] Test offline <br />
- - [x] Download file (zip) <br />
- - [x] Download notebook as svg <br />
- - [ ] Download notebook as pdf <br />
- - [x] Download annotated pdf <br />
- - [ ] Filter / Search documents <br />
- - [ ] Delete local cache if doc is not available on remarkable <br />
+ - [ ] Test offline
+ - [ ] Filter / Search documents
+ - [ ] Delete local cache if doc is not available on remarkable 
  - [ ] Create installer
 
 
 # Future ideas
- - [ ] Create full (or partially folder) backups of raw data <br />
- - [ ] Backup viewer <br />
- - [ ] Restore a backup into the cloud <br /> 
- - [ ] Select a collection to sync with Zotero <br />
+ - [ ] Create full (or partially folder) backups of raw data
+ - [ ] Backup viewer
+ - [ ] Restore a backup into the cloud 
+ - [ ] Select a collection to sync with Zotero
  - [ ] Search also for handwritten text
- - [ ] SSH access: Update background image, live view <br />
- - [ ] Decrypt encrypted pdf's to be compatible with the RM <br />
+ - [ ] SSH access: Update background image, live view
+ - [ ] Decrypt encrypted pdf's to be compatible with the RM
 
 
 # How to setup / install RemaPy

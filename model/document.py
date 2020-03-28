@@ -9,12 +9,12 @@ from datetime import datetime, timezone
 import json
 
 
-from api.client import Client
-from api.helper import Singleton
-import api.object.parser as parser
-from api.object.item import Item
-from api.object.collection import Collection
-import api.config as cfg
+from api.remarkable_client import RemarkableClient
+from utils.helper import Singleton
+import model.parser as parser
+from model.item import Item
+from model.collection import Collection
+import utils.config as cfg
 
 class Document(Item):
     
