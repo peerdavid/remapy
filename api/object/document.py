@@ -1,8 +1,13 @@
 import os
+from io import BytesIO
 import zipfile
+import uuid
+from zipfile import ZipFile
 import shutil
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
+import json
+
 
 from api.client import Client
 from api.helper import Singleton
@@ -92,7 +97,7 @@ class Document(Item):
             shutil.rmtree(path)
 
         if self.blob_url == None:
-            self.blob_url = self.rm_client.get_blob_url(self.uuid)
+            self.blob_url = self.rm_client.get_item(self.uuid)["BlobURLGet"]
 
         raw_file = self.rm_client.get_raw_file(self.blob_url)
         with open(self.path_zip, "wb") as out:
@@ -134,5 +139,51 @@ class Document(Item):
     def _write_remapy_metadata(self):
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
         with open("%s/metadata.yaml" % self.path_remapy, "w") as out:
-            out.write(self.modified_str())
+            out.write(self.local_modified_time())
+
+        
+def create_document_zip( file_path, file_type="pdf", parent_id=""):
+    ID = str(uuid.uuid4())
+
+    # .content file
+    content_file = json.dumps({
+        "extraMetadata": { },
+        "lastOpenedPage": 0,
+        "lineHeight": -1,
+        "margins": 180,
+        "pageCount": 0,
+        "textScale": 1,
+        "transform": {},
+        "fileType": file_type
+    })
+
+    # metadata
+    timestamp = datetime.now(timezone.utc).astimezone().isoformat()
+    metadata = {
+        "VissibleName": os.path.splitext(os.path.basename(file_path))[0],
+        #"deleted": False,
+        #"lastModified": "1568368808000",
+        #"metadatamodified": True,
+        #"modified": True,
+        #"parent": "",
+        #"pinned": False,
+        #"synced": True,
+        "Type": "DocumentType",
+        "Version": 1,
+        "ID": ID,
+        "Parent": parent_id,
+        "ModifiedClient": timestamp
+    }
+
+    mf = BytesIO()
+    mf.seek(0)
+    with ZipFile(mf, mode='w', compression=zipfile.ZIP_DEFLATED ) as zf:
+        zf.write(file_path, arcname="%s.%s" % (ID, file_type))
+        zf.writestr("%s.content" % ID, content_file)
+        zf.writestr("%s.pagedata" % ID, "")
+
+    # with open("test.zip", "wb") as f:
+    #     f.write(mf.getvalue())
+    mf.seek(0)
+    return ID, metadata, mf
 

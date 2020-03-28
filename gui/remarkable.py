@@ -14,7 +14,7 @@ import api.client
 from api.client import Client
 from api.object.item_factory import ItemFactory
 from api.object.item import Item
-from api.object.document import Document
+from api.object.document import Document, create_document_zip
 
 
 class Remarkable(object):
@@ -103,7 +103,7 @@ class Remarkable(object):
         btn.pack(side = tk.LEFT)
         
         self.rm_client.listen_sign_in(self)
-
+        
 
     def _create_tree_icon(self, path, row_height):
         icon = Image.open(path)
@@ -221,7 +221,7 @@ class Remarkable(object):
                 item.uuid, 
                 image=self.icons[item.state], 
                 text=" " + item.name,
-                values=(item.modified_str(), item.current_page))
+                values=(item.local_modified_time(), item.current_page))
 
 
     def _sync_item(self, item, force):   
@@ -286,16 +286,36 @@ class Remarkable(object):
         self.btn_paste_async_click()
 
     def btn_paste_async_click(self):
+        selected_uuids = self.tree.selection()
+
+        if len(selected_uuids) > 1:
+            messagebox.showerror("Paste error", "Can paste only into one collection.")
+            return
+        
+        elif len(selected_uuids) == 1:
+            item = self.item_factory.get_item(selected_uuids[0])
+            parent_id = str(item.parent.uuid if item.is_document else item.uuid)
+        
+        else:
+            parent_id = ""      
+
         file_path = self.root.clipboard_get()
         if not os.path.exists(file_path):
             messagebox.showerror("Paste error", "No file found to upload.")
             return
-        
+
         if not file_path.endswith(".pdf"):
             messagebox.showerror("Paste error", "Only .pdf files are supported.")
             return
         
-        print("Upload file")
+        ID, metadata, mf = create_document_zip(file_path, parent_id = parent_id)
+        metadata = self.rm_client.upload(ID, metadata, mf)
+
+        # Add to tree
+        parent = self.item_factory.get_item(parent_id)
+        item = self.item_factory.create_item(metadata, parent)
+        self._update_tree(item)
+
 
 
     def key_binding_copy(self, event):

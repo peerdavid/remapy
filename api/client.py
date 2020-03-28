@@ -92,7 +92,7 @@ class Client(metaclass=Singleton):
         return auth
         
 
-    def get_blob_url(self, uuid):
+    def get_item(self, uuid):
         
         response = self._request("GET", LIST_DOCS_URL, params={
             "doc": uuid,
@@ -101,7 +101,7 @@ class Client(metaclass=Singleton):
         
         if response.ok:
             items = response.json()
-            return items[0]["BlobURLGet"]
+            return items[0]
         
         return None
 
@@ -119,7 +119,7 @@ class Client(metaclass=Singleton):
         return False
     
 
-    def list_metadata(self):
+    def list_items(self):
         response = self._request("GET", LIST_DOCS_URL)
 
         if response.ok:
@@ -134,6 +134,35 @@ class Client(metaclass=Singleton):
         for chunk in stream.iter_content(chunk_size=8192):
             zip_io.write(chunk)
         return zip_io.getbuffer()
+    
+
+    def upload(self, ID, metadata, zip_file):
+        response = self._request("PUT", "/document-storage/json/2/upload/request",
+                           body=[{
+                               "ID": ID,
+                               "Type": "DocumentType",
+                               "Version": 1
+                           }])
+        if not response.ok:        
+            print("(Error) Upload request failed")
+            return 
+
+        response = response.json()
+        blob_url = response[0].get("BlobURLPut", None)
+
+        response = self._request("PUT", blob_url, data=zip_file.getvalue())
+        zip_file.seek(0)
+        if not response.ok:        
+            print("(Error) Upload request failed")
+            return 
+        
+        response = self._request("PUT", UPDATE_STATUS_URL, body=[metadata])
+        if not response.ok:        
+            print("(Error) Upload request failed")
+            return 
+
+        return self.get_item(ID)
+        
 
     #
     # HELPER

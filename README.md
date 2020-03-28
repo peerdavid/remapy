@@ -11,9 +11,14 @@ it should (theoretically) also work on Windows and/or Mac.
  - [x] About page <br />
  - [x] List all folders and files <br />
  - [x] Delete file <br />
- - [ ] Upload file <br />
- - [ ] Move file / collection <br />
+ - [ ] Upload pdf file <br />
+ - [ ] Upload ebub file <br />
+ - [ ] Upload raw zip file (i.e. restore from backup) <br />
+ - [ ] Rename collection / documents
+ - [ ] Move collection / documents <br />
  - [ ] Check and show if files are our of sync <br />
+ - [ ] Better error handling
+ - [ ] Logging
  - [x] Open collection (all files of collection with one click)
  - [x] Async backend to keep fronted reactive <br />
  - [ ] Test offline <br />
@@ -22,7 +27,8 @@ it should (theoretically) also work on Windows and/or Mac.
  - [ ] Download notebook as pdf <br />
  - [x] Download annotated pdf <br />
  - [ ] Filter / Search documents <br />
- - [ ] Delete local cache if not available more on remarkable <br />
+ - [ ] Delete local cache if doc is not available on remarkable <br />
+ - [ ] Create installer
 
 
 # Future ideas

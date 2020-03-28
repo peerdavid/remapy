@@ -28,7 +28,7 @@ class ItemFactory(metaclass=Singleton):
 
 
     def get_root(self):
-        entries = self.rm_client.list_metadata()
+        entries = self.rm_client.list_items()
         self.root = self._create_tree(entries)
         return self.root
 
@@ -84,11 +84,11 @@ class ItemFactory(metaclass=Singleton):
                 self._create_item_and_parents(parent_id, entries, items, lookup_table)
 
         parent = items[parent_uuid]
-        new_object = self._item_factory(entry, parent)
+        new_object = self.create_item(entry, parent)
         items[new_object.uuid] = new_object
             
 
-    def _item_factory(self, entry, parent):
+    def create_item(self, entry, parent):
         if entry["Type"] == "CollectionType":
             new_object = Collection(entry, parent)
 

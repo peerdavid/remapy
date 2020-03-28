@@ -1,7 +1,6 @@
 from datetime import datetime
 from api.client import Client
-
-
+import time
 
 class Item(object):
 
@@ -41,9 +40,14 @@ class Item(object):
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%SZ")
         
 
-    def modified_str(self):
-        return self.modified_client.strftime("%Y-%m-%d %H:%M:%S")
+    def local_modified_time(self):
+        local_time = self._from_utc_to_local_time(self.modified_client)
+        return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
+    def _from_utc_to_local_time(self, utc):
+        epoch = time.mktime(utc.timetuple())
+        offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
+        return utc + offset
 
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
