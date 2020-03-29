@@ -30,17 +30,16 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Better rendering for highlighter
  - [x] Use multiple threads to download and render documents (speed up)
  - [x] Show sync state also on collection level
- - [ ] Show icon while uploading a file
+ - [x] Show icon while uploading a file
  - [ ] Create new folder
  - [ ] Create new notebook
- - [ ] Delete local if doc is not available on remarkable 
  - [ ] Rename collection / documents
  - [ ] Move collection / documents
  - [ ] Filter / Search documents
  - [ ] Better error handling
  - [ ] Logging
  - [ ] Test offline
- - [ ] Create installer
+ - [ ] Delete local if doc is not available on remarkable 
 
 
 ## Future ideas

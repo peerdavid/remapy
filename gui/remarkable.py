@@ -72,6 +72,7 @@ class Remarkable(object):
         
         self.icon_cloud = self._create_tree_icon("./gui/icons/cloud.png", rowheight)
         self.icon_document_syncing = self._create_tree_icon("./gui/icons/document_syncing.png", rowheight)
+        self.icon_document_upload = self._create_tree_icon("./gui/icons/document_upload.png", rowheight)
         self.icon_collection_syncing = self._create_tree_icon("./gui/icons/collection_syncing.png", rowheight)
         self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
         self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
@@ -432,12 +433,22 @@ class Remarkable(object):
                 file_path, 
                 file_type=filetype, 
                 parent_id = parent_id)
+
+            # Show in tree
+            self.tree.insert(
+                parent_id, 
+                1000, 
+                id,
+                text= " " + metadata["VissibleName"],
+                image=self.icon_document_upload)
+
+            # Upload file into cloud
             metadata = self.rm_client.upload(id, metadata, mf)
 
             # Add to tree
             parent = self.item_factory.get_item(parent_id)
             item = self.item_factory.create_item(metadata, parent)
-            self._update_tree(item)
+            item.add_state_listener(self._update_tree_item)
 
             # Download again to get it correctly
             item.sync()
