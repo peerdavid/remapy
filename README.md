@@ -31,6 +31,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Use multiple threads to download and render documents (speed up)
  - [x] Show sync state also on collection level
  - [x] Show icon while uploading a file
+ - [ ] Alphabetic order of collections and documents in tree
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
