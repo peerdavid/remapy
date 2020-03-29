@@ -32,6 +32,10 @@ class Item(object):
         except:
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%SZ")
         
+        
+    def is_root_item(self):
+        return self.parent is None or self.parent == ""
+
 
     def local_modified_time(self):
         local_time = self._from_utc_to_local_time(self.modified_client)

@@ -2,6 +2,8 @@ import os
 import subprocess
 import threading
 import shutil
+import queue
+import time
 import numpy as np
 from pathlib import Path
 import tkinter as tk
@@ -19,6 +21,10 @@ from model.document import Document, create_document_zip
 import utils.config
 
 class Remarkable(object):
+
+    #
+    # CTOR
+    #
     def __init__(self, root, window, font_size=14, rowheight=14):
         
         self.root = root
@@ -79,17 +85,15 @@ class Remarkable(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open with annotations', command=self.btn_open_click)
-        self.context_menu.add_command(label='Open without annotations', command=self.btn_open_original_click)
+        self.context_menu.add_command(label='Sync', command=self.btn_sync_item_click)
+        self.context_menu.add_command(label='Open with annotations', command=self.btn_open_item_click)
+        self.context_menu.add_command(label='Open without annotations', command=self.btn_open_item_original_click)
         self.context_menu.add_command(label='Rename')
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_async_click)
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
-        self.context_menu.add_command(label='Cut')
-        self.context_menu.add_separator()
-        self.context_menu.add_command(label='Sync local', command=self.btn_sync_async_click)
-        self.context_menu.add_command(label='Delete local', command=self.btn_delete_local_click)
+        self.context_menu.add_command(label='Cut')        
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -97,25 +101,53 @@ class Remarkable(object):
         self.lower_frame = tk.Frame(root)
         self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
 
-        btn = tk.Button(self.lower_frame, text="Sync local")
-        btn.pack(side = tk.LEFT)
+        self.lower_frame_left = tk.Frame(self.lower_frame)
+        self.lower_frame_left.pack(side=tk.LEFT)
 
-        btn = tk.Button(self.lower_frame, text="Delete local", command=self.btn_delete_local_all_click)
-        btn.pack(side = tk.LEFT)
+        btn = tk.Button(self.lower_frame_left, text="Sync", width=10, command=self.btn_sync_click)
+        btn.pack(anchor="w")
+
+        btn = tk.Button(self.lower_frame_left, text="ReSync", width=10, command=self.btn_resync_click)
+        btn.pack(anchor="w")
+
+        self.lower_frame_right = tk.Frame(self.lower_frame)
+        self.lower_frame_right.pack(side=tk.LEFT, expand=True, fill=tk.X)
+
+        self.log_widget = tk.scrolledtext.ScrolledText(self.lower_frame_right, height=3)
+        self.log_widget.insert(tk.END, "Starting RemaPy Explorer...")
+        self.log_widget.config(state=tk.DISABLED)
+        self.log_widget.pack(expand=True, fill=tk.BOTH)
         
         self.rm_client.listen_sign_in(self)
-        
+    
 
+    def log(self, text):
+        time.ctime()
+
+        self.log_widget.config(state=tk.NORMAL)
+        self.log_widget.insert(tk.END, "\n%s" % text)
+        self.log_widget.config(state=tk.DISABLED)
+        self.log_widget.see(tk.END)
+
+    #
+    # Tree
+    #
     def _create_tree_icon(self, path, row_height):
         icon = Image.open(path)
         icon = icon.resize((row_height-4, row_height-4))
         return itk.PhotoImage(icon)
 
 
+    def sign_in_event_handler(self, event, data):
+        if event == api.remarkable_client.EVENT_SUCCESS:
+            root = self.item_factory.get_root()
+            self._update_tree(root)
+
+            self.btn_sync_click()
+
     
     def _update_tree(self, item):
-        is_root = not item.is_document and item.parent is None
-        if not is_root:
+        if not item.is_root_item():
             pos = int(item.is_document)*10
             tree_id = self.tree.insert(
                 item.parent.id, 
@@ -128,20 +160,7 @@ class Remarkable(object):
         for child in item.children:
             self._update_tree(child)
 
-
-
-    #
-    # EVENT HANDLER
-    #
-    def sign_in_event_handler(self, event, data):
-        if event == api.remarkable_client.EVENT_SUCCESS:
-            root = self.item_factory.get_root()
-            self._update_tree(root)
-
-
-    #
-    # EVENT HANDLER
-    #
+    
     def tree_right_click(self, event):
         selected_ids = self.tree.selection()
         if selected_ids:
@@ -162,59 +181,7 @@ class Remarkable(object):
         else:
             # mouse pointer not over item
             pass
-        
 
-    def key_binding_delete(self, event):
-        self.btn_delete_async_click()
-
-
-    def btn_delete_async_click(self):
-        selected_ids = self.tree.selection()
-        items = [self.item_factory.get_item(id) for id in selected_ids]
-        
-        count = [0, 0]
-        for item in items:
-            if item.is_document:
-                count[0] += 1
-                continue
-            
-            child_count = item.get_exact_children_count()
-            count = np.add(count, child_count)
-        
-        message = "Do you really want to delete %d collection(s) and %d file(s)?" % (count[1], count[0])
-        result = messagebox.askquestion("Delete", message, icon='warning')
-
-        if result != "yes":
-            return
-
-        def run():
-            for item in items:
-                item.delete()
-        threading.Thread(target=run).start()
-            
-    
-    def btn_delete_local_click(self):
-        selected_ids = self.tree.selection()
-        for id in selected_ids:
-            self.item_factory.depth_search(
-                fun = lambda item: item.delete_local(),
-                item = self.item_factory.get_item(id)
-        )
-
-
-    def btn_sync_async_click(self):
-        selected_ids = self.tree.selection()
-
-        def sync(item):
-            thread = threading.Thread(target=self._sync_and_open_item, args=(item, True))
-            thread.start()
-
-        for id in selected_ids:
-            self.item_factory.depth_search(
-                fun = sync,
-                item = self.item_factory.get_item(id)
-        )
-    
 
     def _update_tree_item(self, item):
         if item.state == model.item.STATE_DELETED:
@@ -226,6 +193,7 @@ class Remarkable(object):
                 image=icon, 
                 text=" " + item.name,
                 values=(item.local_modified_time(), item.current_page))
+
 
     def _get_icon(self, item):
         if not item.is_document:
@@ -257,13 +225,14 @@ class Remarkable(object):
         return self.icon_weird
 
 
-    def _sync_and_open_item(self, item, force, open_file=False, open_original_file=False):   
-        item.sync(force=force)
-
-        if open_file:
-            file_to_open = item.get_original_file() if open_original_file \
-                    else item.get_annotated_or_original_file()
-            subprocess.call(('xdg-open', file_to_open))
+    #
+    # SYNC AND OPEN
+    #
+    def btn_sync_item_click(self):
+        self._sync_selection_async(
+                force=True, 
+                open_file=False, 
+                open_original=False)
 
 
     def tree_double_click(self, event):
@@ -271,22 +240,30 @@ class Remarkable(object):
         item = self.item_factory.get_item(selected_ids[0])
         
         if item.is_document:
-            self._open_selection_async()
+            self._sync_selection_async(
+                force=False, 
+                open_file=True, 
+                open_original=True)
 
 
     def key_binding_return(self, event):
-        self.btn_open_click()
+        self.btn_open_item_click()
 
 
-    def btn_open_click(self):
-        self._open_selection_async()
+    def btn_open_item_click(self):
+        self._sync_selection_async(
+                force=False, 
+                open_file=True, 
+                open_original=False)
     
 
-    def btn_open_original_click(self):
-        self._open_selection_async(open_original_file=True)
+    def btn_open_item_original_click(self):
+        self._sync_selection_async(
+                force=False, 
+                open_file=True, 
+                open_original=True)
 
-
-    def btn_delete_local_all_click(self):
+    def btn_resync_click(self):
         # Clean everything, also if some (old) things exist
         shutil.rmtree(utils.config.PATH, ignore_errors=True)
         Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
@@ -295,23 +272,113 @@ class Remarkable(object):
             fun=lambda item: item.update_state()
         )
 
+        # And sync again
+        self.btn_sync_click()
+    
 
-    def _open_selection_async(self, open_original_file = False):
+    def btn_sync_click(self):
+        self._sync_items_async([self.item_factory.get_root()],
+                force=False, 
+                open_file=False, 
+                open_original=False)
+
+
+    def _sync_selection_async(self, force=False, open_file=False, open_original=False):
         selected_ids = self.tree.selection()
+        items = [self.item_factory.get_item(id) for id in selected_ids]
+        self._sync_items_async(items, force, open_file, open_original)
 
-        def open_item(item):
-            for child in item.children:
-                open_item(child)
+
+    def _sync_items_async(self, items, force=False, open_file=False, open_original=False):
+        """ To keep the gui responsive...
+        """
+        thread = threading.Thread(target=self._sync_items, args=(items, force, open_file, open_original))
+        thread.start()
+
+
+    def _sync_items(self, items, force=False, open_file=False, open_original=False):
+        
+        num_errors = 0
+        q = queue.Queue()
+        threads = []
+
+        def worker():
+            while True:
+                item = q.get()
+                if item is None:
+                    break
+                
+                try:
+                    self._sync_and_open_item(item, force, open_file, open_original)
+                except e:
+                    self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                    num_errors += 1
+                q.task_done()
+
+        num_worker_threads = 50
+        for i in range(num_worker_threads):
+            t = threading.Thread(target=worker)
+            t.start()
+            threads.append(t)
+        
+        # Add all items and child items
+        for item in items:
+            self.item_factory.depth_search(fun=q.put, item = item)
             
-            if not item.is_document:
-                return
+        q.join()
 
-            thread = threading.Thread(target=self._sync_and_open_item, args=(item, False, True, open_original_file))
-            thread.start()
+        # stop workers
+        for i in range(num_worker_threads):
+            q.put(None)
+        for t in threads:
+            t.join()
+        
+        self.log("\nSynced %d document(s). %d error(s) occured." % (len(items), num_errors))
 
-        for id in selected_ids:
-            item = self.item_factory.get_item(id)
-            open_item(item)
+
+    def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
+        self.log("Syncing '%s'" % item.name[0:50])
+
+        if not item.is_root_item() and item.is_document:
+            item.sync(force=force)
+
+        if open_file:
+            file_to_open = item.get_original_file() if open_original \
+                    else item.get_annotated_or_original_file()
+            subprocess.call(('xdg-open', file_to_open))
+
+
+    #
+    # Delete
+    #
+    def key_binding_delete(self, event):
+        self.btn_delete_item_click()
+
+
+    def btn_delete_item_click(self):
+        selected_ids = self.tree.selection()
+        items = [self.item_factory.get_item(id) for id in selected_ids]
+        
+        count = [0, 0]
+        for item in items:
+            if item.is_document:
+                count[0] += 1
+                continue
+            
+            child_count = item.get_exact_children_count()
+            count = np.add(count, child_count)
+        
+        message = "Do you really want to delete %d collection(s) and %d file(s)?" % (count[1], count[0])
+        result = messagebox.askquestion("Delete", message, icon='warning')
+
+        if result != "yes":
+            return
+
+        def run():
+            for item in items:
+                item.delete()
+        threading.Thread(target=run).start()
+
 
     #
     # Copy, Paste, Cut

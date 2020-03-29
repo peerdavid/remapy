@@ -28,6 +28,9 @@ class ItemFactory(metaclass=Singleton):
 
 
     def get_root(self):
+        if not self.root is None:
+            return self.root
+            
         entries = self.rm_client.list_items()
         self.root = self._create_tree(entries)
         return self.root

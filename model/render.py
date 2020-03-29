@@ -37,6 +37,9 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     # NOTE: The first page is in books often smaller, therefore we use the 
     #       second page if it exists...
     page_layout = base_pdf.pages[0].MediaBox if len(base_pdf.pages) <= 1 else base_pdf.pages[1].MediaBox
+    if page_layout is None:
+        return
+        
     image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
     for page_nr in range(len(base_pdf.pages)):
