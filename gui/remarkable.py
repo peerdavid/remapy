@@ -140,9 +140,6 @@ class Remarkable(object):
 
     def sign_in_event_handler(self, event, data):
         if event == api.remarkable_client.EVENT_SUCCESS:
-            root = self.item_factory.get_root()
-            self._update_tree(root)
-
             self.btn_sync_click()
 
     
@@ -283,6 +280,11 @@ class Remarkable(object):
     
 
     def btn_sync_click(self):
+        self.log("Sync all documents...")
+        root = self.item_factory.get_root(force=True)
+        self.tree.delete(*self.tree.get_children())
+        self._update_tree(root)
+
         self._sync_items_async([self.item_factory.get_root()],
                 force=False, 
                 open_file=False, 
