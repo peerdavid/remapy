@@ -20,10 +20,10 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 # Mappings
 stroke_color = {
-    0: colors.darkblue,  # Pen color 1
-    1: colors.gray,      # Pen color 2
-    2: colors.white,     # Eraser
-    3: colors.yellow     # Highlighter
+    0: colors.Color(5/255., 60/255., 150/255.),         # Pen color 1
+    1: colors.Color(125/255., 125/255., 125/255.),      # Pen color 2
+    2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
+    3: colors.Color(255/255., 255/255., 0, alpha=0.15)  # Highlighter
 }
 
 
@@ -136,11 +136,15 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     ratio = (image_height/image_width) / (DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH)
+    
+    # Scale width accordignly to the given document, otherwise e.g.
+    # lines in (A4) pdf's look different than in notebooks...
+    width_scale = min(image_width / DEFAULT_IMAGE_WIDTH, image_width / DEFAULT_IMAGE_WIDTH)
 
     with open(rm_file, 'rb') as f:
         data = f.read()
     offset = 0
-
+    
     # Is this a reMarkable .lines file?
     expected_header_v3=b'reMarkable .lines file, version=3          '
     expected_header_v5=b'reMarkable .lines file, version=5          '
@@ -207,9 +211,10 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 print('Unknown pen: {}'.format(pen))
                 opacity = 0.
 
+            width *= width_scale
             # This scaling for pdf looks much better...
-            if(image_width != DEFAULT_IMAGE_WIDTH or image_height != DEFAULT_IMAGE_HEIGHT):
-                width /= 2
+            # if(image_width != DEFAULT_IMAGE_WIDTH or image_height != DEFAULT_IMAGE_HEIGHT):
+            #     width /= 2
             
             # Iterate through the segments to form a polyline
             points = []
@@ -229,33 +234,20 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
             if is_eraser_area:
                 continue
             
-            # Draw polyline from segments for everything but not highlighter, 
-            # because of artefact
+            # Render lines
             drawing = Drawing(image_width, image_height)
-            opacity = 0.15 if is_highlighter else 1.0
+            can.setLineWidth(width)
+            can.setLineCap(1)
+            can.setStrokeColor(stroke_color[color])
 
-            if not is_highlighter:
-                poly_line = PolyLine(
-                    points, 
-                    strokeWidth=width, 
-                    strokeColor=stroke_color[color],
-                    strokeOpacity=opacity)
-                drawing.add(poly_line)
-            else:
-            # This is looks really nice but rendering is slow.
-            # Therefore we use it only for highlighter
-                for i in range(0, len(points)-2, 2):
-                    x1 = points[i]
-                    y1 = points[i+1]
-                    x2 = points[i+2]
-                    y2 = points[i+3]
-                    line = Line(x1, y1, x2, y2, 
-                        strokeWidth=width, 
-                        strokeColor=stroke_color[color],
-                        strokeOpacity=opacity)  
-                    drawing.add(line)
-
-            renderPDF.draw(drawing, can, 0, 0)
+            p = can.beginPath()
+            p.moveTo(points[0], points[1])
+            for i in range(0, len(points), 2):
+                p.lineTo(points[i], points[i+1])
+                p.moveTo(points[i], points[i+1])
+                if i % 10 == 0:
+                    p.close()
+            can.drawPath(p)
     can.save()
     packet.seek(0)
     return packet

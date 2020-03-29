@@ -39,7 +39,7 @@ DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 #
 # CLIENT
 #
-class RemarkableClient(metaclass=Singleton):
+class RemarkableClient():
     def __init__(self):
         self.test = True
         self.sign_in_listener = []
