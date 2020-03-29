@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import os
 from pathlib import Path
 import tkinter as tk
@@ -82,7 +84,7 @@ class Main(object):
 # M A I N
 #
 def main():
-    window = tk.Tk()
+    window = tk.Tk(className="RemaPy")
     Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
     app = Main(window)
     window.mainloop()

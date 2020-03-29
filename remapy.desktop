@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Terminal=false
+Name=RemaPy Explorer
+Exec=run.sh
+Icon=icon.png
+StartupWMClass=remaPy

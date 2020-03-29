@@ -7,7 +7,7 @@ A list of some todo's and future ideas that I want to implement is given below.
 
 *WARNING:* This project is not affiliated with reMarkable AS, Oslo and you use this tool on your own risk.
 
-![Explorer](doc/explorer.png)
+<img src="doc/explorer.png" />
 
 
 # ToDo's
@@ -45,7 +45,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Logging
  - [ ] Make RemaPy offline ready
  - [ ] Delete local if doc is not available on remarkable 
-
+ - [ ] Set exact versions in requirements.txt
 
 ## Future ideas
  - [ ] Zotero sync
@@ -63,6 +63,10 @@ to create a virtual environment and install all necessary packages:
 2. Activate venv: ```source env/bin/activate```
 3. Update your pip installation: ```pip3 install --upgrade pip```
 4. Install all requirements. Use requirements-gpu if a gpu is available, requirements-cpu otherwise: ```pip3 install -r requirements.txt```
+
+
+To create a launcher symbol adapt the remapy.desktop file and copy it 
+to ~/.local/share/applications/remapy.desktop
 
 
 # Acknowledgments
