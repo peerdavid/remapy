@@ -67,13 +67,18 @@ def notebook(path, id, path_annotated_pdf, path_templates=None):
     
     rm_files_path = "%s/%s" % (path, id)
     annotations_pdf = []
-    for file_name in sorted(os.listdir(rm_files_path)):
-        if(not file_name.endswith(".rm")):
-            continue
-        
+
+    p = 0
+    while True:
+        file_name = "%d.rm" % p      
         rm_file = "%s/%s" % (rm_files_path, file_name)
+
+        if not os.path.exists(rm_file):
+            break
+
         packet = _render_rm_file(rm_file)
         annotations_pdf.append(PdfReader(packet))
+        p += 1  
     
     # Write empty notebook notes containing blank pages or templates
     writer = PdfWriter()
