@@ -26,17 +26,19 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Upload pdf file
  - [x] Upload epub file
  - [x] Show download progress bar
- - [ ] Better rendering for highlighter
+ - [x] Better rendering for highlighter
+ - [ ] Use multiple threads to download and render documents (speed up)
+ - [ ] Show sync state also on collection level
  - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Create new folder
  - [ ] Create new notebook
+ - [ ] Delete local if doc is not available on remarkable 
  - [ ] Rename collection / documents
  - [ ] Move collection / documents
+ - [ ] Filter / Search documents
  - [ ] Better error handling
  - [ ] Logging
  - [ ] Test offline
- - [ ] Filter / Search documents
- - [ ] Delete local if doc is not available on remarkable 
  - [ ] Create installer
 
 

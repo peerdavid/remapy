@@ -88,7 +88,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Sync local', command=self.btn_download_async_click)
+        self.context_menu.add_command(label='Sync local', command=self.btn_sync_async_click)
         self.context_menu.add_command(label='Delete local', command=self.btn_delete_local_click)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
@@ -167,6 +167,7 @@ class Remarkable(object):
     def key_binding_delete(self, event):
         self.btn_delete_async_click()
 
+
     def btn_delete_async_click(self):
         selected_ids = self.tree.selection()
         items = [self.item_factory.get_item(id) for id in selected_ids]
@@ -192,7 +193,6 @@ class Remarkable(object):
         threading.Thread(target=run).start()
             
     
-
     def btn_delete_local_click(self):
         selected_ids = self.tree.selection()
         for id in selected_ids:
@@ -202,16 +202,18 @@ class Remarkable(object):
         )
 
 
-    def btn_download_async_click(self):
+    def btn_sync_async_click(self):
         selected_ids = self.tree.selection()
 
-        def run():
-            for id in selected_ids:
-                self.item_factory.depth_search(
-                    fun = lambda i: self._sync_item(i, True),
-                    item = self.item_factory.get_item(id)
-                )
-        threading.Thread(target=run).start()
+        def sync(item):
+            thread = threading.Thread(target=self._sync_and_open_item, args=(item, True))
+            thread.start()
+
+        for id in selected_ids:
+            self.item_factory.depth_search(
+                fun = sync,
+                item = self.item_factory.get_item(id)
+        )
     
 
     def _update_tree_item(self, item):
@@ -255,8 +257,13 @@ class Remarkable(object):
         return self.icon_weird
 
 
-    def _sync_item(self, item, force):   
+    def _sync_and_open_item(self, item, force, open_file=False, open_original_file=False):   
         item.sync(force=force)
+
+        if open_file:
+            file_to_open = item.get_original_file() if open_original_file \
+                    else item.get_annotated_or_original_file()
+            subprocess.call(('xdg-open', file_to_open))
 
 
     def tree_double_click(self, event):
@@ -264,7 +271,7 @@ class Remarkable(object):
         item = self.item_factory.get_item(selected_ids[0])
         
         if item.is_document:
-            self._open_async()
+            self._open_selection_async()
 
 
     def key_binding_return(self, event):
@@ -272,11 +279,11 @@ class Remarkable(object):
 
 
     def btn_open_click(self):
-        self._open_async()
+        self._open_selection_async()
     
 
     def btn_open_original_click(self):
-        self._open_async(open_original_file=True)
+        self._open_selection_async(open_original_file=True)
 
 
     def btn_delete_local_all_click(self):
@@ -289,27 +296,22 @@ class Remarkable(object):
         )
 
 
-    def _open_async(self, open_original_file = False):
+    def _open_selection_async(self, open_original_file = False):
         selected_ids = self.tree.selection()
-        def open_id(item):
+
+        def open_item(item):
             for child in item.children:
-                open_id(child)
+                open_item(child)
             
             if not item.is_document:
                 return
 
-            self._sync_item(item, False)
-            file_to_open = item.get_original_file() if open_original_file \
-                           else item.get_annotated_or_original_file()
-            subprocess.call(('xdg-open', file_to_open))
+            thread = threading.Thread(target=self._sync_and_open_item, args=(item, False, True, open_original_file))
+            thread.start()
 
-        def open_all_ids():
-            for id in selected_ids:
-                item = self.item_factory.get_item(id)
-                open_id(item)
-
-        threading.Thread(target=open_all_ids).start()
-
+        for id in selected_ids:
+            item = self.item_factory.get_item(id)
+            open_item(item)
 
     #
     # Copy, Paste, Cut
@@ -367,7 +369,7 @@ class Remarkable(object):
         selected_ids = self.tree.selection()
 
         def sync_and_copy(item):
-            self._sync_item(item, force=False)
+            self._sync_and_open_item(item, force=False)
             self.root.clipboard_append(item.path_annotated_pdf)
 
         def run():
