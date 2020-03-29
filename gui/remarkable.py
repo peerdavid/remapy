@@ -87,15 +87,17 @@ class Remarkable(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Sync', command=self.btn_sync_item_click)
         self.context_menu.add_command(label='Open with annotations', command=self.btn_open_item_click)
         self.context_menu.add_command(label='Open without annotations', command=self.btn_open_item_original_click)
         self.context_menu.add_command(label='Rename')
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Copy')
+        self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
-        self.context_menu.add_command(label='Cut')        
+        self.context_menu.add_command(label='Cut')   
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label='Sync', command=self.btn_sync_item_click)
+        self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -319,14 +321,14 @@ class Remarkable(object):
                 if item is None:
                     break
                 
-                # try:
-                self._sync_and_open_item(item, force, open_file, open_original)
-                # except Exception as e:
-                #     if open_file:
-                #         self.log("(Error) Could not open '%s'" % item.name[0:50])
-                #     else:
-                #         self.log("(Error) Could not sync '%s'" % item.name[0:50])
-                #     print(e)
+                try:
+                    self._sync_and_open_item(item, force, open_file, open_original)
+                except Exception as e:
+                    if open_file:
+                        self.log("(Error) Could not open '%s'" % item.name[0:50])
+                    else:
+                        self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                    print(e)
                     
                 q.task_done()
 
@@ -460,4 +462,32 @@ class Remarkable(object):
 
 
     def key_binding_copy(self, event):
-        pass
+        self.btn_copy_async_click()
+
+
+    def btn_copy_async_click(self):
+        self.root.clipboard_clear()
+        selected_ids = self.tree.selection()
+
+        def sync_and_copy(item):
+            self._sync_and_open_item(item, force=False)
+            self.root.clipboard_append(item.path_annotated_pdf)
+
+        def run():
+            for id in selected_ids:
+                self.item_factory.depth_search(
+                    fun=lambda item: sync_and_copy(item),
+                    item = self.item_factory.get_item(id))
+        threading.Thread(target=run).start()
+        self.root.update()
+
+
+    def btn_open_in_file_explorer(self):
+        selected_ids = self.tree.selection()
+        items = [self.item_factory.get_item(id) for id in selected_ids]
+
+        for item in items:
+            if not item.is_document:
+                continue
+
+            subprocess.call(('xdg-open', item.path_remapy))

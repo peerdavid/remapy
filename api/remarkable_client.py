@@ -261,7 +261,8 @@ class RemarkableClient():
                              data=data,
                              headers=_headers,
                              params=params,
-                             stream=stream)
+                             stream=stream,
+                             timeout=60*2)
         return r
 
 

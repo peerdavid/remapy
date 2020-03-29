@@ -31,11 +31,13 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Use multiple threads to download and render documents (speed up)
  - [x] Show sync state also on collection level
  - [x] Show icon while uploading a file
- - [ ] Create new folder
+ - [ ] Rename collection
+ - [ ] Rename document
+ - [ ] Create new collection
  - [ ] Create new notebook
- - [ ] Rename collection / documents
- - [ ] Move collection / documents
- - [ ] Filter / Search documents
+ - [ ] Move collection
+ - [ ] Move document
+ - [ ] Filter / Search for documents
  - [ ] Better error handling
  - [ ] Logging
  - [ ] Test offline
@@ -48,9 +50,9 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Create full (or partially folder) backups of raw data
  - [ ] Backup viewer
  - [ ] Restore a backup into the cloud 
- - [ ] Search also for handwritten text
+ - [ ] OCR; Search in documents text and handwritten notes
  - [ ] SSH access: Update background image, live view
- - [ ] Decrypt encrypted pdf's to be compatible with the RM
+ - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
 
 
 # How to setup / install RemaPy
@@ -67,4 +69,5 @@ to create a virtual environment and install all necessary packages:
 # Acknowledgments
 [1] Python remarkable api, https://github.com/subutux/rmapy <br />
 [2] Golang remarkable tool, https://github.com/juruen/rmapi/ <br />
-[3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, Good ware, prettycons from www.flaticon.com <br />
+[3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, 
+Good ware, prettycons, Payungkead from www.flaticon.com <br />

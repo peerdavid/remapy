@@ -26,7 +26,7 @@ ABOUT = \
    project is not affiliated with reMarkable AS, Oslo. 
 
    Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, Good ware, 
-   prettycons from www.flaticon.com
+   prettycons, Payungkead from www.flaticon.com
 
 
 
