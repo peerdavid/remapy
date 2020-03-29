@@ -40,22 +40,33 @@ DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 # CLIENT
 #
 class RemarkableClient():
-    def __init__(self):
-        self.test = True
-        self.sign_in_listener = []
+
+    class SignInListenerHandler(metaclass=Singleton):
+        
+        def __init__(self):
+            self.sign_in_listener = []
+
+        def listen_sign_in(self, subscriber):
+            """ Sends a signal (true) if successfully signed in 
+                and (false) if login was not possible in rm cloud.
+            """
+            self.sign_in_listener.append(subscriber)
+        
+        def publish(self, code=EVENT_SUCCESS, data=None):
+            for subscriber in self.sign_in_listener:
+                subscriber.sign_in_event_handler(code, data)
+
 
     #
-    # EVENT HANDLER
+    # CTOR
     #
+    def __init__(self):
+        self.test = True
+        self.listener_handler = self.SignInListenerHandler()
+
     def listen_sign_in(self, subscriber):
-        """ Sends a signal (true) if successfully signed in 
-            and (false) if login was not possible in rm cloud.
-        """
-        self.sign_in_listener.append(subscriber)
-    
-    def publish(self, subscribers, code=EVENT_SUCCESS, data=None):
-        for subscriber in subscribers:
-            subscriber.sign_in_event_handler(code, data)
+        self.listener_handler.listen_sign_in(subscriber)   
+
 
     #
     # API
@@ -68,18 +79,18 @@ class RemarkableClient():
         device_token = cfg.get("authentication.device_token")
         if device_token == None:
             if onetime_code is None or onetime_code == "":
-                self.publish(self.sign_in_listener, EVENT_ONETIMECODE_NEEDED)
+                self.listener_handler.publish(EVENT_ONETIMECODE_NEEDED)
                 return
 
             device_token = self._get_device_token(onetime_code)
             if device_token is None:
-                self.publish(self.sign_in_listener, EVENT_DEVICE_TOKEN_FAILED)
+                self.listener_handler.publish(EVENT_DEVICE_TOKEN_FAILED)
                 return            
         
         # Renew the user token.
         user_token = self._get_user_token(device_token)
         if user_token is None:
-            self.publish(self.sign_in_listener, EVENT_USER_TOKEN_FAILED)
+            self.listener_handler.publish(EVENT_USER_TOKEN_FAILED)
             return
         
         # Save tokens to config
@@ -88,7 +99,7 @@ class RemarkableClient():
         cfg.save({"authentication": auth})
 
         # Inform all subscriber
-        self.publish(self.sign_in_listener, EVENT_SUCCESS, auth)
+        self.listener_handler.publish(EVENT_SUCCESS, auth)
         return auth
         
 
