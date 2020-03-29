@@ -3,13 +3,12 @@ import model.item
 from model.item import Item
 
 
-STATE_COLLECTION = 100
 
 class Collection(Item):
 
     def __init__(self, entry, parent):
         super(Collection, self).__init__(entry, parent)
-        self.state = STATE_COLLECTION
+        self.state = model.item.STATE_SYNCED
         pass
 
 
@@ -29,17 +28,23 @@ class Collection(Item):
 
         ok = self.rm_client.delete_item(self.id, self.version)
         if ok:
-            self._update_state(state=STATE_DELETED)
+            self._update_state(state=model.item.STATE_DELETED)
         return ok
 
+    def is_root_collection(self):
+        return self.parent == None
 
     def full_name(self):
-        if self.parent == None:
+        if self.is_root_collection():
             return "."
             
         return "%s/%s" % (self.parent.full_name(), self.name)
 
+
     def _update_state(self, state):
+        if self.is_root_collection():
+            return 
+            
         self.state = state
         self._update_state_listener()
     
@@ -71,6 +76,15 @@ class Collection(Item):
         
         return False
     
+
     def listen_child_state_change(self, item):
         if item.state == model.item.STATE_DELETED:
             self.children.remove(item)
+            return
+        
+        # Check sync stage
+        for child in self.children:
+            if child.state == model.item.STATE_SYNCING:
+                self._update_state(model.item.STATE_SYNCING)
+                return
+        self._update_state(model.item.STATE_SYNCED)

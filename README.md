@@ -10,6 +10,7 @@ A list of some todo's and future ideas that I want to implement is given below.
 ![Explorer](doc/explorer.png)
 
 # ToDo's
+## Basic functionality
  - [x] Authentication
  - [x] Settings page (Path to templates, sync folder, )
  - [x] About page
@@ -28,8 +29,8 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Show download progress bar
  - [x] Better rendering for highlighter
  - [x] Use multiple threads to download and render documents (speed up)
- - [ ] Show sync state also on collection level
- - [ ] Upload raw zip file (i.e. restore from backup)
+ - [x] Show sync state also on collection level
+ - [ ] Show icon while uploading a file
  - [ ] Create new folder
  - [ ] Create new notebook
  - [ ] Delete local if doc is not available on remarkable 
@@ -42,7 +43,8 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Create installer
 
 
-# Future ideas
+## Future ideas
+ - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Zotero sync
  - [ ] Create full (or partially folder) backups of raw data
  - [ ] Backup viewer

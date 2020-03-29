@@ -3,6 +3,8 @@ from api.remarkable_client import RemarkableClient
 import time
 
 
+STATE_SYNCING = 1
+STATE_SYNCED = 2
 STATE_DELETED = 170591
 
 

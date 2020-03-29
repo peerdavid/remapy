@@ -71,7 +71,8 @@ class Remarkable(object):
         self.tree.tag_configure('move', background='#FF9800')    
         
         self.icon_cloud = self._create_tree_icon("./gui/icons/cloud.png", rowheight)
-        self.icon_syncing = self._create_tree_icon("./gui/icons/syncing.png", rowheight)
+        self.icon_document_syncing = self._create_tree_icon("./gui/icons/document_syncing.png", rowheight)
+        self.icon_collection_syncing = self._create_tree_icon("./gui/icons/collection_syncing.png", rowheight)
         self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
         self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
         self.icon_epub = self._create_tree_icon("./gui/icons/epub.png", rowheight)
@@ -194,16 +195,19 @@ class Remarkable(object):
 
     def _get_icon(self, item):
         if not item.is_document:
-            return self.icon_collection
+            if item.state == model.item.STATE_SYNCED:
+                return self.icon_collection
+            else:
+                return self.icon_collection_syncing
         
 
         if item.state == model.document.STATE_NOT_SYNCED:
             return self.icon_cloud
         
-        elif item.state == model.document.STATE_SYNCING:
-            return self.icon_syncing
+        elif item.state == model.item.STATE_SYNCING:
+            return self.icon_document_syncing
 
-        if item.state == model.document.STATE_SYNCED:
+        if item.state == model.item.STATE_SYNCED:
             if item.type == model.document.TYPE_PDF:
                 return self.icon_pdf
             elif item.type == model.document.TYPE_EPUB:
@@ -314,14 +318,14 @@ class Remarkable(object):
                 if item is None:
                     break
                 
-                try:
-                    self._sync_and_open_item(item, force, open_file, open_original)
-                except Exception as e:
-                    if open_file:
-                        self.log("(Error) Could not open '%s'" % item.name[0:50])
-                    else:
-                        self.log("(Error) Could not sync '%s'" % item.name[0:50])
-                    print(e)
+                # try:
+                self._sync_and_open_item(item, force, open_file, open_original)
+                # except Exception as e:
+                #     if open_file:
+                #         self.log("(Error) Could not open '%s'" % item.name[0:50])
+                #     else:
+                #         self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                #     print(e)
                     
                 q.task_done()
 
@@ -346,7 +350,7 @@ class Remarkable(object):
 
     def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
 
-        if (force or item.state != model.document.STATE_SYNCED) and not item.is_root_item():
+        if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
             item.sync()
             self.log("Synced '%s'" %  item.full_name())
 
@@ -385,6 +389,7 @@ class Remarkable(object):
         def run():
             for item in items:
                 item.delete()
+                self.log("Deleted %s" % item.full_name())
         threading.Thread(target=run).start()
 
 
@@ -421,17 +426,26 @@ class Remarkable(object):
             messagebox.showerror("Paste error", "Only .pdf and .epub files are supported.")
             return
         
-        # Upload file
-        id, metadata, mf = create_document_zip(
-            file_path, 
-            file_type=filetype, 
-            parent_id = parent_id)
-        metadata = self.rm_client.upload(id, metadata, mf)
+        def run():
+            # Upload file
+            id, metadata, mf = create_document_zip(
+                file_path, 
+                file_type=filetype, 
+                parent_id = parent_id)
+            metadata = self.rm_client.upload(id, metadata, mf)
 
-        # Add to tree
-        parent = self.item_factory.get_item(parent_id)
-        item = self.item_factory.create_item(metadata, parent)
-        self._update_tree(item)
+            # Add to tree
+            parent = self.item_factory.get_item(parent_id)
+            item = self.item_factory.create_item(metadata, parent)
+            self._update_tree(item)
+
+            # Download again to get it correctly
+            item.sync()
+            self.log("Successfully uploaded %s" % item.full_name())
+
+        
+        self.log("Uploading %s..." % file_path)
+        threading.Thread(target=run).start()
 
 
     def key_binding_copy(self, event):

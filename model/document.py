@@ -25,10 +25,8 @@ TYPE_PDF = 2
 TYPE_EPUB = 3
 
 # Synced with cloud states
-STATE_NOT_SYNCED = 0
-STATE_SYNCING = 1
-STATE_SYNCED = 2
-STATE_OUT_OF_SYNC = 3
+STATE_NOT_SYNCED = 200
+STATE_OUT_OF_SYNC = 201
 
 
 class Document(Item):
@@ -82,7 +80,7 @@ class Document(Item):
         return "%s/%s" % (self.parent.full_name(), self.name)
 
     def sync(self):
-        self.state = STATE_SYNCING
+        self.state = model.item.STATE_SYNCING
         self._update_state_listener()
 
         self._download_raw()
@@ -164,7 +162,7 @@ class Document(Item):
             with open(self.path_metadata_local, encoding='utf-8') as f:
                 local_metadata = json.loads(f.read())
 
-            self.state = STATE_SYNCED if local_metadata["Version"] == self.version else STATE_OUT_OF_SYNC
+            self.state = model.item.STATE_SYNCED if local_metadata["Version"] == self.version else STATE_OUT_OF_SYNC
             is_epub = os.path.exists(self.path_original_epub)
             is_pdf = not is_epub and os.path.exists(self.path_original_pdf)
 
