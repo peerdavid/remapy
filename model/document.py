@@ -78,11 +78,10 @@ class Document(Item):
     def is_parent_of(self, item):
         return False
 
+    def full_name(self):
+        return "%s/%s" % (self.parent.full_name(), self.name)
 
-    def sync(self, force=False):
-
-        if not force and self.state == STATE_SYNCED:
-            return 
+    def sync(self):
         self.state = STATE_SYNCING
         self._update_state_listener()
 
@@ -156,7 +155,7 @@ class Document(Item):
     def _update_state(self, inform_listener=True):
         
         # Not synced
-        if not os.path.exists(self.path) or not os.path.exists(self.path_metadata_local):
+        if not os.path.exists(self.path_metadata_local):
             self.type = TYPE_UNKNOWN
             self.state = STATE_NOT_SYNCED
         

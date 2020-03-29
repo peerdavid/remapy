@@ -242,4 +242,4 @@ class About(object):
       about_text = tk.scrolledtext.ScrolledText(root)
       about_text.insert("1.0", ABOUT)
       about_text.config(state=tk.DISABLED)
-      about_text.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+      about_text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)

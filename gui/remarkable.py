@@ -91,7 +91,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Rename')
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
+        self.context_menu.add_command(label='Copy')
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')        
 
@@ -99,7 +99,7 @@ class Remarkable(object):
 
         # Footer
         self.lower_frame = tk.Frame(root)
-        self.lower_frame.pack(side=tk.BOTTOM, anchor="w")
+        self.lower_frame.pack(side=tk.BOTTOM, anchor="w", fill=tk.X)
 
         self.lower_frame_left = tk.Frame(self.lower_frame)
         self.lower_frame_left.pack(side=tk.LEFT)
@@ -116,7 +116,7 @@ class Remarkable(object):
         self.log_widget = tk.scrolledtext.ScrolledText(self.lower_frame_right, height=3)
         self.log_widget.insert(tk.END, "Starting RemaPy Explorer...")
         self.log_widget.config(state=tk.DISABLED)
-        self.log_widget.pack(expand=True, fill=tk.BOTH)
+        self.log_widget.pack(expand=True, fill=tk.X)
         
         self.rm_client.listen_sign_in(self)
     
@@ -243,7 +243,7 @@ class Remarkable(object):
             self._sync_selection_async(
                 force=False, 
                 open_file=True, 
-                open_original=True)
+                open_original=False)
 
 
     def key_binding_return(self, event):
@@ -264,6 +264,12 @@ class Remarkable(object):
                 open_original=True)
 
     def btn_resync_click(self):
+        message = "Do you really want to delete ALL local files and download ALL documents again?"
+        result = messagebox.askquestion("Warning", message, icon='warning')
+
+        if result != "yes":
+            return 
+
         # Clean everything, also if some (old) things exist
         shutil.rmtree(utils.config.PATH, ignore_errors=True)
         Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
@@ -297,8 +303,6 @@ class Remarkable(object):
 
 
     def _sync_items(self, items, force=False, open_file=False, open_original=False):
-        
-        num_errors = 0
         q = queue.Queue()
         threads = []
 
@@ -310,12 +314,16 @@ class Remarkable(object):
                 
                 try:
                     self._sync_and_open_item(item, force, open_file, open_original)
-                except e:
-                    self.log("(Error) Could not sync '%s'" % item.name[0:50])
-                    num_errors += 1
+                except Exception as e:
+                    if open_file:
+                        self.log("(Error) Could not open '%s'" % item.name[0:50])
+                    else:
+                        self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                    print(e)
+                    
                 q.task_done()
 
-        num_worker_threads = 50
+        num_worker_threads = 10
         for i in range(num_worker_threads):
             t = threading.Thread(target=worker)
             t.start()
@@ -333,14 +341,12 @@ class Remarkable(object):
         for t in threads:
             t.join()
         
-        self.log("\nSynced %d document(s). %d error(s) occured." % (len(items), num_errors))
-
 
     def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
-        self.log("Syncing '%s'" % item.name[0:50])
 
-        if not item.is_root_item() and item.is_document:
-            item.sync(force=force)
+        if (force or item.state != model.document.STATE_SYNCED) and not item.is_root_item():
+            item.sync()
+            self.log("Synced '%s'" %  item.full_name())
 
         if open_file:
             file_to_open = item.get_original_file() if open_original \
@@ -426,24 +432,5 @@ class Remarkable(object):
         self._update_tree(item)
 
 
-
     def key_binding_copy(self, event):
-        self.btn_copy_async_click()
-
-
-    def btn_copy_async_click(self):
-        self.root.clipboard_clear()
-        selected_ids = self.tree.selection()
-
-        def sync_and_copy(item):
-            self._sync_and_open_item(item, force=False)
-            self.root.clipboard_append(item.path_annotated_pdf)
-
-        def run():
-            for id in selected_ids:
-                self.item_factory.depth_search(
-                    fun=lambda item: sync_and_copy(item),
-                    item = self.item_factory.get_item(id))
-        threading.Thread(target=run).start()
-        self.root.update()
-            
+        pass

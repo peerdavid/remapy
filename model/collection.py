@@ -17,6 +17,8 @@ class Collection(Item):
         self.children.append(child)
         child.add_state_listener(self.listen_child_state_change)
 
+    def sync():
+        pass
 
     def delete(self):
         
@@ -30,6 +32,12 @@ class Collection(Item):
             self._update_state(state=STATE_DELETED)
         return ok
 
+
+    def full_name(self):
+        if self.parent == None:
+            return "."
+            
+        return "%s/%s" % (self.parent.full_name(), self.name)
 
     def _update_state(self, state):
         self.state = state
