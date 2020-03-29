@@ -28,6 +28,8 @@ class Remarkable(object):
     def __init__(self, root, window, font_size=14, rowheight=14):
         
         self.root = root
+        app_dir = os.path.dirname(__file__)
+        icon_dir = os.path.join(app_dir, 'icons/')
 
         # Create tkinter elements
         self.nodes = dict()
@@ -70,18 +72,18 @@ class Remarkable(object):
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        self.icon_cloud = self._create_tree_icon("./gui/icons/cloud.png", rowheight)
-        self.icon_document_syncing = self._create_tree_icon("./gui/icons/document_syncing.png", rowheight)
-        self.icon_document_upload = self._create_tree_icon("./gui/icons/document_upload.png", rowheight)
-        self.icon_collection_syncing = self._create_tree_icon("./gui/icons/collection_syncing.png", rowheight)
-        self.icon_collection = self._create_tree_icon("./gui/icons/collection.png", rowheight)
-        self.icon_notebook = self._create_tree_icon("./gui/icons/notebook.png", rowheight)
-        self.icon_epub = self._create_tree_icon("./gui/icons/epub.png", rowheight)
-        self.icon_pdf = self._create_tree_icon("./gui/icons/pdf.png", rowheight)
-        self.icon_notebook_out_of_sync = self._create_tree_icon("./gui/icons/notebook_out_of_sync.png", rowheight)
-        self.icon_epub_out_of_sync = self._create_tree_icon("./gui/icons/epub_out_of_sync.png", rowheight)
-        self.icon_pdf_out_of_sync = self._create_tree_icon("./gui/icons/pdf_out_of_sync.png", rowheight)
-        self.icon_weird = self._create_tree_icon("./gui/icons/weird.png", rowheight)
+        self.icon_cloud = self._create_tree_icon(icon_dir + "cloud.png", rowheight)
+        self.icon_document_syncing = self._create_tree_icon(icon_dir + "document_syncing.png", rowheight)
+        self.icon_document_upload = self._create_tree_icon(icon_dir + "document_upload.png", rowheight)
+        self.icon_collection_syncing = self._create_tree_icon(icon_dir + "collection_syncing.png", rowheight)
+        self.icon_collection = self._create_tree_icon(icon_dir + "collection.png", rowheight)
+        self.icon_notebook = self._create_tree_icon(icon_dir + "notebook.png", rowheight)
+        self.icon_epub = self._create_tree_icon(icon_dir + "epub.png", rowheight)
+        self.icon_pdf = self._create_tree_icon(icon_dir + "pdf.png", rowheight)
+        self.icon_notebook_out_of_sync = self._create_tree_icon(icon_dir + "notebook_out_of_sync.png", rowheight)
+        self.icon_epub_out_of_sync = self._create_tree_icon(icon_dir + "epub_out_of_sync.png", rowheight)
+        self.icon_pdf_out_of_sync = self._create_tree_icon(icon_dir + "pdf_out_of_sync.png", rowheight)
+        self.icon_weird = self._create_tree_icon(icon_dir + "weird.png", rowheight)
 
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
