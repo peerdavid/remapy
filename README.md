@@ -27,7 +27,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Upload epub file
  - [x] Show download progress bar
  - [x] Better rendering for highlighter
- - [ ] Use multiple threads to download and render documents (speed up)
+ - [x] Use multiple threads to download and render documents (speed up)
  - [ ] Show sync state also on collection level
  - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Create new folder
