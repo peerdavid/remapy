@@ -1,7 +1,7 @@
 import numpy as np
 import model.item
 from model.item import Item
-
+from pathlib import Path
 
 
 class Collection(Item):
@@ -35,8 +35,11 @@ class Collection(Item):
         return self.parent == None
 
     def full_name(self):
-        if self.is_root_collection():
-            return "."
+        if self.parent is None:
+            return ""
+            
+        if self.parent.parent is None:
+            return self.name
             
         return "%s/%s" % (self.parent.full_name(), self.name)
 
@@ -88,3 +91,7 @@ class Collection(Item):
                 self._update_state(model.item.STATE_SYNCING)
                 return
         self._update_state(model.item.STATE_SYNCED)
+    
+
+    def create_backup(self, path):
+        Path(path).mkdir(parents=True, exist_ok=True)

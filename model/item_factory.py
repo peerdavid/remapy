@@ -37,10 +37,10 @@ class ItemFactory(metaclass=Singleton):
 
 
     def depth_search(self, fun, item=None, document_only=True, collection_only=False):
-        item = self.root if item == None else item
+        item = self.get_root() if item == None else item
         
         for child in item.children:
-            self.depth_search(fun, child)
+            self.depth_search(fun, child, document_only, collection_only)
         
         if collection_only and item.is_document:
             return
@@ -49,6 +49,20 @@ class ItemFactory(metaclass=Singleton):
             return
 
         fun(item)
+
+
+    def create_backup(self, backup_path):
+        # Create folder structure
+        self.depth_search(
+            fun=lambda item: item.create_backup(backup_path),
+            document_only=False,
+            collection_only=True)
+
+        # And copy files into it
+        self.depth_search(
+            fun=lambda item: item.create_backup(backup_path),
+            document_only=True,
+            collection_only=False)
 
 
     def _create_tree(self, entries):

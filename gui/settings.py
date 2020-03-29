@@ -1,16 +1,21 @@
-
+from datetime import date
+import time
 import webbrowser
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter import messagebox
+import threading
+from pathlib import Path
 
 import api.remarkable_client
 from api.remarkable_client import RemarkableClient
 import utils.config as cfg
-
+import model.item_factory
 
 class Settings(object):
     def __init__(self, root, font_size):
         self.rm_client=RemarkableClient()
+        self.item_factory = model.item_factory.ItemFactory()
 
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)
@@ -18,6 +23,9 @@ class Settings(object):
         root.grid_rowconfigure(3, minsize=30)
         root.grid_rowconfigure(4, minsize=30)
         root.grid_rowconfigure(6, minsize=50)
+        root.grid_rowconfigure(7, minsize=30)
+        root.grid_rowconfigure(8, minsize=30)
+        root.grid_rowconfigure(9, minsize=50)
         
         # gaps between columns
         label = tk.Label(root, text="    ")
@@ -59,8 +67,25 @@ class Settings(object):
         self.entry_templates = tk.Entry(root, textvariable=self.entry_templates_text)
         self.entry_templates.grid(row=7, column=4, sticky="W")        
 
-        self.btn_save_ = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
-        self.btn_save_.grid(row=8, column=4, sticky="W")
+        self.btn_save = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
+        self.btn_save.grid(row=8, column=4, sticky="W")
+
+        label = tk.Label(root, text="Backup", font="Helvetica 14 bold")
+        label.grid(row=9, column=2, sticky="W")
+
+        label = tk.Label(root, text="Backup path:")
+        label.grid(row=10, column=2, sticky="W")
+        self.backup_text = tk.StringVar()
+
+        backup_path = Path.joinpath(Path.home(), "Backup/Remarkable/%s" % str(date.today().strftime("%Y-%m-%d")))
+        self.backup_text.set(backup_path)
+        self.backup_entry = tk.Entry(root, textvariable=self.backup_text)
+        self.backup_entry.grid(row=10, column=4, sticky="W")  
+        self.create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
+        self.create_backup.grid(row=11, column=4, sticky="W")
+
+        self.label_backup_progress = tk.Label(root)
+        self.label_backup_progress.grid(row=10, column=6)
 
         # Subscribe to sign in event. Outer logic (i.e. main) can try to 
         # sign in automatically...
@@ -106,3 +131,22 @@ class Settings(object):
             "templates": self.entry_templates_text.get()
         }
         cfg.save({"general": general})
+
+
+    def btn_create_backup(self):
+        message = "If your explorer is not synchronized, some files are not included in the backup. Should we continue?"
+        result = messagebox.askquestion("Info", message, icon='warning')       
+
+        if result != "yes":
+            return
+
+        backup_path = self.backup_text.get()
+        self.label_backup_progress.config(text="Writing backup '%s'" % backup_path)
+
+        def run():
+            self.item_factory.create_backup(backup_path)
+            self.label_backup_progress.config(text="")
+            messagebox.showinfo("Info", "Successfully created backup '%s'" % backup_path)       
+
+        threading.Thread(target=run).start()
+

@@ -9,6 +9,7 @@ A list of some todo's and future ideas that I want to implement is given below.
 
 ![Explorer](doc/explorer.png)
 
+
 # ToDo's
 ## Basic functionality
  - [x] Authentication
@@ -31,6 +32,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Use multiple threads to download and render documents (speed up)
  - [x] Show sync state also on collection level
  - [x] Show icon while uploading a file
+ - [x] Backup annotated files
  - [ ] Alphabetic order of collections and documents in tree
  - [ ] Rename collection
  - [ ] Rename document
@@ -41,18 +43,14 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Filter / Search for documents
  - [ ] Better error handling
  - [ ] Logging
- - [ ] Test offline
+ - [ ] Make RemaPy offline ready
  - [ ] Delete local if doc is not available on remarkable 
 
 
 ## Future ideas
- - [ ] Upload raw zip file (i.e. restore from backup)
  - [ ] Zotero sync
- - [ ] Create full (or partially folder) backups of raw data
- - [ ] Backup viewer
- - [ ] Restore a backup into the cloud 
- - [ ] OCR; Search in documents text and handwritten notes
  - [ ] SSH access: Update background image, live view
+ - [ ] OCR; Search in documents text and handwritten notes
  - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
 
 
