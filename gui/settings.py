@@ -10,12 +10,10 @@ from pathlib import Path
 import api.remarkable_client
 from api.remarkable_client import RemarkableClient
 import utils.config as cfg
-import model.item_factory
 
 class Settings(object):
     def __init__(self, root, font_size):
         self.rm_client=RemarkableClient()
-        self.item_factory = model.item_factory.ItemFactory()
 
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)

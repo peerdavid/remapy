@@ -3,7 +3,7 @@ from model.collection import Collection
 from model.document import Document
 from utils.helper import Singleton
 
-class ItemFactory(metaclass=Singleton):
+class ItemManager(metaclass=Singleton):
     
     def __init__(self,):
         self.rm_client = RemarkableClient()

@@ -14,7 +14,7 @@ from PIL import Image
 
 import api.remarkable_client
 from api.remarkable_client import RemarkableClient
-from model.item_factory import ItemFactory
+from model.item_manager import ItemManager
 from model.item import Item
 import model.document
 from model.document import Document, create_document_zip
@@ -34,7 +34,7 @@ class Remarkable(object):
         # Create tkinter elements
         self.nodes = dict()
         self.rm_client = RemarkableClient()
-        self.item_factory = ItemFactory()
+        self.item_manager = ItemManager()
 
         style = ttk.Style()
         style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
@@ -98,7 +98,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')   
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Sync', command=self.btn_sync_item_click)
+        self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
         self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
@@ -171,7 +171,7 @@ class Remarkable(object):
     def tree_right_click(self, event):
         selected_ids = self.tree.selection()
         if selected_ids:
-            items = [self.item_factory.get_item(id) for id in selected_ids]
+            items = [self.item_manager.get_item(id) for id in selected_ids]
             for item in items:
                 for possile_child in items:
                     if not item.is_parent_of(possile_child):
@@ -238,7 +238,7 @@ class Remarkable(object):
     #
     # SYNC AND OPEN
     #
-    def btn_sync_item_click(self):
+    def btn_resync_item_click(self):
         self._sync_selection_async(
                 force=True, 
                 open_file=False, 
@@ -247,7 +247,7 @@ class Remarkable(object):
 
     def tree_double_click(self, event):
         selected_ids = self.tree.selection()
-        item = self.item_factory.get_item(selected_ids[0])
+        item = self.item_manager.get_item(selected_ids[0])
         
         if item.is_document:
             self._sync_selection_async(
@@ -284,7 +284,7 @@ class Remarkable(object):
         shutil.rmtree(utils.config.PATH, ignore_errors=True)
         Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
 
-        self.item_factory.depth_search(
+        self.item_manager.depth_search(
             fun=lambda item: item.update_state()
         )
 
@@ -294,11 +294,11 @@ class Remarkable(object):
 
     def btn_sync_click(self):
         self.log("Syncing all documents...")
-        root = self.item_factory.get_root(force=True)
+        root = self.item_manager.get_root(force=True)
         self.tree.delete(*self.tree.get_children())
         self._update_tree(root)
 
-        self._sync_items_async([self.item_factory.get_root()],
+        self._sync_items_async([self.item_manager.get_root()],
                 force=False, 
                 open_file=False, 
                 open_original=False)
@@ -307,7 +307,7 @@ class Remarkable(object):
     def _sync_selection_async(self, force=False, open_file=False, open_original=False):
         self.log("Syncing selected documents...")
         selected_ids = self.tree.selection()
-        items = [self.item_factory.get_item(id) for id in selected_ids]
+        items = [self.item_manager.get_item(id) for id in selected_ids]
         self._sync_items_async(items, force, open_file, open_original)
 
 
@@ -347,7 +347,7 @@ class Remarkable(object):
         
         # Add all items and child items
         for item in items:
-            self.item_factory.depth_search(fun=q.put, item = item)
+            self.item_manager.depth_search(fun=q.put, item = item)
             
         q.join()
 
@@ -380,7 +380,7 @@ class Remarkable(object):
 
     def btn_delete_item_click(self):
         selected_ids = self.tree.selection()
-        items = [self.item_factory.get_item(id) for id in selected_ids]
+        items = [self.item_manager.get_item(id) for id in selected_ids]
         
         count = [0, 0]
         for item in items:
@@ -418,7 +418,7 @@ class Remarkable(object):
             return
         
         elif len(selected_ids) == 1:
-            item = self.item_factory.get_item(selected_ids[0])
+            item = self.item_manager.get_item(selected_ids[0])
             parent_id = str(item.parent.id if item.is_document else item.id)
         
         else:
@@ -456,8 +456,8 @@ class Remarkable(object):
             metadata = self.rm_client.upload(id, metadata, mf)
 
             # Add to tree
-            parent = self.item_factory.get_item(parent_id)
-            item = self.item_factory.create_item(metadata, parent)
+            parent = self.item_manager.get_item(parent_id)
+            item = self.item_manager.create_item(metadata, parent)
             item.add_state_listener(self._update_tree_item)
 
             # Download again to get it correctly
@@ -483,16 +483,16 @@ class Remarkable(object):
 
         def run():
             for id in selected_ids:
-                self.item_factory.depth_search(
+                self.item_manager.depth_search(
                     fun=lambda item: sync_and_copy(item),
-                    item = self.item_factory.get_item(id))
+                    item = self.item_manager.get_item(id))
         threading.Thread(target=run).start()
         self.root.update()
 
 
     def btn_open_in_file_explorer(self):
         selected_ids = self.tree.selection()
-        items = [self.item_factory.get_item(id) for id in selected_ids]
+        items = [self.item_manager.get_item(id) for id in selected_ids]
 
         for item in items:
             if not item.is_document:
