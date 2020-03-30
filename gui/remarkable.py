@@ -151,16 +151,20 @@ class Remarkable(object):
     
     def _update_tree(self, item):
         if not item.is_root_item():
-            pos = int(item.is_document)*10
             tree_id = self.tree.insert(
                 item.parent.id, 
-                pos, 
+                0, 
                 item.id)
+            
             self._update_tree_item(item)
 
             item.add_state_listener(self._update_tree_item)    
 
-        for child in item.children:
+        # Sort by name and item type
+        sorted_children = item.children
+        sorted_children.sort(key=lambda x: str.lower(x.name), reverse=True)
+        sorted_children.sort(key=lambda x: int(x.is_document), reverse=True)
+        for child in sorted_children:
             self._update_tree(child)
 
     

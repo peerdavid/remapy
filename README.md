@@ -33,7 +33,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Show sync state also on collection level
  - [x] Show icon while uploading a file
  - [x] Backup annotated files
- - [ ] Alphabetic order of collections and documents in tree
+ - [x] Alphabetic order of collections and documents in tree
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
