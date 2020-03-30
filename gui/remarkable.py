@@ -438,6 +438,8 @@ class Remarkable(object):
             return
         
         def run():
+            # ToDo: Refactor this function into the item manager where a 
+            #       callback indicates the state...
             # Upload file
             id, metadata, mf = create_document_zip(
                 file_path, 
