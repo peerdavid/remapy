@@ -36,10 +36,10 @@ class Remarkable(object):
         self.rm_client = RemarkableClient()
         self.item_manager = ItemManager()
 
-        style = ttk.Style()
-        style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
-        style.configure("remapy.style.Treeview.Heading", font=font_size)
-        style.layout("remapy.style.Treeview", [('remapy.style.Treeview.treearea', {'sticky': 'nswe'})])
+        self.tree_style = ttk.Style()
+        self.tree_style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
+        self.tree_style.configure("remapy.style.Treeview.Heading", font=font_size)
+        self.tree_style.layout("remapy.style.Treeview", [('remapy.style.Treeview.treearea', {'sticky': 'nswe'})])
         
         self.upper_frame = tk.Frame(root)
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
@@ -91,15 +91,15 @@ class Remarkable(object):
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
         self.context_menu.add_command(label='Open with annotations', command=self.btn_open_item_click)
         self.context_menu.add_command(label='Open without annotations', command=self.btn_open_item_original_click)
+        self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
         self.context_menu.add_command(label='Rename')
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Cut')   
-        self.context_menu.add_separator()
-        self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
-        self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -110,11 +110,11 @@ class Remarkable(object):
         self.lower_frame_left = tk.Frame(self.lower_frame)
         self.lower_frame_left.pack(side=tk.LEFT)
 
-        btn = tk.Button(self.lower_frame_left, text="Sync", width=10, command=self.btn_sync_click)
-        btn.pack(anchor="w")
+        self.btn_sync = tk.Button(self.lower_frame_left, text="Sync", width=10, command=self.btn_sync_click)
+        self.btn_sync.pack(anchor="w")
 
-        btn = tk.Button(self.lower_frame_left, text="ReSync", width=10, command=self.btn_resync_click)
-        btn.pack(anchor="w")
+        self.btn_resync = tk.Button(self.lower_frame_left, text="ReSync", width=10, command=self.btn_resync_click)
+        self.btn_resync.pack(anchor="w")
 
         self.lower_frame_right = tk.Frame(self.lower_frame)
         self.lower_frame_right.pack(side=tk.LEFT, expand=True, fill=tk.X)
@@ -126,6 +126,20 @@ class Remarkable(object):
         
         self.rm_client.listen_sign_in(self)
     
+
+    def _set_online_mode(self, mode):
+        self.btn_sync.config(state=mode)
+        self.btn_resync.config(state=mode)
+        self.context_menu.entryconfig(4, state=mode)
+        self.context_menu.entryconfig(5, state=mode)
+        self.context_menu.entryconfig(6, state=mode)
+        self.context_menu.entryconfig(8, state=mode)
+        self.context_menu.entryconfig(9, state=mode)
+        self.context_menu.entryconfig(10, state=mode)
+
+        bg = "#ffffff" if mode == "normal" else "#bdbdbd"
+        self.tree_style.configure("remapy.style.Treeview", background=bg)
+
 
     def log(self, text):
         now = strftime("%H:%M:%S", gmtime())
@@ -144,9 +158,10 @@ class Remarkable(object):
 
 
     def sign_in_event_handler(self, event, data):
-        if event == api.remarkable_client.EVENT_SUCCESS:
-            self.log("Successfully signed in")
-            self.btn_sync_click()
+        # Also if the login failed (e.g. we are offline) we try again 
+        # if we can sync the items (e.g. with old user key) and otherwise 
+        # we switch to the offline mode
+        self.btn_sync_click()
 
     
     def _update_tree(self, item):
@@ -275,7 +290,12 @@ class Remarkable(object):
 
 
     def btn_resync_click(self):
-        message = "Do you really want to delete ALL local files and download ALL documents again?"
+
+        if self.is_online:
+            message = "Do you really want to delete ALL local files and download ALL documents again?"
+        else:
+            message = "Do you really want resync without a connection to the remarkable cloud?"
+        
         result = messagebox.askquestion("Warning", message, icon='warning')
 
         if result != "yes":
@@ -291,22 +311,29 @@ class Remarkable(object):
 
         # And sync again
         self.btn_sync_click()
-    
+
 
     def btn_sync_click(self):
         self.log("Syncing all documents...")
-        root = self.item_manager.get_root(force=True)
+        root, self.is_online = self.item_manager.get_root(force=True)
+
+        if self.is_online:
+            self.log("Successfully signed in")
+            self._set_online_mode("normal")
+        else:
+            self.log("OFFLINE MODE: No connection to the remarkable cloud")
+            self._set_online_mode("disabled")
+
         self.tree.delete(*self.tree.get_children())
         self._update_tree(root)
 
-        # self._sync_items_async([self.item_manager.get_root()],
-        #         force=False, 
-        #         open_file=False, 
-        #         open_original=False)
+        self._sync_items_async([self.item_manager.get_root()],
+                force=False, 
+                open_file=False, 
+                open_original=False)
 
 
     def _sync_selection_async(self, force=False, open_file=False, open_original=False):
-        self.log("Syncing selected documents...")
         selected_ids = self.tree.selection()
         items = [self.item_manager.get_item(id) for id in selected_ids]
         self._sync_items_async(items, force, open_file, open_original)

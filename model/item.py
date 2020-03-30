@@ -7,11 +7,30 @@ from api.remarkable_client import RemarkableClient
 import utils.config
 
 
+#
+# DEFINITIONS
+#
 STATE_SYNCING = 1
 STATE_SYNCED = 2
 STATE_DELETED = 170591
 
 
+#
+# HELPER
+#
+def get_path(id):
+    return "%s/%s" % (utils.config.PATH, id)
+
+def get_path_remapy(id):    
+    return "%s/.remapy" % get_path(id)
+
+def get_path_metadata_local(id):
+    return "%s/metadata.local" % get_path_remapy(id)
+
+
+#
+# CLASS
+#
 class Item(object):
 
     def __init__(self, entry, parent=None):
@@ -43,10 +62,9 @@ class Item(object):
             self.modified_client = datetime.strptime(entry["ModifiedClient"], "%Y-%m-%dT%H:%M:%SZ")
         
         # Set paths
-        self.path = "%s/%s" % (utils.config.PATH, self.id)
-        self.path_remapy = "%s/.remapy" % self.path
-        self.path_metadata_local = "%s/metadata.local" % self.path_remapy
-        
+        self.path = get_path(self.id)
+        self.path_remapy = get_path_remapy(self.id)
+        self.path_metadata_local = get_path_metadata_local(self.id)
         
     def is_root_item(self):
         return self.parent is None or self.parent == ""
@@ -75,7 +93,7 @@ class Item(object):
     def _write_remapy_metadata(self):
         if self.is_root:
             return 
-            
+
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
         with open(self.path_metadata_local, "w") as out:
             out.write(json.dumps(self.entry, indent=4))

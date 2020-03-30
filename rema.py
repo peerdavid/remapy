@@ -78,7 +78,9 @@ class Main(object):
     # EVENT HANDLER
     #
     def sign_in_event_handler(self, event, data):
-        if event == api.remarkable_client.EVENT_SUCCESS:
+        # If we fail to get a user token, we are e.g. offline. So we continue 
+        # and try if we can get it later; otherwise we go into an offline mode
+        if event == api.remarkable_client.EVENT_SUCCESS or event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.notebook.tab(0, state="normal")
         else:
             self.notebook.tab(0, state="disabled")

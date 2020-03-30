@@ -1,7 +1,9 @@
 import os
 import shutil
+import json 
 
 from api.remarkable_client import RemarkableClient
+import model.item
 from model.collection import Collection
 from model.document import Document
 from utils.helper import Singleton
@@ -39,17 +41,29 @@ class ItemManager(metaclass=Singleton):
         """
         if not self.root is None and not force:
             return self.root
-        
 
-        is_online = True
-        if is_online:
-            entries = self.rm_client.list_items()
-            self._clean_local_items(entries)
-        else:
-            entries =[]
+        entries, is_online = self.get_entries()
         
+        self._clean_local_items(entries)
         self.root = self._create_tree(entries)
-        return self.root
+        return self.root, is_online
+
+    
+    def get_entries(self):
+        try:
+            entries = self.rm_client.list_items()
+            return entries, True
+        except:
+            entries = []
+            for local_id in os.listdir(utils.config.PATH):
+                entry_path = model.item.get_path_metadata_local(local_id)
+                with open(entry_path, 'r') as file:
+                    entry_content = file.read().replace('\n', '')
+                
+                entry = json.loads(entry_content)
+                entries.append(entry)
+
+        return entries, False
 
 
     def _clean_local_items(self, entries):

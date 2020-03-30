@@ -203,9 +203,12 @@ class RemarkableClient():
         if device_token is None or device_token == "":
             return None
         
-        response = self._request("POST", USER_TOKEN_URL, None, headers={
-                "Authorization": f"Bearer {device_token}"
-        })
+        try:
+            response = self._request("POST", USER_TOKEN_URL, None, headers={
+                    "Authorization": f"Bearer {device_token}"
+            })
+        except:
+            return None
 
         if response.ok:
             user_token = response.text

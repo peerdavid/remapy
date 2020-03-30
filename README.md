@@ -34,7 +34,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Show icon while uploading a file
  - [x] Backup annotated files
  - [x] Alphabetic order of collections and documents in tree
- - [ ] Make RemaPy offline ready (readonly)
+ - [x] Make RemaPy offline ready (readonly)
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
