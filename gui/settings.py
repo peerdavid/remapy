@@ -10,10 +10,12 @@ from pathlib import Path
 import api.remarkable_client
 from api.remarkable_client import RemarkableClient
 import utils.config as cfg
+from model.item_manager import ItemManager
 
 class Settings(object):
     def __init__(self, root, font_size):
         self.rm_client=RemarkableClient()
+        self.item_manager = ItemManager()
 
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)
@@ -78,7 +80,11 @@ class Settings(object):
         backup_path = Path.joinpath(Path.home(), "Backup/Remarkable/%s" % str(date.today().strftime("%Y-%m-%d")))
         self.backup_text.set(backup_path)
         self.backup_entry = tk.Entry(root, textvariable=self.backup_text)
-        self.backup_entry.grid(row=10, column=4, sticky="W")  
+        self.backup_entry.grid(row=10, column=4, sticky="W") 
+
+        label = tk.Label(root, text="Backup of annotated PDF's i.e. no restore of raw files")
+        label.grid(row=10, column=7, sticky="W") 
+
         self.create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
         self.create_backup.grid(row=11, column=4, sticky="W")
 
@@ -142,7 +148,7 @@ class Settings(object):
         self.label_backup_progress.config(text="Writing backup '%s'" % backup_path)
 
         def run():
-            self.item_factory.create_backup(backup_path)
+            self.item_manager.create_backup(backup_path)
             self.label_backup_progress.config(text="")
             messagebox.showinfo("Info", "Successfully created backup '%s'" % backup_path)       
 

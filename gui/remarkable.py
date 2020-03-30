@@ -318,7 +318,6 @@ class Remarkable(object):
         root, self.is_online = self.item_manager.get_root(force=True)
 
         if self.is_online:
-            self.log("Successfully signed in")
             self._set_online_mode("normal")
         else:
             self.log("OFFLINE MODE: No connection to the remarkable cloud")

@@ -35,6 +35,8 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Backup annotated files
  - [x] Alphabetic order of collections and documents in tree
  - [x] Make RemaPy offline ready (readonly)
+ - [ ] Show cloud symbol also on collection if some docs are not synced
+ - [ ] Upload folders (create folders and all pdf files of this folder)
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
