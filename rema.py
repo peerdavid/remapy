@@ -22,7 +22,7 @@ class Main(object):
 
         # Define app settings
         font_size = 38
-        rowheight = 28
+        rowheight = 30
         window_width = 750
         window_height = 650
 
@@ -31,7 +31,11 @@ class Main(object):
 
         # Window settings
         window.title("RemaPy Explorer")
-        x = (window.winfo_screenwidth() / 4 * 3) - (window_width / 2)
+
+        # Try to start remapy always on the first screen and in the middle.
+        # We assume a resolution width of 1920... if 1920 is too large use 
+        # the real resolution
+        x = min(window.winfo_screenwidth(), 1920) / 2 - (window_width / 2)
         y = (window.winfo_screenheight() / 2) - (window_height / 2)
         window.geometry("%dx%d+%d+%d" % (window_width, window_height, x, y))
 
