@@ -16,8 +16,16 @@ class Collection(Item):
         self.children.append(child)
         child.add_state_listener(self.listen_child_state_change)
 
-    def sync():
-        pass
+
+    def sync(self):
+        if self.is_root:
+            return
+
+        # Write metadata of collection and of all parents to ensure 
+        # that we have the same information available when we are offline
+        self._write_remapy_metadata()
+        self.parent.sync()
+
 
     def delete(self):
         
@@ -31,8 +39,10 @@ class Collection(Item):
             self._update_state(state=model.item.STATE_DELETED)
         return ok
 
+
     def is_root_collection(self):
         return self.parent == None
+
 
     def full_name(self):
         if self.parent is None:
@@ -95,3 +105,7 @@ class Collection(Item):
 
     def create_backup(self, path):
         Path(path).mkdir(parents=True, exist_ok=True)
+
+    
+    def update_state(self):
+        pass

@@ -34,6 +34,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Show icon while uploading a file
  - [x] Backup annotated files
  - [x] Alphabetic order of collections and documents in tree
+ - [ ] Make RemaPy offline ready (readonly)
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
@@ -43,16 +44,15 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Filter / Search for documents
  - [ ] Better error handling
  - [ ] Logging
- - [ ] Make RemaPy offline ready
  - [ ] Delete local if doc is not available on remarkable 
- - [ ] Set exact versions in requirements.txt
+ - [ ] Set exact versions of python packages in requirements.txt
 
 ## Future ideas
  - [ ] Zotero sync
- - [ ] SSH access: Update background image, live view
+ - [ ] SSH access: Change background image of remarkable, live view via ssh
  - [ ] OCR; Search in documents text and handwritten notes
  - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
-
+ - [ ] Select colors for rendering of pens and highlighter
 
 # How to setup / install RemaPy
 For this installation we assume that python3, pip3 and all nvidia drivers

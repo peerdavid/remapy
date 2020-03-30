@@ -273,6 +273,7 @@ class Remarkable(object):
                 open_file=True, 
                 open_original=True)
 
+
     def btn_resync_click(self):
         message = "Do you really want to delete ALL local files and download ALL documents again?"
         result = messagebox.askquestion("Warning", message, icon='warning')
@@ -284,7 +285,7 @@ class Remarkable(object):
         shutil.rmtree(utils.config.PATH, ignore_errors=True)
         Path(utils.config.PATH).mkdir(parents=True, exist_ok=True)
 
-        self.item_manager.depth_search(
+        self.item_manager.traverse_tree(
             fun=lambda item: item.update_state()
         )
 
@@ -298,10 +299,10 @@ class Remarkable(object):
         self.tree.delete(*self.tree.get_children())
         self._update_tree(root)
 
-        self._sync_items_async([self.item_manager.get_root()],
-                force=False, 
-                open_file=False, 
-                open_original=False)
+        # self._sync_items_async([self.item_manager.get_root()],
+        #         force=False, 
+        #         open_file=False, 
+        #         open_original=False)
 
 
     def _sync_selection_async(self, force=False, open_file=False, open_original=False):
@@ -347,7 +348,7 @@ class Remarkable(object):
         
         # Add all items and child items
         for item in items:
-            self.item_manager.depth_search(fun=q.put, item = item)
+            self.item_manager.traverse_tree(fun=q.put, item = item)
             
         q.join()
 
@@ -365,7 +366,7 @@ class Remarkable(object):
             item.sync()
             self.log("Synced '%s'" %  item.full_name())
 
-        if open_file:
+        if open_file and item.is_document:
             file_to_open = item.get_original_file() if open_original \
                     else item.get_annotated_or_original_file()
             subprocess.call(('xdg-open', file_to_open))
@@ -485,7 +486,7 @@ class Remarkable(object):
 
         def run():
             for id in selected_ids:
-                self.item_manager.depth_search(
+                self.item_manager.traverse_tree(
                     fun=lambda item: sync_and_copy(item),
                     item = self.item_manager.get_item(id))
         threading.Thread(target=run).start()

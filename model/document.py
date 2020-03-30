@@ -36,13 +36,10 @@ class Document(Item):
         super(Document, self).__init__(entry, parent)
         
         # Remarkable tablet paths
-        self.path = "%s/%s" % (cfg.PATH, self.id)
         self.path_zip = "%s.zip" % self.path
         self.path_rm_files = "%s/%s" % (self.path, self.id)
 
         # RemaPy paths
-        self.path_remapy = "%s/.remapy" % self.path
-        self.path_metadata_local = "%s/metadata.local" % self.path_remapy
         self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
@@ -106,6 +103,7 @@ class Document(Item):
                     self.path_annotated_pdf)
 
         self._update_state()
+        self.parent.sync()
 
 
     def get_annotated_or_original_file(self):
@@ -178,18 +176,6 @@ class Document(Item):
             return 
 
         self._update_state_listener()
-
-
-    def _write_remapy_metadata(self):
-        Path(self.path_remapy).mkdir(parents=True, exist_ok=True)
-        with open(self.path_metadata_local, "w") as out:
-            out.write(
-                json.dumps({
-                    "ID": self.id,
-                    "ModifiedClient": str(self.modified_client),
-                    "Version": self.version 
-                }, indent=4)
-            )
 
 
     def create_backup(self, backup_path):

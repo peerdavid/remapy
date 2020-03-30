@@ -1,7 +1,12 @@
+import os
+import shutil
+
 from api.remarkable_client import RemarkableClient
 from model.collection import Collection
 from model.document import Document
 from utils.helper import Singleton
+import utils.config
+
 
 class ItemManager(metaclass=Singleton):
     
@@ -28,41 +33,33 @@ class ItemManager(metaclass=Singleton):
 
 
     def get_root(self, force=False):
+        """ Get root node of tree online or offline. If we are online 
+            we sync all files with the rm cloud i.e. delete old local 
+            files.
+        """
         if not self.root is None and not force:
             return self.root
-            
-        entries = self.rm_client.list_items()
+        
+
+        is_online = True
+        if is_online:
+            entries = self.rm_client.list_items()
+            self._clean_local_items(entries)
+        else:
+            entries =[]
+        
         self.root = self._create_tree(entries)
         return self.root
 
 
-    def depth_search(self, fun, item=None, document_only=True, collection_only=False):
-        item = self.get_root() if item == None else item
-        
-        for child in item.children:
-            self.depth_search(fun, child, document_only, collection_only)
-        
-        if collection_only and item.is_document:
-            return
-        
-        if document_only and not item.is_document:
-            return
+    def _clean_local_items(self, entries):
+        online_ids = [entry["ID"] for entry in entries]
+        for local_id in os.listdir(utils.config.PATH):
+            if local_id in online_ids:
+                continue
 
-        fun(item)
-
-
-    def create_backup(self, backup_path):
-        # Create folder structure
-        self.depth_search(
-            fun=lambda item: item.create_backup(backup_path),
-            document_only=False,
-            collection_only=True)
-
-        # And copy files into it
-        self.depth_search(
-            fun=lambda item: item.create_backup(backup_path),
-            document_only=True,
-            collection_only=False)
+            #shutil.rmtree("%s/%s" % (utils.config.PATH, local_id))
+            print("Deleted local item %s" % local_id)
 
 
     def _create_tree(self, entries):
@@ -83,6 +80,30 @@ class ItemManager(metaclass=Singleton):
             self._create_item_and_parents(i, entries, items, lookup_table)
 
         return root
+
+
+    def traverse_tree(self, fun, item=None, document=True, collection=True):
+        item = self.get_root() if item == None else item
+        
+        for child in item.children:
+            self.traverse_tree(fun, child, document, collection)
+        
+        if item.is_document and document or item.is_collection and collection:
+            fun(item)
+
+
+    def create_backup(self, backup_path):
+        # Create folder structure
+        self.traverse_tree(
+            fun=lambda item: item.create_backup(backup_path),
+            document=False,
+            collection=True)
+
+        # And copy files into it
+        self.traverse_tree(
+            fun=lambda item: item.create_backup(backup_path),
+            document=True,
+            collection=False)
 
 
     def _create_item_and_parents(self, i, entries, items, lookup_table):
