@@ -3,7 +3,7 @@ import subprocess
 import threading
 import shutil
 import queue
-import time
+from time import gmtime, strftime
 import numpy as np
 from pathlib import Path
 import tkinter as tk
@@ -120,7 +120,7 @@ class Remarkable(object):
         self.lower_frame_right.pack(side=tk.LEFT, expand=True, fill=tk.X)
 
         self.log_widget = tk.scrolledtext.ScrolledText(self.lower_frame_right, height=3)
-        self.log_widget.insert(tk.END, "Starting RemaPy Explorer...")
+        self.log_widget.insert(tk.END, "RemaPy Explorer v0.1")
         self.log_widget.config(state=tk.DISABLED)
         self.log_widget.pack(expand=True, fill=tk.X)
         
@@ -128,10 +128,9 @@ class Remarkable(object):
     
 
     def log(self, text):
-        time.ctime()
-
+        now = strftime("%H:%M:%S", gmtime())
         self.log_widget.config(state=tk.NORMAL)
-        self.log_widget.insert(tk.END, "\n%s" % text)
+        self.log_widget.insert(tk.END, "\n[%s] %s" % (str(now), text))
         self.log_widget.config(state=tk.DISABLED)
         self.log_widget.see(tk.END)
 
@@ -146,6 +145,7 @@ class Remarkable(object):
 
     def sign_in_event_handler(self, event, data):
         if event == api.remarkable_client.EVENT_SUCCESS:
+            self.log("Successfully signed in")
             self.btn_sync_click()
 
     
@@ -293,7 +293,7 @@ class Remarkable(object):
     
 
     def btn_sync_click(self):
-        self.log("Sync all documents...")
+        self.log("Syncing all documents...")
         root = self.item_factory.get_root(force=True)
         self.tree.delete(*self.tree.get_children())
         self._update_tree(root)
@@ -305,6 +305,7 @@ class Remarkable(object):
 
 
     def _sync_selection_async(self, force=False, open_file=False, open_original=False):
+        self.log("Syncing selected documents...")
         selected_ids = self.tree.selection()
         items = [self.item_factory.get_item(id) for id in selected_ids]
         self._sync_items_async(items, force, open_file, open_original)
@@ -355,6 +356,7 @@ class Remarkable(object):
             q.put(None)
         for t in threads:
             t.join()
+    
         
 
     def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
