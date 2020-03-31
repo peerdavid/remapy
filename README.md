@@ -49,6 +49,7 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Better logging
  - [ ] Refactoring and cleanup
  - [ ] Set exact versions of python packages in requirements.txt
+ - [ ] Write wiki and link from RemaPy. E.g. how to setup templates etc.
 
 ## Future ideas
  - [ ] Zotero sync
