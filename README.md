@@ -35,18 +35,19 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Backup annotated files
  - [x] Alphabetic order of collections and documents in tree
  - [x] Make RemaPy offline ready (readonly)
+ - [x] Delete local if doc is not available on remarkable 
  - [ ] Show cloud symbol also on collection if some docs are not synced
- - [ ] Upload folders (create folders and all pdf files of this folder)
+ - [ ] Upload folders / multiple files (create folders and all pdf files of this folder)
+ - [ ] Filter / Search documents or folders
  - [ ] Rename collection
  - [ ] Rename document
  - [ ] Create new collection
  - [ ] Create new notebook
  - [ ] Move collection
  - [ ] Move document
- - [ ] Filter / Search for documents
  - [ ] Better error handling
- - [ ] Logging
- - [ ] Delete local if doc is not available on remarkable 
+ - [ ] Better logging
+ - [ ] Refactoring and cleanup
  - [ ] Set exact versions of python packages in requirements.txt
 
 ## Future ideas
