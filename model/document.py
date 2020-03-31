@@ -45,7 +45,7 @@ class Document(Item):
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
 
         # Other props
-        self.current_page = entry["CurrentPage"]
+        self.current_page = entry["CurrentPage"] + 1
         self.download_url = None
         self.blob_url = None
         self.state = None       # Synced, out of sync etc.

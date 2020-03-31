@@ -397,7 +397,11 @@ class Remarkable(object):
         if open_file and item.is_document:
             file_to_open = item.get_original_file() if open_original \
                     else item.get_annotated_or_original_file()
-            subprocess.call(('xdg-open', file_to_open))
+
+            if file_to_open.endswith(".pdf"):
+                subprocess.call(["evince", "-p", str(item.current_page), file_to_open])
+            else:
+                subprocess.call(["xdg-open", file_to_open])
 
 
     #
