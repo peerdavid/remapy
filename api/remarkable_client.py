@@ -75,31 +75,37 @@ class RemarkableClient():
         """ Load token. If not available the user must provide a 
             one time code from https://my.remarkable.com/connect/remarkable
         """ 
-        # Get device token if not stored local
-        device_token = cfg.get("authentication.device_token")
-        if device_token == None:
-            if onetime_code is None or onetime_code == "":
-                self.listener_handler.publish(EVENT_ONETIMECODE_NEEDED)
+
+        try:
+            # Get device token if not stored local
+            device_token = cfg.get("authentication.device_token")
+            if device_token == None:
+                if onetime_code is None or onetime_code == "":
+                    self.listener_handler.publish(EVENT_ONETIMECODE_NEEDED)
+                    return
+
+                device_token = self._get_device_token(onetime_code)
+                if device_token is None:
+                    self.listener_handler.publish(EVENT_DEVICE_TOKEN_FAILED)
+                    return            
+            
+            # Renew the user token.
+            user_token = self._get_user_token(device_token)
+            if user_token is None:
+                self.listener_handler.publish(EVENT_USER_TOKEN_FAILED)
                 return
+            
+            # Save tokens to config
+            auth = {"device_token": device_token,
+                    "user_token": user_token}
+            cfg.save({"authentication": auth})
 
-            device_token = self._get_device_token(onetime_code)
-            if device_token is None:
-                self.listener_handler.publish(EVENT_DEVICE_TOKEN_FAILED)
-                return            
-        
-        # Renew the user token.
-        user_token = self._get_user_token(device_token)
-        if user_token is None:
-            self.listener_handler.publish(EVENT_USER_TOKEN_FAILED)
-            return
-        
-        # Save tokens to config
-        auth = {"device_token": device_token,
-                "user_token": user_token}
-        cfg.save({"authentication": auth})
+            # Inform all subscriber
+            self.listener_handler.publish(EVENT_SUCCESS, auth)
+        except:
+            auth={}
+            self.listener_handler.publish(EVENT_FAILED, auth)
 
-        # Inform all subscriber
-        self.listener_handler.publish(EVENT_SUCCESS, auth)
         return auth
         
 

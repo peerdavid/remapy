@@ -45,8 +45,7 @@ class Remarkable(object):
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
 
         self.label_offline = tk.Label(window, fg="#f44336", font='Arial 13 bold')
-        self.label_offline.place(relx=1.0, y=12, anchor="e")
-
+        self.label_offline.place(relx=0.5, y=12, anchor="center")
 
         window.bind('<Control-v>', self.key_binding_paste)
         window.bind('<Control-c>', self.key_binding_copy)

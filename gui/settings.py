@@ -39,16 +39,17 @@ class Settings(object):
         label.grid(row=1, column=2, sticky="W")
 
         self.onetime_code_link = "https://my.remarkable.com/connect/remarkable"
-        self.label_onetime_code = tk.Label(root, justify="left", anchor="w", fg="blue", cursor="hand2")
-        self.label_onetime_code.grid(row=2, column=7, sticky="W")
+        self.label_onetime_code = tk.Label(root, justify="left", anchor="w", 
+                    fg="blue", cursor="hand2", text="\nDownload one-time code from \n" + self.onetime_code_link)
+        self.label_onetime_code.grid(row=2, column=7, sticky="SW")
         self.label_onetime_code.bind("<Button-1>", lambda e: webbrowser.open_new(self.onetime_code_link))
 
-        label = tk.Label(root, text="Status: ")
+        label = tk.Label(root, justify="left", anchor="w", text="Status: ")
         label.grid(row=2, column=2, sticky="W")
         self.label_auth_status = tk.Label(root, text="Unknown")
         self.label_auth_status.grid(row=2, column=4, sticky="W")
 
-        label = tk.Label(root, text="One-time code:")
+        label = tk.Label(root, justify="left", anchor="w", text="One-time code:")
         label.grid(row=3, column=2, sticky="W")
         self.entry_onetime_code_text = tk.StringVar()
         self.entry_onetime_code = tk.Entry(root, textvariable=self.entry_onetime_code_text)
@@ -83,14 +84,14 @@ class Settings(object):
 
         backup_path = Path.joinpath(Path.home(), "Backup/Remarkable/%s" % str(date.today().strftime("%Y-%m-%d")))
         self.backup_text.set(backup_path)
-        self.backup_entry = tk.Entry(root, textvariable=self.backup_text)
-        self.backup_entry.grid(row=10, column=4, sticky="W") 
+        self.entry_backup = tk.Entry(root, textvariable=self.backup_text)
+        self.entry_backup.grid(row=10, column=4, sticky="W") 
 
         label = tk.Label(root, justify="left", anchor="w", text="Copies annotated PDF files into the given directory.\nNote that those files can not be restored on the tablet.")
         label.grid(row=10, column=7, sticky="W") 
 
-        self.create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
-        self.create_backup.grid(row=11, column=4, sticky="W")
+        self.btn_create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
+        self.btn_create_backup.grid(row=11, column=4, sticky="W")
 
         self.label_backup_progress = tk.Label(root)
         self.label_backup_progress.grid(row=10, column=6)
@@ -107,31 +108,37 @@ class Settings(object):
 
         self.btn_sign_in.config(state = "normal")
         self.entry_onetime_code.config(state="normal")
-        self.label_onetime_code.config(text="")
+        self.btn_create_backup.config(state="disabled")
+        self.btn_save.config(state="disabled")
+        self.entry_backup.config(state="disabled")
+        self.entry_templates.config(state="disabled")
 
         if event == api.remarkable_client.EVENT_SUCCESS:
             self.btn_sign_in.config(state="disabled")
-            self.label_auth_status.config(text="Successfully signed in", fg="green")
             self.entry_onetime_code.config(state="disabled")
+            self.btn_create_backup.config(state="normal")
+            self.btn_save.config(state="normal")
+            self.entry_backup.config(state="normal")
+            self.entry_templates.config(state="normal")
+            self.label_auth_status.config(text="Successfully signed in", fg="green")
             
         elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
-            self.label_auth_status.config(text="Could not renew user token (please try again).", fg="red")
-            self.entry_onetime_code.config(state="disabled")
+            self.label_auth_status.config(text="Could not renew user token\n(please try again).", fg="red")
 
         elif event == api.remarkable_client.EVENT_ONETIMECODE_NEEDED:
-            self.label_auth_status.config(text="Enter one-time code from:", fg="red")
-            self.label_onetime_code.config(text=self.onetime_code_link)
+            self.label_auth_status.config(text="Enter one-time code.", fg="red")
         
         elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
-            self.label_auth_status.config(text="Could not fetch device token (please try again).", fg="red")
+            self.label_auth_status.config(text="Could not fetch device token\n(please try again).", fg="red")
             
         else:
-            self.label_auth_status.config(text="Sorry, an error occurred.", fg="red")
+            self.label_auth_status.config(text="Could not sign in.", fg="red")
 
 
     def btn_sign_in_click(self):
         onetime_code = self.entry_onetime_code_text.get()
         self.rm_client.sign_in(onetime_code)
+            
     
 
     def btn_save_click(self):

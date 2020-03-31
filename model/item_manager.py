@@ -44,9 +44,8 @@ class ItemManager(metaclass=Singleton):
 
         entries, is_online = self.get_entries()
         
-        if is_online:
-            self._clean_local_items(entries)
-            self.root = self._create_tree(entries)
+        self._clean_local_items(entries)
+        self.root = self._create_tree(entries)
         return self.root, is_online
 
     
