@@ -390,7 +390,9 @@ class Remarkable(object):
 
         if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
             item.sync()
-            self.log("Synced '%s'" %  item.full_name())
+
+            if item.is_document:
+                self.log("Synced '%s'" %  item.full_name())
 
         if open_file and item.is_document:
             file_to_open = item.get_original_file() if open_original \
