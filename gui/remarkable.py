@@ -44,6 +44,10 @@ class Remarkable(object):
         self.upper_frame = tk.Frame(root)
         self.upper_frame.pack(expand=True, fill=tk.BOTH)
 
+        self.label_offline = tk.Label(window, fg="#f44336", font='Arial 13 bold')
+        self.label_offline.place(relx=1.0, y=12, anchor="e")
+
+
         window.bind('<Control-v>', self.key_binding_paste)
         window.bind('<Control-c>', self.key_binding_copy)
         window.bind('<Return>', self.key_binding_return)
@@ -140,6 +144,10 @@ class Remarkable(object):
         bg = "#ffffff" if mode == "normal" else "#bdbdbd"
         self.tree_style.configure("remapy.style.Treeview", background=bg)
 
+        if mode == "normal":
+            self.label_offline.config(text="")
+        else:
+            self.label_offline.config(text="You are offline  ")
 
     def log(self, text):
         now = strftime("%H:%M:%S", gmtime())
