@@ -72,7 +72,7 @@ class ItemManager(metaclass=Singleton):
             if local_id in online_ids:
                 continue
 
-            #shutil.rmtree("%s/%s" % (utils.config.PATH, local_id))
+            shutil.rmtree("%s/%s" % (utils.config.PATH, local_id))
             print("Deleted local item %s" % local_id)
 
 

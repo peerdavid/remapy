@@ -208,18 +208,14 @@ def create_document_zip(file_path, file_type, parent_id=""):
     timestamp = datetime.now(timezone.utc).astimezone().isoformat()
     metadata = {
         "VissibleName": os.path.splitext(os.path.basename(file_path))[0],
-        #"deleted": False,
-        #"lastModified": "1568368808000",
-        #"metadatamodified": True,
-        #"modified": True,
-        #"parent": "",
-        #"pinned": False,
-        #"synced": True,
         "Type": "DocumentType",
         "Version": 1,
         "ID": id,
         "Parent": parent_id,
-        "ModifiedClient": timestamp
+        "ModifiedClient": timestamp,
+        "Success": True,
+        "CurrentPage": 0,
+        "Bookmarked": False,
     }
 
     mf = BytesIO()
