@@ -39,8 +39,8 @@ class Settings(object):
         label.grid(row=1, column=2, sticky="W")
 
         self.onetime_code_link = "https://my.remarkable.com/connect/remarkable"
-        self.label_onetime_code = tk.Label(root, fg="blue", cursor="hand2")
-        self.label_onetime_code.grid(row=2, column=6)
+        self.label_onetime_code = tk.Label(root, justify="left", anchor="w", fg="blue", cursor="hand2")
+        self.label_onetime_code.grid(row=2, column=7, sticky="W")
         self.label_onetime_code.bind("<Button-1>", lambda e: webbrowser.open_new(self.onetime_code_link))
 
         label = tk.Label(root, text="Status: ")
@@ -67,6 +67,10 @@ class Settings(object):
         self.entry_templates = tk.Entry(root, textvariable=self.entry_templates_text)
         self.entry_templates.grid(row=7, column=4, sticky="W")        
 
+        label = tk.Label(root, justify="left", anchor="w", text="A local folder that contains all template PNG files. \nYou can find it on your tablet '/usr/share/remarkable'")
+        label.grid(row=7, column=7, sticky="W") 
+
+
         self.btn_save = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
         self.btn_save.grid(row=8, column=4, sticky="W")
 
@@ -82,7 +86,7 @@ class Settings(object):
         self.backup_entry = tk.Entry(root, textvariable=self.backup_text)
         self.backup_entry.grid(row=10, column=4, sticky="W") 
 
-        label = tk.Label(root, text="Backup of annotated PDF's i.e. no restore of raw files")
+        label = tk.Label(root, justify="left", anchor="w", text="Copies annotated PDF files into the given directory.\nNote that those files can not be restored on the tablet.")
         label.grid(row=10, column=7, sticky="W") 
 
         self.create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)

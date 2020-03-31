@@ -169,7 +169,8 @@ class Remarkable(object):
         # Also if the login failed (e.g. we are offline) we try again 
         # if we can sync the items (e.g. with old user key) and otherwise 
         # we switch to the offline mode
-        self.btn_sync_click()
+        if event == api.remarkable_client.EVENT_SUCCESS or event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
+            self.btn_sync_click()
 
     
     def _update_tree(self, item):

@@ -44,15 +44,16 @@ class ItemManager(metaclass=Singleton):
 
         entries, is_online = self.get_entries()
         
-        self._clean_local_items(entries)
-        self.root = self._create_tree(entries)
+        if is_online:
+            self._clean_local_items(entries)
+            self.root = self._create_tree(entries)
         return self.root, is_online
 
     
     def get_entries(self):
         try:
             entries = self.rm_client.list_items()
-            return entries, True
+            return entries, entries != None
         except:
             entries = []
             for local_id in os.listdir(utils.config.PATH):
