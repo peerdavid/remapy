@@ -97,12 +97,12 @@ class Remarkable(object):
         self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
-        self.context_menu.add_command(label='Rename')
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
-        self.context_menu.add_separator()
-        self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
-        self.context_menu.add_command(label='Cut')   
+        self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
+
+        # self.context_menu.add_command(label='Rename')
+        # self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
+        # self.context_menu.add_command(label='Cut')   
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -136,9 +136,9 @@ class Remarkable(object):
         self.context_menu.entryconfig(4, state=mode)
         self.context_menu.entryconfig(5, state=mode)
         self.context_menu.entryconfig(6, state=mode)
-        self.context_menu.entryconfig(8, state=mode)
-        self.context_menu.entryconfig(9, state=mode)
-        self.context_menu.entryconfig(10, state=mode)
+        # self.context_menu.entryconfig(8, state=mode)
+        # self.context_menu.entryconfig(9, state=mode)
+        # self.context_menu.entryconfig(10, state=mode)
 
         bg = "#ffffff" if mode == "normal" else "#bdbdbd"
         self.tree_style.configure("remapy.style.Treeview", background=bg)
