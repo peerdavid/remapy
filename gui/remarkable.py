@@ -146,7 +146,7 @@ class Remarkable(object):
         if mode == "normal":
             self.label_offline.config(text="")
         else:
-            self.label_offline.config(text="You are offline  ")
+            self.label_offline.config(text="Offline")
 
     def log(self, text):
         now = strftime("%H:%M:%S", gmtime())

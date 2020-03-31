@@ -124,13 +124,11 @@ class Settings(object):
             
         elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.label_auth_status.config(text="Could not renew user token\n(please try again).", fg="red")
+            self.entry_onetime_code.config(state="disabled")
 
         elif event == api.remarkable_client.EVENT_ONETIMECODE_NEEDED:
             self.label_auth_status.config(text="Enter one-time code.", fg="red")
         
-        elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
-            self.label_auth_status.config(text="Could not fetch device token\n(please try again).", fg="red")
-            
         else:
             self.label_auth_status.config(text="Could not sign in.", fg="red")
 
