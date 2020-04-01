@@ -5,6 +5,7 @@ import argparse
 import math
 import io
 import time
+import numpy as np
 from pdfrw import PdfReader, PdfWriter, PageMerge, IndirectPdfDict, PdfDict
 from reportlab.graphics import renderPDF
 from reportlab.pdfgen import canvas
@@ -23,7 +24,9 @@ stroke_color = {
     0: colors.Color(5/255., 60/255., 150/255.),         # Pen color 1
     1: colors.Color(125/255., 125/255., 125/255.),      # Pen color 2
     2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
-    3: colors.Color(255/255., 255/255., 0, alpha=0.15)  # Highlighter
+    3: colors.Color(255/255., 255/255., 0, alpha=0.15), # Highlighter
+    # Own defined colors
+    4: colors.Color(97/255., 97/255., 97/255.)             # Pencil
 }
 
 
@@ -141,6 +144,9 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
 
 def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, 
         image_height=DEFAULT_IMAGE_HEIGHT):
+    """ Render the .rm files (old .lines). See also 
+    https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
+    """
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     ratio = (image_height/image_width) / (DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH)
@@ -176,10 +182,10 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
         for stroke in range(nstrokes):
             if is_v3:
                 fmt = '<IIIfI'
-                pen, color, i_unk, width, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen, color, i_unk, pen_width, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
             if is_v5:
                 fmt = '<IIIffI'
-                pen, color, i_unk, width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen, color, i_unk, pen_width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
             
             opacity = 1
             last_x = -1.; last_y = -1.
@@ -196,22 +202,25 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
             is_fineliner = (pen == 4 or pen == 17)
             is_brush = (pen == 0 or pen == 12)
 
+            if is_sharp_pencil or is_tilt_pencil:
+                color = 4
+
             if is_brush:
                 pass
             elif is_ballpoint or is_fineliner:
-                width = 32 * width * width - 116 * width + 107
+                pen_width = 32 * pen_width * pen_width - 116 * pen_width + 107
             elif is_marker:
-                width = 64 * width - 112
+                pen_width = 64 * pen_width - 112
                 opacity = 0.9
             elif is_highlighter:
-                width = 30
+                pen_width = 30
                 opacity = 0.2
                 color = 3
             elif is_eraser:
-                width = 1280 * width * width - 4800 * width + 4510
+                pen_width = 1280 * pen_width * pen_width - 4800 * pen_width + 4510
                 color = 2
             elif is_sharp_pencil or is_tilt_pencil:
-                width = 16 * width - 27
+                pen_width = 16 * pen_width - 27
                 opacity = 0.9
             elif is_eraser_area:
                 opacity = 0.
@@ -219,16 +228,17 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 print('Unknown pen: {}'.format(pen))
                 opacity = 0.
 
-            width *= width_scale
-            # This scaling for pdf looks much better...
-            # if(image_width != DEFAULT_IMAGE_WIDTH or image_height != DEFAULT_IMAGE_HEIGHT):
-            #     width /= 2
-            
             # Iterate through the segments to form a polyline
             points = []
+            width = []
             for segment in range(nsegments):
                 fmt = '<ffffff'
-                xpos, ypos, pressure, tilt, i_unk2, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                xpos, ypos, i_unk2, pressure, tilt, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                
+                if is_ballpoint or is_brush:
+                    width.append((6*pen_width + 2*pressure) / 8 * width_scale)
+                else:
+                    width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * width_scale)
                 
                 if ratio > 1:
                     xpos = ratio*((xpos*image_width) / DEFAULT_IMAGE_WIDTH)
@@ -238,19 +248,21 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                     ypos = (1/ratio)*(ypos*image_height) / DEFAULT_IMAGE_HEIGHT
 
                 points.extend([xpos, image_height-ypos])
+            
+            # print("Real: " + str(width))
+            # print("Pen: " + str(pen_width))
 
             if is_eraser_area:
                 continue
             
             # Render lines
             drawing = Drawing(image_width, image_height)
-            can.setLineWidth(width)
             can.setLineCap(1)
             can.setStrokeColor(stroke_color[color])
-
             p = can.beginPath()
             p.moveTo(points[0], points[1])
             for i in range(0, len(points), 2):
+                can.setLineWidth(width[int(i/2)])
                 p.lineTo(points[i], points[i+1])
                 p.moveTo(points[i], points[i+1])
                 if i % 10 == 0:
