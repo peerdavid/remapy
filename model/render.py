@@ -37,19 +37,18 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     # Parse remarkable files and write into pdf
     annotations_pdf = []
 
-    # NOTE: The first page is in books often smaller, therefore we use the 
-    #       second page if it exists...
-    page_layout = base_pdf.pages[0].MediaBox if len(base_pdf.pages) <= 1 else base_pdf.pages[1].MediaBox
-    if page_layout is None:
-        return
-        
-    image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
     for page_nr in range(len(base_pdf.pages)):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
             annotations_pdf.append(_blank_page())
             continue
+            
+        page_layout = base_pdf.pages[page_nr].MediaBox
+        if page_layout is None:
+            continue
+            
+        image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
         packet = _render_rm_file(rm_file, image_width=image_width, image_height=image_height)
         annotated_page = PdfReader(packet)
@@ -150,10 +149,10 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     ratio = (image_height/image_width) / (DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH)
-    
+
     # Scale width accordignly to the given document, otherwise e.g.
     # lines in (A4) pdf's look different than in notebooks...
-    width_scale = min(image_width / DEFAULT_IMAGE_WIDTH, image_width / DEFAULT_IMAGE_WIDTH)
+    width_scale = image_width / DEFAULT_IMAGE_WIDTH
 
     with open(rm_file, 'rb') as f:
         data = f.read()
@@ -239,15 +238,10 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                     width.append((6*pen_width + 2*pressure) / 8 * width_scale)
                 else:
                     width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * width_scale)
-                
-                if ratio > 1:
-                    xpos = ratio*((xpos*image_width) / DEFAULT_IMAGE_WIDTH)
-                    ypos = (ypos*image_height) / DEFAULT_IMAGE_HEIGHT
-                else:
-                    xpos = (xpos*image_width) / DEFAULT_IMAGE_WIDTH
-                    ypos = (1/ratio)*(ypos*image_height) / DEFAULT_IMAGE_HEIGHT
 
-                points.extend([xpos, image_height-ypos])
+                xpos = ratio * (xpos*image_width) / DEFAULT_IMAGE_WIDTH
+                ypos = (image_height - ypos*image_height / DEFAULT_IMAGE_HEIGHT)
+                points.extend([xpos, ypos])
             
             # print("Real: " + str(width))
             # print("Pen: " + str(pen_width))
