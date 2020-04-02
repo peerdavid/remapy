@@ -395,6 +395,10 @@ class Remarkable(object):
         
 
     def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
+        
+        if item.state == model.item.STATE_SYNCING:
+            self.log("Already syncing '%s'" %  item.full_name())
+            return
 
         if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
             item.sync()

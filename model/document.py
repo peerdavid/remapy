@@ -77,6 +77,9 @@ class Document(Item):
         return "%s/%s" % (self.parent.full_name(), self.name)
 
     def sync(self):
+        if self.state == model.item.STATE_SYNCING:
+            return 
+            
         self.state = model.item.STATE_SYNCING
         self._update_state_listener()
 
