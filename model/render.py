@@ -21,8 +21,8 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 # Mappings
 stroke_color = {
-    0: colors.Color(5/255., 60/255., 150/255.),         # Pen color 1
-    1: colors.Color(125/255., 125/255., 125/255.),      # Pen color 2
+    0: colors.Color(48/255., 63/255., 159/255.),        # Pen color 1
+    1: colors.Color(211/255., 47/255., 47/255.),        # Pen color 2
     2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
     3: colors.Color(255/255., 255/255., 0, alpha=0.15), # Highlighter
     # Own defined colors
