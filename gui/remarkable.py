@@ -374,7 +374,7 @@ class Remarkable(object):
                     
                 q.task_done()
 
-        num_worker_threads = 10
+        num_worker_threads = min(10, len(items))
         for i in range(num_worker_threads):
             t = threading.Thread(target=worker)
             t.start()

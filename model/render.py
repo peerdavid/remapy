@@ -148,7 +148,12 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
     """
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(image_width, image_height))
-    ratio = (image_height/image_width) / (DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH)
+    
+    ratio_x = (image_width) / (DEFAULT_IMAGE_WIDTH)
+    ratio_y = (image_height) / (DEFAULT_IMAGE_HEIGHT)
+    
+    
+    is_landscape = image_width > image_height
 
     # Scale width accordignly to the given document, otherwise e.g.
     # lines in (A4) pdf's look different than in notebooks...
@@ -239,13 +244,16 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 else:
                     width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * width_scale)
 
-                xpos = ratio * (xpos*image_width) / DEFAULT_IMAGE_WIDTH
-                ypos = (image_height - ypos*image_height / DEFAULT_IMAGE_HEIGHT)
-                points.extend([xpos, ypos])
-            
-            # print("Real: " + str(width))
-            # print("Pen: " + str(pen_width))
+                # Note: here is still something wrong: For some pdfs 
+                # the rendering is not correct. ALso landscape is not supported
+                # right now...
+                xpos = ratio_x * xpos
+                ypos = image_height - ypos * ratio_y
 
+                if ratio_x != 1 or ratio_y != 1:
+                     xpos += 180 / 2 * ratio_x      # Note: 180 is default margin in .content file
+
+                points.extend([xpos, ypos])
             if is_eraser_area:
                 continue
             
@@ -262,6 +270,7 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 if i % 10 == 0:
                     p.close()
             can.drawPath(p)
+    
     can.save()
     packet.seek(0)
     return packet
