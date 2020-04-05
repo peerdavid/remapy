@@ -49,16 +49,15 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
             continue
             
         image_width, image_height = float(page_layout[2]), float(page_layout[3])
-
-        packet = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
-        annotated_page = PdfReader(packet)
+        annotated_page = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(_blank_page())
         else:
-            annotations_pdf.append(annotated_page.pages[0])
+            page = annotated_page.pages[0]
+            annotations_pdf.append(page)
        
     # Merge annotations pdf and original pdf
-    for i in range(len(base_pdf.pages)):
+    for i in range(len(base_pdf.pages)):           
         merger = PageMerge(base_pdf.pages[i])
         merger.add(annotations_pdf[i]).render()
     writer = PdfWriter()
@@ -78,8 +77,8 @@ def notebook(path, id, path_annotated_pdf, path_templates=None):
         if not os.path.exists(rm_file):
             break
 
-        packet = _render_rm_file(rm_file)
-        annotations_pdf.append(PdfReader(packet))
+        overlay = _render_rm_file(rm_file)
+        annotations_pdf.append(overlay)
         p += 1  
     
     # Write empty notebook notes containing blank pages or templates
@@ -147,15 +146,22 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
     
+    is_landscape = image_width > image_height
+    if is_landscape:
+        image_height, image_width = image_width, image_height
+
     crop_box = [0.0, 0.0, image_width, image_height] if crop_box is None else crop_box
 
     # Calculate the image height and width that we use for the overlay
-    image_height = float(crop_box[3]) - float(crop_box[1])
-    image_width = max(image_width, image_height * DEFAULT_IMAGE_WIDTH / DEFAULT_IMAGE_HEIGHT)
-    ratio = (image_width) / (DEFAULT_IMAGE_WIDTH) # note: ratio x = ratio y
+    if is_landscape:
+        image_width = float(crop_box[2]) - float(crop_box[0])
+        image_height = max(image_height, image_width * DEFAULT_IMAGE_HEIGHT / DEFAULT_IMAGE_WIDTH)
+        ratio = (image_height) / (DEFAULT_IMAGE_HEIGHT)
+    else:    
+        image_height = float(crop_box[3]) - float(crop_box[1])
+        image_width = max(image_width, image_height * DEFAULT_IMAGE_WIDTH / DEFAULT_IMAGE_HEIGHT)
+        ratio = (image_width) / (DEFAULT_IMAGE_WIDTH)
     
-    is_landscape = image_width > image_height
-
     # Is this a reMarkable .lines file?
     with open(rm_file, 'rb') as f:
         data = f.read()
@@ -242,7 +248,6 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 else:
                     width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * ratio)
 
-                # ToDo: Handle landscape pdfs
                 xpos = ratio * xpos + float(crop_box[0])
                 ypos = image_height - ratio * ypos + float(crop_box[1])
                 points.extend([xpos, ypos])
@@ -266,7 +271,13 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
         
     can.save()
     packet.seek(0)
-    return packet
+    overlay = PdfReader(packet)
+
+    if is_landscape:
+        for page in overlay.pages:
+            page.Rotate=90
+
+    return overlay
 
 
 if __name__ == "__main__":

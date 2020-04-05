@@ -363,14 +363,14 @@ class Remarkable(object):
                 if item is None:
                     break
                 
-                try:
-                    self._sync_and_open_item(item, force, open_file, open_original)
-                except Exception as e:
-                    if open_file:
-                        self.log("(Error) Could not open '%s'" % item.name[0:50])
-                    else:
-                        self.log("(Error) Could not sync '%s'" % item.name[0:50])
-                    print(e)
+                #try:
+                self._sync_and_open_item(item, force, open_file, open_original)
+                # except Exception as e:
+                #     if open_file:
+                #         self.log("(Error) Could not open '%s'" % item.name[0:50])
+                #     else:
+                #         self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                #     print(e)
                     
                 q.task_done()
 

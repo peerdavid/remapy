@@ -5,7 +5,8 @@ import uuid
 from zipfile import ZipFile
 import shutil
 from pathlib import Path
-from datetime import datetime, timezone
+import datetime
+from datetime import timezone
 import json
 
 
@@ -208,7 +209,8 @@ def create_document_zip(file_path, file_type, parent_id=""):
     })
 
     # metadata
-    timestamp = datetime.now(timezone.utc).astimezone().isoformat()
+    timestamp = datetime.datetime.now(timezone.utc) - datetime.timedelta(minutes=2)
+    timestamp = timestamp.astimezone().isoformat()
     metadata = {
         "VissibleName": os.path.splitext(os.path.basename(file_path))[0],
         "Type": "DocumentType",
@@ -218,7 +220,7 @@ def create_document_zip(file_path, file_type, parent_id=""):
         "ModifiedClient": timestamp,
         #"Success": True,
         "CurrentPage": 0,
-        "Bookmarked": False,
+        #"Bookmarked": False,
     }
 
     mf = BytesIO()
