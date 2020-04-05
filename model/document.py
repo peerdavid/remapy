@@ -216,7 +216,7 @@ def create_document_zip(file_path, file_type, parent_id=""):
         "ID": id,
         "Parent": parent_id,
         "ModifiedClient": timestamp,
-        "Success": True,
+        #"Success": True,
         "CurrentPage": 0,
         "Bookmarked": False,
     }

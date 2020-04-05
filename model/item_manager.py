@@ -71,8 +71,12 @@ class ItemManager(metaclass=Singleton):
         for local_id in os.listdir(utils.config.PATH):
             if local_id in online_ids:
                 continue
-
-            shutil.rmtree("%s/%s" % (utils.config.PATH, local_id))
+            
+            local_file_or_folder = "%s/%s" % (utils.config.PATH, local_id)
+            if os.path.isfile(local_file_or_folder):
+                os.remove(local_file_or_folder)
+            else:
+                shutil.rmtree(local_file_or_folder)
             print("Deleted local item %s" % local_id)
 
 

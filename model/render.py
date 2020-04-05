@@ -37,7 +37,6 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     # Parse remarkable files and write into pdf
     annotations_pdf = []
 
-
     for page_nr in range(len(base_pdf.pages)):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
@@ -45,12 +44,13 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
             continue
             
         page_layout = base_pdf.pages[page_nr].MediaBox
+        crop_box = base_pdf.pages[page_nr].CropBox
         if page_layout is None:
             continue
             
         image_width, image_height = float(page_layout[2]), float(page_layout[3])
 
-        packet = _render_rm_file(rm_file, image_width=image_width, image_height=image_height)
+        packet = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
         annotated_page = PdfReader(packet)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(_blank_page())
@@ -142,28 +142,24 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
 
 
 def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, 
-        image_height=DEFAULT_IMAGE_HEIGHT):
+        image_height=DEFAULT_IMAGE_HEIGHT, crop_box=None):
     """ Render the .rm files (old .lines). See also 
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
-    packet = io.BytesIO()
-    can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     
-    ratio_x = (image_width) / (DEFAULT_IMAGE_WIDTH)
-    ratio_y = (image_height) / (DEFAULT_IMAGE_HEIGHT)
-    
+    crop_box = [0.0, 0.0, image_width, image_height] if crop_box is None else crop_box
+
+    # Calculate the image height and width that we use for the overlay
+    image_height = float(crop_box[3]) - float(crop_box[1])
+    image_width = max(image_width, image_height * DEFAULT_IMAGE_WIDTH / DEFAULT_IMAGE_HEIGHT)
+    ratio = (image_width) / (DEFAULT_IMAGE_WIDTH) # note: ratio x = ratio y
     
     is_landscape = image_width > image_height
 
-    # Scale width accordignly to the given document, otherwise e.g.
-    # lines in (A4) pdf's look different than in notebooks...
-    width_scale = image_width / DEFAULT_IMAGE_WIDTH
-
+    # Is this a reMarkable .lines file?
     with open(rm_file, 'rb') as f:
         data = f.read()
     offset = 0
-    
-    # Is this a reMarkable .lines file?
     expected_header_v3=b'reMarkable .lines file, version=3          '
     expected_header_v5=b'reMarkable .lines file, version=5          '
     if len(data) < len(expected_header_v5) + 4:
@@ -178,6 +174,8 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
         return
 
     # Iterate through layers on the page (There is at least one)
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet, pagesize=(image_width, image_height))
     for layer in range(nlayers):
         fmt = '<I'
         (nstrokes,) = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
@@ -240,19 +238,13 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 xpos, ypos, i_unk2, pressure, tilt, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
                 
                 if is_ballpoint or is_brush:
-                    width.append((6*pen_width + 2*pressure) / 8 * width_scale)
+                    width.append((6*pen_width + 2*pressure) / 8 * ratio)
                 else:
-                    width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * width_scale)
+                    width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * ratio)
 
-                # Note: here is still something wrong: For some pdfs 
-                # the rendering is not correct. ALso landscape is not supported
-                # right now...
-                xpos = ratio_x * xpos
-                ypos = image_height - ypos * ratio_y
-
-                if ratio_x != 1 or ratio_y != 1:
-                     xpos += 180 / 2 * ratio_x      # Note: 180 is default margin in .content file
-
+                # ToDo: Handle landscape pdfs
+                xpos = ratio * xpos + float(crop_box[0])
+                ypos = image_height - ratio * ypos + float(crop_box[1])
                 points.extend([xpos, ypos])
             if is_eraser_area:
                 continue
@@ -269,8 +261,9 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
                 p.moveTo(points[i], points[i+1])
                 if i % 10 == 0:
                     p.close()
+            p.close()
             can.drawPath(p)
-    
+        
     can.save()
     packet.seek(0)
     return packet
