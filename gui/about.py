@@ -238,6 +238,7 @@ ABOUT = \
 class About(object):
 
    def __init__(self, root):
+
       about_text = tk.scrolledtext.ScrolledText(root)
       about_text.insert("1.0", ABOUT)
       about_text.config(state=tk.DISABLED)

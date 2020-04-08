@@ -471,7 +471,6 @@ class Remarkable(object):
 
         file_path = self.root.clipboard_get()
         if not os.path.exists(file_path):
-            messagebox.showerror("Paste error", "No file found to upload.")
             return
 
         is_pdf = file_path.endswith(".pdf")
