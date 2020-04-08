@@ -54,7 +54,11 @@ class RemarkableClient():
         
         def publish(self, code=EVENT_SUCCESS, data=None):
             for subscriber in self.sign_in_listener:
-                subscriber.sign_in_event_handler(code, data)
+                try:
+                    subscriber.sign_in_event_handler(code, data)
+                except Exception as e:
+                    print("(Warning) Failed to publish subscriber.")
+                    print(e)
 
 
     #
