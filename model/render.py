@@ -37,7 +37,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     # Parse remarkable files and write into pdf
     annotations_pdf = []
 
-    for page_nr in range(len(base_pdf.pages)):
+    for page_nr in range(base_pdf.numPages):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
             annotations_pdf.append(_blank_page())
@@ -46,7 +46,11 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
         page_layout = base_pdf.pages[page_nr].MediaBox
         crop_box = base_pdf.pages[page_nr].CropBox
         if page_layout is None:
-            continue
+            page_layout = base_pdf.pages[page_nr].ArtBox
+
+            if page_layout is None:
+                annotations_pdf.append(_blank_page())
+                continue
             
         image_width, image_height = float(page_layout[2]), float(page_layout[3])
         annotated_page = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
@@ -57,7 +61,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
             annotations_pdf.append(page)
        
     # Merge annotations pdf and original pdf
-    for i in range(len(base_pdf.pages)):           
+    for i in range(base_pdf.numPages):           
         merger = PageMerge(base_pdf.pages[i])
         merger.add(annotations_pdf[i]).render()
     writer = PdfWriter()

@@ -57,6 +57,8 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] OCR; Search in documents text and handwritten notes
  - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
  - [ ] Select colors for rendering of pens and highlighter
+ - [ ] Render only marked things into odt file
+ - [ ] Copy and past a webpage (upload as pdf)
 
 # How to setup / install RemaPy
 For this installation we assume that python3, pip3 and all nvidia drivers
