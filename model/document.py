@@ -193,7 +193,7 @@ class Document(Item):
         shutil.copyfile(file_to_backup, backup_path + "/" + file_name)
 
         
-def create_document_zip(file_path, file_type, parent_id=""):
+def create_document_zip(name, data, file_type, parent_id=""):
     id = str(uuid.uuid4())
 
     # .content file
@@ -212,7 +212,7 @@ def create_document_zip(file_path, file_type, parent_id=""):
     timestamp = datetime.datetime.now(timezone.utc) - datetime.timedelta(minutes=2)
     timestamp = timestamp.astimezone().isoformat()
     metadata = {
-        "VissibleName": os.path.splitext(os.path.basename(file_path))[0],
+        "VissibleName": name,
         "Type": "DocumentType",
         "Version": 1,
         "ID": id,
@@ -226,7 +226,7 @@ def create_document_zip(file_path, file_type, parent_id=""):
     mf = BytesIO()
     mf.seek(0)
     with ZipFile(mf, mode='w', compression=zipfile.ZIP_DEFLATED ) as zf:
-        zf.write(file_path, arcname="%s.%s" % (id, file_type))
+        zf.writestr("%s.%s" % (id, file_type), data)
         zf.writestr("%s.content" % id, content_file)
         zf.writestr("%s.pagedata" % id, "")
 

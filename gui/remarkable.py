@@ -3,6 +3,7 @@ import subprocess
 import threading
 import shutil
 import queue
+import weasyprint
 from time import gmtime, strftime
 import numpy as np
 from pathlib import Path
@@ -469,24 +470,38 @@ class Remarkable(object):
         else:
             parent_id = ""      
 
-        file_path = self.root.clipboard_get()
-        if not os.path.exists(file_path):
-            return
+        clipboard = self.root.clipboard_get()
+        is_file = os.path.exists(clipboard)
+        is_url = clipboard.startswith("http")
+        filetype = None
 
-        is_pdf = file_path.endswith(".pdf")
-        is_epub = file_path.endswith(".epub")
-        filetype = "pdf" if is_pdf else "epub" if is_epub else None
+        if is_file:
+            is_pdf = clipboard.endswith(".pdf")
+            is_epub = clipboard.endswith(".epub")
+            filetype = "pdf" if is_pdf else "epub" if is_epub else None
 
-        if filetype is None:
-            messagebox.showerror("Paste error", "Only .pdf and .epub files are supported.")
+            if filetype is None:
+                messagebox.showerror("Paste error", "Only .pdf and .epub files are supported.")
+                return
+        elif is_url:
+            pass
+        else:
             return
+       
         
-        def run():
-            # ToDo: Refactor this function into the item manager where a 
-            #       callback indicates the state...
-            # Upload file
+        def run(filetype):
+            if is_file:
+                name = os.path.splitext(os.path.basename(clipboard))[0]
+                with open(clipboard, "rb") as f:
+                    data = f.read()
+            elif is_url:
+                name = clipboard[:35] + "..." if len(clipboard) > 35 else clipboard # Take at most 20 chars of website
+                data = weasyprint.HTML(clipboard).write_pdf()
+                filetype = "pdf"
+
             id, metadata, mf = create_document_zip(
-                file_path, 
+                name, 
+                data,
                 file_type=filetype, 
                 parent_id = parent_id)
 
@@ -511,8 +526,8 @@ class Remarkable(object):
             self.log("Successfully uploaded %s" % item.full_name())
 
         
-        self.log("Uploading %s..." % file_path)
-        threading.Thread(target=run).start()
+        self.log("Uploading %s..." % clipboard)
+        threading.Thread(target=run, args=[filetype]).start()
 
 
     def key_binding_copy(self, event):

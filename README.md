@@ -10,8 +10,37 @@ A list of some todo's and future ideas that I want to implement is given below.
 <img src="doc/explorer.png" />
 
 
+## Features
+ - Open annotated or original file (without annotations)
+ - Open remarkable raw files
+ - Colored annotations
+ - Upload pdf and epub via copy and paste
+ - Create backups of all your files (pdf only)
+ - Upload a webpage via copy and paste (simply paste a url in remapy)
+
+
+# How to setup / install RemaPy
+First of all ensure that python3 and pip3 is installed.
+
+## Linux
+To install all dependencies into a virtual environment, execute steps 1-4. 
+If you want to install the packages system wide, execute only step 4:
+1. Create virtual environment: ```python3 -m venv env```
+2. Activate venv: ```source env/bin/activate```
+3. Update your pip installation: ```pip3 install --upgrade pip```
+4. Install all requirements. Use requirements-gpu if a gpu is available, requirements-cpu otherwise: ```pip3 install -r requirements.txt```
+
+To create a launcher symbol adapt the remapy.desktop file and copy it 
+to ~/.local/share/applications/remapy.desktop
+
+
+## Windows
+Coming soon...
+
+
 # ToDo's
-## Basic functionality
+There are still some things that I want to implement:
+
  - [x] Authentication
  - [x] Settings page (Path to templates, sync folder, )
  - [x] About page
@@ -36,6 +65,8 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [x] Alphabetic order of collections and documents in tree
  - [x] Make RemaPy offline ready (readonly)
  - [x] Delete local if doc is not available on remarkable 
+ - [x] Copy and past a webpage (upload as pdf)
+ - [ ] Render only marked text and images and export into odt file
  - [ ] Show cloud symbol also on collection if some docs are not synced
  - [ ] Upload folders / multiple files (create folders and all pdf files of this folder)
  - [ ] Filter / Search documents or folders
@@ -49,30 +80,11 @@ A list of some todo's and future ideas that I want to implement is given below.
  - [ ] Better logging
  - [ ] Refactoring and cleanup
  - [ ] Set exact versions of python packages in requirements.txt
- - [ ] Write wiki and link from RemaPy. E.g. how to setup templates etc.
-
-## Future ideas
  - [ ] Zotero sync
  - [ ] SSH access: Change background image of remarkable, live view via ssh
  - [ ] OCR; Search in documents text and handwritten notes
  - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
  - [ ] Select colors for rendering of pens and highlighter
- - [ ] Render only marked things into odt file
- - [ ] Copy and past a webpage (upload as pdf)
-
-# How to setup / install RemaPy
-For this installation we assume that python3, pip3 and all nvidia drivers
-(GPU support) are already installed. Then execute the following
-to create a virtual environment and install all necessary packages:
-
-1. Create virtual environment: ```python3 -m venv env```
-2. Activate venv: ```source env/bin/activate```
-3. Update your pip installation: ```pip3 install --upgrade pip```
-4. Install all requirements. Use requirements-gpu if a gpu is available, requirements-cpu otherwise: ```pip3 install -r requirements.txt```
-
-
-To create a launcher symbol adapt the remapy.desktop file and copy it 
-to ~/.local/share/applications/remapy.desktop
 
 
 # Acknowledgments
