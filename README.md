@@ -8,7 +8,7 @@ A list of some todo's and future ideas that I want to implement is given below.
 *WARNING:* This project is not affiliated with reMarkable AS, Oslo and you use this tool on your own risk.
 
 <img src="doc/explorer.png" />
-
+Ps.: Image created with RemaPy ;)
 
 ## Features
  - Open annotated or original file (without annotations)
