@@ -5,7 +5,9 @@ altough it should (theoretically) also work on other systems. Feel free to
 write an issue if you find a bug or also if you have an idea for new features. 
 A list of some todo's and future ideas that I want to implement is given below.
 
-*WARNING:* This project is not affiliated with reMarkable AS, Oslo and you use this tool on your own risk.
+*WARNING:* This project is not affiliated to, nor endorsed by, reMarkable AS. 
+I am not responsible for any damage done to your device or your data 
+due to the use of this software.
 
 <img src="doc/explorer.png" />
 Ps.: Image created with RemaPy ;)
