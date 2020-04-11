@@ -24,7 +24,7 @@ stroke_color = {
     0: colors.Color(48/255., 63/255., 159/255.),        # Pen color 1
     1: colors.Color(211/255., 47/255., 47/255.),        # Pen color 2
     2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
-    3: colors.Color(1.0, 0.952941, 0.658824, alpha=0.40), # Highlighter
+    3: colors.Color(1.0, 0.95, 0.66, alpha=0.35),       # Highlighter
     # Own defined colors
     4: colors.Color(97/255., 97/255., 97/255.)             # Pencil
 }
