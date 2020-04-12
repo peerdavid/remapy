@@ -3,6 +3,7 @@ import subprocess
 import threading
 import shutil
 import queue
+from urllib.parse import urlparse
 import weasyprint
 from time import gmtime, strftime
 import numpy as np
@@ -93,13 +94,15 @@ class Remarkable(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open with annotations', command=self.btn_open_item_click)
+        self.context_menu.add_command(label='Open', command=self.btn_open_item_click)
+        self.context_menu.add_command(label='Open only annotated pages', command=self.btn_open_oap_item_click)
         self.context_menu.add_command(label='Open without annotations', command=self.btn_open_item_original_click)
-        self.context_menu.add_command(label='Open in file explorer', command=self.btn_open_in_file_explorer)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label='File explorer', command=self.btn_open_in_file_explorer)
 
         # self.context_menu.add_command(label='Rename')
         # self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
@@ -292,6 +295,13 @@ class Remarkable(object):
                 open_original=False)
     
 
+    def btn_open_oap_item_click(self):
+        self._sync_selection_async(
+                        force=False, 
+                        open_file=True, 
+                        open_oap=True)
+
+
     def btn_open_item_original_click(self):
         self._sync_selection_async(
                 force=False, 
@@ -339,23 +349,24 @@ class Remarkable(object):
         self._sync_items_async([self.item_manager.get_root()],
                 force=False, 
                 open_file=False, 
-                open_original=False)
+                open_original=False,
+                open_oap=False)
 
 
-    def _sync_selection_async(self, force=False, open_file=False, open_original=False):
+    def _sync_selection_async(self, force=False, open_file=False, open_original=False, open_oap=False):
         selected_ids = self.tree.selection()
         items = [self.item_manager.get_item(id) for id in selected_ids]
-        self._sync_items_async(items, force, open_file, open_original)
+        self._sync_items_async(items, force, open_file, open_original, open_oap)
 
 
-    def _sync_items_async(self, items, force=False, open_file=False, open_original=False):
+    def _sync_items_async(self, items, force, open_file, open_original, open_oap):
         """ To keep the gui responsive...
         """
-        thread = threading.Thread(target=self._sync_items, args=(items, force, open_file, open_original))
+        thread = threading.Thread(target=self._sync_items, args=(items, force, open_file, open_original, open_oap))
         thread.start()
 
 
-    def _sync_items(self, items, force=False, open_file=False, open_original=False):
+    def _sync_items(self, items, force, open_file, open_original, open_oap):
         q = queue.Queue()
         threads = []
 
@@ -366,7 +377,7 @@ class Remarkable(object):
                     break
                 
                 try:
-                    self._sync_and_open_item(item, force, open_file, open_original)
+                    self._sync_and_open_item(item, force, open_file, open_original, open_oap)
                 except Exception as e:
                     if open_file:
                         self.log_console("(Error) Could not open '%s'" % item.name[0:50])
@@ -395,7 +406,7 @@ class Remarkable(object):
             t.join()
     
 
-    def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
+    def _sync_and_open_item(self, item, force, open_file, open_original, open_oap):   
         
         if item.state == model.item.STATE_SYNCING:
             self.log_console("Already syncing '%s'" %  item.full_name())
@@ -408,11 +419,20 @@ class Remarkable(object):
                 self.log_console("Synced '%s'" %  item.full_name())
 
         if open_file and item.is_document:
-            file_to_open = item.get_original_file() if open_original \
-                    else item.get_annotated_or_original_file()
+            if open_original:
+                file_to_open = item.get_original_file()
+            elif open_oap:
+                file_to_open = item.get_oap_file()
+            else: 
+                file_to_open = item.get_annotated_or_original_file()
+
+            if file_to_open == None:
+                messagebox.showinfo("Not found", "File does not exist.", icon='info')
+                return
 
             if file_to_open.endswith(".pdf"):
-                subprocess.call(["evince", "-i", str(item.current_page), file_to_open])
+                current_page = 0 if open_oap else item.current_page
+                subprocess.call(["evince", "-i", str(current_page), file_to_open])
             else:
                 subprocess.call(["xdg-open", file_to_open])
 
@@ -495,9 +515,11 @@ class Remarkable(object):
                 with open(clipboard, "rb") as f:
                     data = f.read()
             elif is_url:
-                name = clipboard[:35] + "..." if len(clipboard) > 35 else clipboard # Take at most 20 chars of website
+                name = urlparse(clipboard).hostname
                 data = weasyprint.HTML(clipboard).write_pdf()
                 filetype = "pdf"
+
+            self.log_console("Uploading %s..." % name)
 
             id, metadata, mf = create_document_zip(
                 name, 
@@ -525,8 +547,6 @@ class Remarkable(object):
             item.sync()
             self.log_console("Successfully uploaded %s" % item.full_name())
 
-        
-        self.log_console("Uploading %s..." % clipboard)
         threading.Thread(target=run, args=[filetype]).start()
 
 

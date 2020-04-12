@@ -24,14 +24,17 @@ stroke_color = {
     0: colors.Color(48/255., 63/255., 159/255.),        # Pen color 1
     1: colors.Color(211/255., 47/255., 47/255.),        # Pen color 2
     2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
-    3: colors.Color(1.0, 0.95, 0.66, alpha=0.35),       # Highlighter
+    3: colors.Color(255/255., 255/255., 0, alpha=0.25), # Highlighter
     # Own defined colors
     4: colors.Color(97/255., 97/255., 97/255.)             # Pencil
 }
 
 
-def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
-    
+def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
+    """ Render pdf with annotations. The path_oap_pdf defines the pdf 
+        which includes only annotated pages.
+    """
+
     base_pdf = PdfReader(open(path_original_pdf, "rb"))
 
     # Parse remarkable files and write into pdf
@@ -40,7 +43,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
     for page_nr in range(base_pdf.numPages):
         rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
         if not os.path.exists(rm_file):
-            annotations_pdf.append(_blank_page())
+            annotations_pdf.append(None)
             continue
             
         page_layout = base_pdf.pages[page_nr].MediaBox
@@ -49,23 +52,32 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf):
             page_layout = base_pdf.pages[page_nr].ArtBox
 
             if page_layout is None:
-                annotations_pdf.append(_blank_page())
+                annotations_pdf.append(None)
                 continue
             
         image_width, image_height = float(page_layout[2]), float(page_layout[3])
         annotated_page = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
         if len(annotated_page.pages) <= 0:
-            annotations_pdf.append(_blank_page())
+            annotations_pdf.append(None)
         else:
             page = annotated_page.pages[0]
             annotations_pdf.append(page)
        
     # Merge annotations pdf and original pdf
-    for i in range(base_pdf.numPages):           
-        merger = PageMerge(base_pdf.pages[i])
-        merger.add(annotations_pdf[i]).render()
-    writer = PdfWriter()
-    writer.write(path_annotated_pdf, base_pdf)
+    writer_full = PdfWriter()
+    writer_oap = PdfWriter()
+    for i in range(base_pdf.numPages):          
+        annotations_page = annotations_pdf[i]
+
+        if annotations_page != None:
+            merger = PageMerge(base_pdf.pages[i])
+            merger.add(annotations_page).render()
+            writer_oap.addpage(base_pdf.pages[i])
+
+        writer_full.addpage(base_pdf.pages[i])
+
+    writer_full.write(path_annotated_pdf)
+    writer_oap.write(path_oap_pdf)
 
 
 def notebook(path, id, path_annotated_pdf, path_templates=None):

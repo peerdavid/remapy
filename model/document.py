@@ -44,6 +44,7 @@ class Document(Item):
 
         # RemaPy paths
         self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
+        self.path_oap_pdf = "%s/%s_oap.pdf" % (self.path_remapy, self.name)
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
 
@@ -106,7 +107,8 @@ class Document(Item):
                 render.pdf(
                     self.path_rm_files, 
                     self.path_original_pdf,
-                    self.path_annotated_pdf)
+                    self.path_annotated_pdf,
+                    self.path_oap_pdf)
 
         self._update_state()
         self.parent.sync()
@@ -117,6 +119,18 @@ class Document(Item):
             return self.path_annotated_pdf
         
         return self.get_original_file()
+
+
+    def get_oap_file(self):
+        # For notebooks this not really exists. Therefore 
+        # we return the annotated pdf
+        if self.type == TYPE_NOTEBOOK:
+            return self.path_annotated_pdf
+
+        if os.path.exists(self.path_oap_pdf):
+            return self.path_oap_pdf
+        
+        return None
     
 
     def get_original_file(self):

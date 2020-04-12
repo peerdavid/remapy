@@ -13,26 +13,29 @@ due to the use of this software.
 Ps.: Image created with RemaPy ;)
 
 ## Features
- - Open annotated or original file (without annotations)
- - Open remarkable raw files
- - Colored annotations
- - Upload pdf and epub via copy and paste
- - Create backups of all your files (pdf only)
- - Upload a webpage via copy and paste (simply paste a url in remapy)
+ - Open notebooks, annotated pdf's or annotated epub's
+ - Open only the pages that you annotated
+ - Open the original file without annotations
+ - Create backups of your annotated documents
+ - Upload pdf and epub via copy and paste from your file explorer
+ - Upload a webpage simply via copy and paste (copy and paste a url instead of a file)
 
 
 # How to setup / install RemaPy
 First of all ensure that python3 and pip3 is installed.
 
 ## Linux
-To install all dependencies into a virtual environment, execute steps 1-4. 
+Clone this repository to a local folder. To install all 
+dependencies into a virtual environment, execute steps 1-4. 
 If you want to install the packages system wide, execute only step 4:
 1. Create virtual environment: ```python3 -m venv env```
 2. Activate venv: ```source env/bin/activate```
 3. Update your pip installation: ```pip3 install --upgrade pip```
 4. Install all requirements. Use requirements-gpu if a gpu is available, requirements-cpu otherwise: ```pip3 install -r requirements.txt```
 
-To create a launcher symbol adapt the remapy.desktop file and copy it 
+You can then simply execute remapy with ```./rema.py```
+
+Note: To create a launcher symbol adapt the remapy.desktop file and copy it 
 to ~/.local/share/applications/remapy.desktop
 
 
@@ -68,7 +71,7 @@ There are still some things that I want to implement:
  - [x] Make RemaPy offline ready (readonly)
  - [x] Delete local if doc is not available on remarkable 
  - [x] Copy and past a webpage (upload as pdf)
- - [ ] Render only marked text and images and export into odt file
+ - [x] Render only pages with annotations
  - [ ] Show cloud symbol also on collection if some docs are not synced
  - [ ] Upload folders / multiple files (create folders and all pdf files of this folder)
  - [ ] Filter / Search documents or folders
