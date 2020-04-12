@@ -423,12 +423,11 @@ class Remarkable(object):
                 file_to_open = item.get_original_file()
             elif open_oap:
                 file_to_open = item.get_oap_file()
+                if file_to_open == None:
+                    messagebox.showinfo("Information", "Document is not annotated.", icon='info')
+                    return
             else: 
                 file_to_open = item.get_annotated_or_original_file()
-
-            if file_to_open == None:
-                messagebox.showinfo("Not found", "File does not exist.", icon='info')
-                return
 
             if file_to_open.endswith(".pdf"):
                 current_page = 0 if open_oap else item.current_page
