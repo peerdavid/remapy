@@ -43,8 +43,8 @@ class Document(Item):
         self.path_rm_files = "%s/%s" % (self.path, self.id)
 
         # RemaPy paths
-        self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name)
-        self.path_oap_pdf = "%s/%s_oap.pdf" % (self.path_remapy, self.name)
+        self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name.replace("/", "."))
+        self.path_oap_pdf = "%s/%s_oap.pdf" % (self.path_remapy, self.name.replace("/", "."))
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id)
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
 

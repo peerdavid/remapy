@@ -3,7 +3,6 @@ import subprocess
 import threading
 import shutil
 import queue
-from urllib.parse import urlparse
 import weasyprint
 from time import gmtime, strftime
 import numpy as np
@@ -515,7 +514,7 @@ class Remarkable(object):
                     data = f.read()
             elif is_url:
                 self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
-                name = urlparse(clipboard).hostname
+                name = clipboard
                 data = weasyprint.HTML(clipboard).write_pdf()
                 filetype = "pdf"
 
