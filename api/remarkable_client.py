@@ -46,7 +46,7 @@ class RemarkableClient():
         def __init__(self):
             self.sign_in_listener = []
 
-        def listen_sign_in(self, subscriber):
+        def listen_sign_in_event(self, subscriber):
             """ Sends a signal (true) if successfully signed in 
                 and (false) if login was not possible in rm cloud.
             """
@@ -68,8 +68,8 @@ class RemarkableClient():
         self.test = True
         self.listener_handler = self.SignInListenerHandler()
 
-    def listen_sign_in(self, subscriber):
-        self.listener_handler.listen_sign_in(subscriber)   
+    def listen_sign_in_event(self, subscriber):
+        self.listener_handler.listen_sign_in_event(subscriber)   
 
 
     #

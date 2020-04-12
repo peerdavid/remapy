@@ -98,7 +98,7 @@ class Settings(object):
 
         # Subscribe to sign in event. Outer logic (i.e. main) can try to 
         # sign in automatically...
-        self.rm_client.listen_sign_in(self)
+        self.rm_client.listen_sign_in_event(self)
     
 
     #

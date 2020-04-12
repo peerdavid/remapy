@@ -11,15 +11,36 @@ import utils.config
 
 
 class ItemManager(metaclass=Singleton):
+    """ The ItemManager keeps track of all the collections and documents
+        that are stored in your rm cloud. Load and create items through 
+        this class. It is a singleton such that it is ensured that access to 
+        items goes through the same tree structure.
+    """
     
+
     def __init__(self,):
         self.rm_client = RemarkableClient()
         self.root = None
 
 
+    def get_root(self, force=False):
+        """ Get root node of tree from cache or download it from the rm cloud. 
+            If you are offline, we load the stored tree from last time.
+            Note that if we are online we sync all files with the rm cloud 
+            i.e. delete old local files.
+        """
+        if not self.root is None and not force:
+            return self.root
+
+        entries, is_online = self._get_entries()
+        
+        self._clean_local_items(entries)
+        self.root = self._create_tree(entries)
+        return self.root, is_online
+
+
     def get_item(self, id, item=None):
-        if self.root is None:
-            self.get_root()
+        self.get_root()
         
         item = self.root if item is None else item
 
@@ -34,22 +55,45 @@ class ItemManager(metaclass=Singleton):
         return None
 
 
-    def get_root(self, force=False):
-        """ Get root node of tree online or offline. If we are online 
-            we sync all files with the rm cloud i.e. delete old local 
-            files.
-        """
-        if not self.root is None and not force:
-            return self.root
+    def create_backup(self, backup_path):
+        # Create folder structure
+        self.traverse_tree(
+            fun=lambda item: item.create_backup(backup_path),
+            document=False,
+            collection=True)
 
-        entries, is_online = self.get_entries()
+        # And copy files into it
+        self.traverse_tree(
+            fun=lambda item: item.create_backup(backup_path),
+            document=True,
+            collection=False)
+
+
+    def traverse_tree(self, fun, item=None, document=True, collection=True):
+        item = self.get_root() if item == None else item
         
-        self._clean_local_items(entries)
-        self.root = self._create_tree(entries)
-        return self.root, is_online
+        for child in item.children:
+            self.traverse_tree(fun, child, document, collection)
+        
+        if item.is_document and document or item.is_collection and collection:
+            fun(item)
 
-    
-    def get_entries(self):
+
+    def create_item(self, entry, parent):
+        if entry["Type"] == "CollectionType":
+            new_object = Collection(entry, parent)
+
+        elif entry["Type"] == "DocumentType":
+            new_object = Document(entry, parent)
+
+        else: 
+            raise Exception("Unknown type %s" % entry["Type"])
+        
+        parent.add_child(new_object)
+        return new_object
+
+        
+    def _get_entries(self):
         try:
             entries = self.rm_client.list_items()
             return entries, entries != None
@@ -86,7 +130,9 @@ class ItemManager(metaclass=Singleton):
         for i in range(len(entries)):
             lookup_table[entries[i]["ID"]] = i
 
-        # Create a dummy root object where everything starts
+        # Create a dummy root object where everything starts with parent 
+        # "". This parent "" should not be changed as it is also used in 
+        # the rm cloud
         root = Collection(None, None)
         items = {
             "": root
@@ -98,30 +144,6 @@ class ItemManager(metaclass=Singleton):
             self._create_item_and_parents(i, entries, items, lookup_table)
 
         return root
-
-
-    def traverse_tree(self, fun, item=None, document=True, collection=True):
-        item = self.get_root() if item == None else item
-        
-        for child in item.children:
-            self.traverse_tree(fun, child, document, collection)
-        
-        if item.is_document and document or item.is_collection and collection:
-            fun(item)
-
-
-    def create_backup(self, backup_path):
-        # Create folder structure
-        self.traverse_tree(
-            fun=lambda item: item.create_backup(backup_path),
-            document=False,
-            collection=True)
-
-        # And copy files into it
-        self.traverse_tree(
-            fun=lambda item: item.create_backup(backup_path),
-            document=True,
-            collection=False)
 
 
     def _create_item_and_parents(self, i, entries, items, lookup_table):
@@ -142,17 +164,3 @@ class ItemManager(metaclass=Singleton):
         parent = items[parent_id]
         new_object = self.create_item(entry, parent)
         items[new_object.id] = new_object
-            
-
-    def create_item(self, entry, parent):
-        if entry["Type"] == "CollectionType":
-            new_object = Collection(entry, parent)
-
-        elif entry["Type"] == "DocumentType":
-            new_object = Document(entry, parent)
-
-        else: 
-            raise Exception("Unknown type %s" % entry["Type"])
-        
-        parent.add_child(new_object)
-        return new_object

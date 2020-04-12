@@ -128,7 +128,7 @@ class Remarkable(object):
         self.log_widget.config(state=tk.DISABLED)
         self.log_widget.pack(expand=True, fill=tk.X)
         
-        self.rm_client.listen_sign_in(self)
+        self.rm_client.listen_sign_in_event(self)
     
 
     def _set_online_mode(self, mode):

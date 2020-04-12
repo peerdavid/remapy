@@ -27,7 +27,7 @@ class Main(object):
         window_height = 650
 
         # Subscribe to events
-        self.rm_client.listen_sign_in(self)
+        self.rm_client.listen_sign_in_event(self)
 
         # Window settings
         window.title("RemaPy Explorer")
