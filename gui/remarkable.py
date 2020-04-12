@@ -22,10 +22,10 @@ from model.document import Document, create_document_zip
 import utils.config
 
 class Remarkable(object):
+    """ Main window of RemaPy which displays the tree structure of
+        all your rm documents and collections.
+    """
 
-    #
-    # CTOR
-    #
     def __init__(self, root, window, font_size=14, rowheight=14):
         
         self.root = root
@@ -149,7 +149,8 @@ class Remarkable(object):
         else:
             self.label_offline.config(text="Offline")
 
-    def log(self, text):
+
+    def log_console(self, text):
         now = strftime("%H:%M:%S", gmtime())
         self.log_widget.config(state=tk.NORMAL)
         self.log_widget.insert(tk.END, "\n[%s] %s" % (str(now), text))
@@ -323,13 +324,13 @@ class Remarkable(object):
 
 
     def btn_sync_click(self):
-        self.log("Syncing all documents...")
+        self.log_console("Syncing all documents...")
         root, self.is_online = self.item_manager.get_root(force=True)
 
         if self.is_online:
             self._set_online_mode("normal")
         else:
-            self.log("OFFLINE MODE: No connection to the remarkable cloud")
+            self.log_console("OFFLINE MODE: No connection to the remarkable cloud")
             self._set_online_mode("disabled")
 
         self.tree.delete(*self.tree.get_children())
@@ -368,9 +369,9 @@ class Remarkable(object):
                     self._sync_and_open_item(item, force, open_file, open_original)
                 except Exception as e:
                     if open_file:
-                        self.log("(Error) Could not open '%s'" % item.name[0:50])
+                        self.log_console("(Error) Could not open '%s'" % item.name[0:50])
                     else:
-                        self.log("(Error) Could not sync '%s'" % item.name[0:50])
+                        self.log_console("(Error) Could not sync '%s'" % item.name[0:50])
                     print(e)
                     
                 q.task_done()
@@ -393,19 +394,18 @@ class Remarkable(object):
         for t in threads:
             t.join()
     
-        
 
     def _sync_and_open_item(self, item, force=False, open_file=False, open_original=False):   
         
         if item.state == model.item.STATE_SYNCING:
-            self.log("Already syncing '%s'" %  item.full_name())
+            self.log_console("Already syncing '%s'" %  item.full_name())
             return
 
         if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
             item.sync()
 
             if item.is_document:
-                self.log("Synced '%s'" %  item.full_name())
+                self.log_console("Synced '%s'" %  item.full_name())
 
         if open_file and item.is_document:
             file_to_open = item.get_original_file() if open_original \
@@ -446,7 +446,7 @@ class Remarkable(object):
         def run():
             for item in items:
                 item.delete()
-                self.log("Deleted %s" % item.full_name())
+                self.log_console("Deleted %s" % item.full_name())
         threading.Thread(target=run).start()
 
 
@@ -523,10 +523,10 @@ class Remarkable(object):
 
             # Download again to get it correctly
             item.sync()
-            self.log("Successfully uploaded %s" % item.full_name())
+            self.log_console("Successfully uploaded %s" % item.full_name())
 
         
-        self.log("Uploading %s..." % clipboard)
+        self.log_console("Uploading %s..." % clipboard)
         threading.Thread(target=run, args=[filetype]).start()
 
 
