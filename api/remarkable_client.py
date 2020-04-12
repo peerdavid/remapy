@@ -40,6 +40,8 @@ DELETE_ENTRY_URL = BASE_URL + "/document-storage/json/2/delete"
 # CLIENT
 #
 class RemarkableClient():
+    """ Client to connect to rm cloud via REST
+    """
 
     class SignInListenerHandler(metaclass=Singleton):
         

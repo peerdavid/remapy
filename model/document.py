@@ -31,6 +31,8 @@ STATE_OUT_OF_SYNC = 201
 
 
 class Document(Item):
+    """ This class represents a rm document i.e. pdf, epub or notebook
+    """
 
 
     def __init__(self, entry, parent: Collection):

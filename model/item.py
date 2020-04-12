@@ -66,6 +66,7 @@ class Item(object):
         self.path_remapy = get_path_remapy(self.id)
         self.path_metadata_local = get_path_metadata_local(self.id)
         
+
     def is_root_item(self):
         return self.parent is None or self.parent == ""
 
@@ -75,12 +76,6 @@ class Item(object):
         return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
 
-    def _from_utc_to_local_time(self, utc):
-        epoch = time.mktime(utc.timetuple())
-        offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
-        return utc + offset
-
-
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
     
@@ -88,6 +83,12 @@ class Item(object):
     def _update_state_listener(self):
         for listener in self.state_listener:
             listener(self)
+
+
+    def _from_utc_to_local_time(self, utc):
+        epoch = time.mktime(utc.timetuple())
+        offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
+        return utc + offset
 
         
     def _write_remapy_metadata(self):
