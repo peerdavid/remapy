@@ -514,6 +514,7 @@ class Remarkable(object):
                 with open(clipboard, "rb") as f:
                     data = f.read()
             elif is_url:
+                self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
                 name = urlparse(clipboard).hostname
                 data = weasyprint.HTML(clipboard).write_pdf()
                 filetype = "pdf"

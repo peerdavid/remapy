@@ -43,6 +43,29 @@ to ~/.local/share/applications/remapy.desktop
 Coming soon...
 
 
+
+# FAQ
+**How can I upload a document?**<br />
+Simply copy the file in your explorer and paste it in RemaPy. If you 
+paste a URL instead of a webpage, the webpage will be downloaded, converted
+to pdf and uploaded onto your tablet. <br />
+
+**Why are annotations different than on my talbet / the original client?**<br />
+My main motivation to write RemaPy was, to enable linux users to read their 
+notebooks, annotated pdf's and annotated epubs via the remarkable cloud. 
+Especially researches and students often use linux and RemaPy is somehow designed
+for those users. Therefore the rendering as its done by the original 
+client and by the remarkable tablet is honestly not on my roadmap. 
+Feel free to write an issue or even better improve the renderer (```models/render.py```) 
+. Any help is welcome :) <br />
+
+**Why are uploaded webpages sometimes only the "terms of use" page?** <br />
+This is currently a restriction and until now I had not really a good idea 
+how I can *generally* overcome this problem i.e. convert the webpage to 
+a pdf after the terms of use are accepted. Any idea is welcome :) <br />
+
+
+
 # ToDo's
 There are still some things that I want to implement:
 
@@ -72,24 +95,18 @@ There are still some things that I want to implement:
  - [x] Delete local if doc is not available on remarkable 
  - [x] Copy and past a webpage (upload as pdf)
  - [x] Render only pages with annotations
- - [ ] Show cloud symbol also on collection if some docs are not synced
- - [ ] Upload folders / multiple files (create folders and all pdf files of this folder)
+ - [ ] Upload folder / multiple files recursively
  - [ ] Filter / Search documents or folders
- - [ ] Rename collection
- - [ ] Rename document
- - [ ] Create new collection
- - [ ] Create new notebook
- - [ ] Move collection
- - [ ] Move document
+ - [ ] Rename
+ - [ ] Create new
+ - [ ] Move
  - [ ] Better error handling
  - [ ] Better logging
  - [ ] Refactoring and cleanup
- - [ ] Set exact versions of python packages in requirements.txt
  - [ ] Zotero sync
- - [ ] SSH access: Change background image of remarkable, live view via ssh
+ - [ ] SSH access: Change background image of remarkable
  - [ ] OCR; Search in documents text and handwritten notes
- - [ ] Decrypt encrypted pdf's before uploading it to be compatible with the RM
- - [ ] Select colors for rendering of pens and highlighter
+ - [ ] Let the user select annotation colors
 
 
 # Acknowledgments
