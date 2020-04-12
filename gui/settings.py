@@ -68,7 +68,7 @@ class Settings(object):
         self.entry_templates = tk.Entry(root, textvariable=self.entry_templates_text)
         self.entry_templates.grid(row=7, column=4, sticky="W")        
 
-        label = tk.Label(root, justify="left", anchor="w", text="A local folder that contains all template PNG files. \nYou can find it on your tablet '/usr/share/remarkable'")
+        label = tk.Label(root, justify="left", anchor="w", text="A local folder that contains all template PNG files. \nYou can copy the template files from your tablet: \n'/usr/share/remarkable'")
         label.grid(row=7, column=7, sticky="W") 
 
 
@@ -87,7 +87,7 @@ class Settings(object):
         self.entry_backup = tk.Entry(root, textvariable=self.backup_text)
         self.entry_backup.grid(row=10, column=4, sticky="W") 
 
-        label = tk.Label(root, justify="left", anchor="w", text="Copies annotated PDF files into the given directory.\nNote that those files can not be restored on the tablet.")
+        label = tk.Label(root, justify="left", anchor="w", text="Copy currently downloaded and annotated PDF files \ninto the given directory. Note that those files can not \nbe restored on the tablet.")
         label.grid(row=10, column=7, sticky="W") 
 
         self.btn_create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
