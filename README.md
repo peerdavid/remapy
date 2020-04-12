@@ -12,7 +12,8 @@ due to the use of this software.
 <img src="doc/explorer.png" />
 Ps.: Image created with RemaPy ;)
 
-## Features
+# Features
+ - Synchronization via the remarkable cloud
  - Open notebooks, annotated pdf's or annotated epub's
  - Open only the pages that you annotated
  - Open the original file without annotations
