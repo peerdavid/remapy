@@ -63,9 +63,6 @@ class RemarkableClient():
                     print(e)
 
 
-    #
-    # CTOR
-    #
     def __init__(self):
         self.test = True
         self.listener_handler = self.SignInListenerHandler()
@@ -74,9 +71,6 @@ class RemarkableClient():
         self.listener_handler.listen_sign_in_event(subscriber)   
 
 
-    #
-    # API
-    #
     def sign_in(self, onetime_code=None):
         """ Load token. If not available the user must provide a 
             one time code from https://my.remarkable.com/connect/remarkable
@@ -186,10 +180,6 @@ class RemarkableClient():
 
         return self.get_item(id)
         
-
-    #
-    # HELPER
-    #
 
     def _get_device_token(self, one_time_code):
         """ Create a new device for a given one_time_code to be able to 
