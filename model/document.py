@@ -215,28 +215,26 @@ def create_document_zip(name, data, file_type, parent_id=""):
     # .content file
     content_file = json.dumps({
         "extraMetadata": { },
+        "fileType": file_type,
+        "pageCount": 0,
         "lastOpenedPage": 0,
         "lineHeight": -1,
         "margins": 180,
-        "pageCount": 0,
         "textScale": 1,
-        "transform": {},
-        "fileType": file_type
+        "transform": { }
     })
 
     # metadata
     timestamp = datetime.datetime.now(timezone.utc) - datetime.timedelta(minutes=2)
     timestamp = timestamp.astimezone().isoformat()
     metadata = {
+        "ID": id,
+        "Parent": parent_id,
         "VissibleName": name,
         "Type": "DocumentType",
         "Version": 1,
-        "ID": id,
-        "Parent": parent_id,
         "ModifiedClient": timestamp,
-        #"Success": True,
-        "CurrentPage": 0,
-        #"Bookmarked": False,
+        "CurrentPage": 0
     }
 
     mf = BytesIO()
