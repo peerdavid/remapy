@@ -23,7 +23,7 @@ Ps.: Image created with RemaPy ;)
 
 
 # How to setup / install RemaPy
-First of all ensure that python3 and pip3 is installed.
+First of all ensure that python3 (> 3.6) and pip3 is installed.
 
 ## Linux
 Clone this repository to a local folder. To install all 
