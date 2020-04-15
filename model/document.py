@@ -205,7 +205,7 @@ class Document(Item):
 
         file_to_backup = self.get_annotated_or_original_file()
         extension = os.path.splitext(file_to_backup)[1]
-        file_name = self.name + extension
+        file_name = self.name.replace("/", ".") + extension
         shutil.copyfile(file_to_backup, backup_path + "/" + file_name)
 
         
