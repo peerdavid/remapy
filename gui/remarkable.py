@@ -3,7 +3,6 @@ import subprocess
 import threading
 import shutil
 import queue
-import weasyprint
 from time import gmtime, strftime
 import numpy as np
 from pathlib import Path
@@ -20,6 +19,7 @@ from model.item import Item
 import model.document
 from model.document import Document, create_document_zip
 import utils.config
+
 
 class Remarkable(object):
     """ Main window of RemaPy which displays the tree structure of
@@ -513,10 +513,18 @@ class Remarkable(object):
                 with open(clipboard, "rb") as f:
                     data = f.read()
             elif is_url:
-                self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
-                name = clipboard
-                data = weasyprint.HTML(clipboard).write_pdf()
-                filetype = "pdf"
+                try:
+                    import weasyprint
+                    self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
+                    name = clipboard
+                    data = weasyprint.HTML(clipboard).write_pdf()
+                    filetype = "pdf"
+
+                except ImportError:
+                    messagebox.showerror(
+                        "WeasyPrint not installed", 
+                        "Please follow the following installation guide to enable this feature: https://weasyprint.readthedocs.io/en/stable/install.html")
+                    return
 
             self.log_console("Uploading %s..." % name)
 

@@ -5,4 +5,3 @@ requests
 pdfrw
 reportlab
 pathlib
-weasyprint
