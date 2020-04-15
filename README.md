@@ -23,7 +23,7 @@ Ps.: Image created with RemaPy ;)
 
 
 # How to setup / install RemaPy
-First of all ensure that python3 (> 3.6) and pip3 is installed.
+First of all ensure that python3 (>= 3.6) and pip3 is installed.
 
 ## Linux
 Clone this repository to a local folder. To install all 
@@ -67,8 +67,8 @@ a pdf after the terms of use are accepted. Any idea is welcome :) <br />
 
 
 
-# ToDo's
-There are still some things that I want to implement:
+# Roadmap
+Here you can find what I have done so far and my next todo's:
 
  - [x] Authentication
  - [x] Settings page (Path to templates, sync folder, )
@@ -96,6 +96,9 @@ There are still some things that I want to implement:
  - [x] Delete local if doc is not available on remarkable 
  - [x] Copy and past a webpage (upload as pdf)
  - [x] Render only pages with annotations
+ - [ ] Let the user select annotation colors
+ - [ ] Toggle bookmark
+ - [ ] Show bookmark
  - [ ] Upload folder / multiple files recursively
  - [ ] Filter / Search documents or folders
  - [ ] Rename
@@ -107,7 +110,6 @@ There are still some things that I want to implement:
  - [ ] Zotero sync
  - [ ] SSH access: Change background image of remarkable
  - [ ] OCR; Search in documents text and handwritten notes
- - [ ] Let the user select annotation colors
 
 
 # Acknowledgments
