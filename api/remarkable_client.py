@@ -207,7 +207,7 @@ class RemarkableClient():
         
         try:
             response = self._request("POST", USER_TOKEN_URL, None, headers={
-                    "Authorization": f"Bearer {device_token}"
+                    "Authorization": "Bearer %s" % device_token
             })
         except:
             return None
@@ -246,7 +246,7 @@ class RemarkableClient():
         if not path.startswith("http"):
             if not path.startswith('/'):
                 path = '/' + path
-            url = f"{BASE_URL}{path}"
+            url = "%s%s" % (BASE_URL, path)
         else:
             url = path
 
@@ -256,7 +256,7 @@ class RemarkableClient():
 
         user_token = cfg.get("authentication.user_token")
         if user_token != None:
-            _headers["Authorization"] = f"Bearer {user_token}"
+            _headers["Authorization"] = "Bearer %s" % user_token
         
         for k in headers.keys():
             _headers[k] = headers[k]
