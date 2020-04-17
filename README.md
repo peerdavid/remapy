@@ -98,7 +98,6 @@ Here you can find what I have done so far and my next todo's:
  - [x] Render only pages with annotations
  - [x] Toggle bookmark
  - [ ] Let the user select annotation colors
- - [ ] Toggle bookmark
  - [ ] Show bookmark
  - [ ] Upload folder / multiple files recursively
  - [ ] Filter / Search documents or folders
