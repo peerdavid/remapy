@@ -67,6 +67,10 @@ class Item(object):
         self.path_metadata_local = get_path_metadata_local(self.id)
         
 
+    def get_metadata(self):
+        return self.entry
+
+
     def is_root_item(self):
         return self.parent is None or self.parent == ""
 

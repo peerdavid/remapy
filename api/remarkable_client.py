@@ -173,12 +173,16 @@ class RemarkableClient():
             print("(Error) Upload request failed")
             return 
         
+        return self.update_metadata(metadata)
+    
+
+    def update_metadata(self, metadata):
         response = self._request("PUT", UPDATE_STATUS_URL, body=[metadata])
         if not response.ok:        
             print("(Error) Upload request failed")
             return 
 
-        return self.get_item(id)
+        return self.get_item(metadata["ID"])
         
 
     def _get_device_token(self, one_time_code):

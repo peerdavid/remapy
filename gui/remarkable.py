@@ -4,6 +4,7 @@ import threading
 import shutil
 import queue
 from time import gmtime, strftime
+import datetime
 import numpy as np
 from pathlib import Path
 import tkinter as tk
@@ -19,6 +20,9 @@ from model.item import Item
 import model.document
 from model.document import Document, create_document_zip
 import utils.config
+
+
+RFC3339Nano = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class Remarkable(object):
@@ -102,6 +106,7 @@ class Remarkable(object):
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='File explorer', command=self.btn_open_in_file_explorer)
+        self.context_menu.add_command(label='Toggle bookmark', command=self.btn_toggle_bookmark)
 
         # self.context_menu.add_command(label='Rename')
         # self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
@@ -587,3 +592,20 @@ class Remarkable(object):
                 continue
 
             subprocess.call(('xdg-open', item.path_remapy))
+    
+
+    def btn_toggle_bookmark(self):
+        selected_ids = self.tree.selection()
+        items = [self.item_manager.get_item(id) for id in selected_ids]
+
+        def toggle_bookmark(item):
+            metadata = item.get_metadata()
+            metadata["Bookmarked"] = not metadata["Bookmarked"]
+            metadata["Version"] += 1
+            metadata["ModifiedClient"] = datetime.datetime.utcnow().strftime(RFC3339Nano)
+            self.rm_client.update_metadata(metadata)
+
+        # Add all items and child items
+        for item in items:
+            self.item_manager.traverse_tree(fun=toggle_bookmark, document=False, collection=True, item = item)
+            self.item_manager.traverse_tree(fun=toggle_bookmark, document=True, collection=False, item = item)

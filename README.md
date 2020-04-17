@@ -96,6 +96,7 @@ Here you can find what I have done so far and my next todo's:
  - [x] Delete local if doc is not available on remarkable 
  - [x] Copy and past a webpage (upload as pdf)
  - [x] Render only pages with annotations
+ - [x] Toggle bookmark
  - [ ] Let the user select annotation colors
  - [ ] Toggle bookmark
  - [ ] Show bookmark

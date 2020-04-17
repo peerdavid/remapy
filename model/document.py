@@ -6,7 +6,6 @@ from zipfile import ZipFile
 import shutil
 from pathlib import Path
 import datetime
-from datetime import timezone
 import json
 
 
@@ -28,6 +27,9 @@ TYPE_EPUB = 3
 # Synced with cloud states
 STATE_NOT_SYNCED = 200
 STATE_OUT_OF_SYNC = 201
+
+
+RFC3339Nano = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class Document(Item):
@@ -225,15 +227,13 @@ def create_document_zip(name, data, file_type, parent_id=""):
     })
 
     # metadata
-    timestamp = datetime.datetime.now(timezone.utc) - datetime.timedelta(minutes=2)
-    timestamp = timestamp.astimezone().isoformat()
     metadata = {
         "ID": id,
         "Parent": parent_id,
         "VissibleName": name,
         "Type": "DocumentType",
         "Version": 1,
-        "ModifiedClient": timestamp,
+        "ModifiedClient": datetime.datetime.utcnow().strftime(RFC3339Nano),
         "CurrentPage": 0
     }
 
