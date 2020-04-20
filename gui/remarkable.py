@@ -177,7 +177,7 @@ class Remarkable(object):
 
     
     def _update_tree(self, item):
-        if not item.is_root_item():
+        if not item.is_root():
             tree_id = self.tree.insert(
                 item.parent().id(), 
                 0, 
@@ -413,7 +413,7 @@ class Remarkable(object):
             self.log_console("Already syncing '%s'" %  item.full_name())
             return
 
-        if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
+        if (force or item.state != model.item.STATE_SYNCED) and not item.is_root():
             item.sync()
 
             if item.is_document():

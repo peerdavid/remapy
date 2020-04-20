@@ -45,26 +45,24 @@ class Item(object):
     # CTOR
     #
     def __init__(self, metadata, parent=None):
-        self.children = []
-        self.is_root = metadata is None
-        if self.is_root:
-            self._parent = None
-            return 
-
         self.metadata = metadata
-        self.rm_client = RemarkableClient()
         self._parent = parent
-        self.state_listener = []
-
-        # Set paths
         self.path = get_path(self.id())
         self.path_remapy = get_path_remapy(self.id())
         self.path_metadata_local = get_path_metadata_local(self.id())
+
+        self.rm_client = RemarkableClient()
+        self.children = []
+        self.state_listener = []
         
 
     #
     # Getter and setter
     #
+    def is_root(self):
+        return self.metadata is None
+
+
     def id(self):
         return self._meta_value("ID")
 
@@ -106,7 +104,7 @@ class Item(object):
     
 
     def _meta_value(self, key, root_value=""):
-        if self.is_root:
+        if self.is_root():
             return root_value
         return self.metadata[key]
 
@@ -117,9 +115,6 @@ class Item(object):
         self.metadata["Version"] += 1
         self.rm_client.update_metadata(self.metadata)
         self._write_remapy_file()
-
-    def is_root_item(self):
-        return self.is_root
 
 
     #
@@ -135,7 +130,7 @@ class Item(object):
         
 
     def _write_remapy_file(self):
-        if self.is_root:
+        if self.is_root():
             return 
 
         Path(self.path_remapy).mkdir(parents=True, exist_ok=True)

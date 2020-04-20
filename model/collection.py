@@ -31,7 +31,7 @@ class Collection(Item):
 
 
     def sync(self):
-        if self.is_root:
+        if self.is_root():
             return
 
         # Write metadata of collection and of all parents to ensure 
@@ -53,10 +53,6 @@ class Collection(Item):
         return ok
 
 
-    def is_root_collection(self):
-        return self.parent() == None
-
-
     def full_name(self):
         if self.parent() is None:
             return ""
@@ -68,7 +64,7 @@ class Collection(Item):
 
 
     def _update_state(self, state):
-        if self.is_root_collection():
+        if self.is_root():
             return 
             
         self.state = state
