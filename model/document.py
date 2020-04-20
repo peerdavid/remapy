@@ -6,6 +6,7 @@ from zipfile import ZipFile
 import shutil
 from pathlib import Path
 import datetime
+from time import gmtime, strftime
 import json
 
 
@@ -37,8 +38,8 @@ class Document(Item):
     """
 
 
-    def __init__(self, entry, parent: Collection):
-        super(Document, self).__init__(entry, parent)
+    def __init__(self, metadata, parent: Collection):
+        super(Document, self).__init__(metadata, parent)
         
         # Remarkable tablet paths
         self.path_zip = "%s.zip" % self.path
@@ -51,7 +52,7 @@ class Document(Item):
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id)
 
         # Other props
-        self.current_page = entry["CurrentPage"] + 1
+        self.current_page = metadata["CurrentPage"] + 1
         self.download_url = None
         self.blob_url = None
         self.state = None       # Synced, out of sync etc.

@@ -22,9 +22,6 @@ from model.document import Document, create_document_zip
 import utils.config
 
 
-RFC3339Nano = "%Y-%m-%dT%H:%M:%SZ"
-
-
 class Remarkable(object):
     """ Main window of RemaPy which displays the tree structure of
         all your rm documents and collections.
@@ -599,6 +596,7 @@ class Remarkable(object):
         items = [self.item_manager.get_item(id) for id in selected_ids]
 
         def toggle_bookmark(item):
+            item.set_bookmarked(not item.bookmarked)
             metadata = item.get_metadata()
             metadata["Bookmarked"] = not metadata["Bookmarked"]
             metadata["Version"] += 1

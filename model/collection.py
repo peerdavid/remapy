@@ -6,8 +6,8 @@ from pathlib import Path
 
 class Collection(Item):
 
-    def __init__(self, entry, parent):
-        super(Collection, self).__init__(entry, parent)
+    def __init__(self, metadata, parent):
+        super(Collection, self).__init__(metadata, parent)
         self.state = model.item.STATE_SYNCED
         pass
 

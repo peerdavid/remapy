@@ -32,10 +32,10 @@ class ItemManager(metaclass=Singleton):
         if not self.root is None and not force:
             return self.root
 
-        entries, is_online = self._get_entries()
+        metadata_list, is_online = self._get_metadata_list()
         
-        self._clean_local_items(entries)
-        self.root = self._create_tree(entries)
+        self._clean_local_items(metadata_list)
+        self.root = self._create_tree(metadata_list)
         return self.root, is_online
 
 
@@ -79,39 +79,39 @@ class ItemManager(metaclass=Singleton):
             fun(item)
 
 
-    def create_item(self, entry, parent):
-        if entry["Type"] == "CollectionType":
-            new_object = Collection(entry, parent)
+    def create_item(self, metadata, parent):
+        if metadata["Type"] == "CollectionType":
+            new_object = Collection(metadata, parent)
 
-        elif entry["Type"] == "DocumentType":
-            new_object = Document(entry, parent)
+        elif metadata["Type"] == "DocumentType":
+            new_object = Document(metadata, parent)
 
         else: 
-            raise Exception("Unknown type %s" % entry["Type"])
+            raise Exception("Unknown type %s" % metadata["Type"])
         
         parent.add_child(new_object)
         return new_object
 
         
-    def _get_entries(self):
+    def _get_metadata_list(self):
         try:
-            entries = self.rm_client.list_items()
-            return entries, entries != None
+            metadata_list = self.rm_client.list_items()
+            return metadata_list, metadata_list != None
         except:
-            entries = []
+            metadata_list = []
             for local_id in os.listdir(utils.config.PATH):
-                entry_path = model.item.get_path_metadata_local(local_id)
-                with open(entry_path, 'r') as file:
-                    entry_content = file.read().replace('\n', '')
+                metadata_path = model.item.get_path_metadata_local(local_id)
+                with open(metadata_path, 'r') as file:
+                    metadata_content = file.read().replace('\n', '')
                 
-                entry = json.loads(entry_content)
-                entries.append(entry)
+                metadata = json.loads(metadata_content)
+                metadata_list.append(metadata)
 
-        return entries, False
+        return metadata_list, False
 
 
-    def _clean_local_items(self, entries):
-        online_ids = [entry["ID"] for entry in entries]
+    def _clean_local_items(self, metadata_list):
+        online_ids = [metadata["ID"] for metadata in metadata_list]
         for local_id in os.listdir(utils.config.PATH):
             if local_id in online_ids:
                 continue
@@ -124,11 +124,11 @@ class ItemManager(metaclass=Singleton):
             print("Deleted local item %s" % local_id)
 
 
-    def _create_tree(self, entries):
+    def _create_tree(self, metadata_list):
 
         lookup_table = {}
-        for i in range(len(entries)):
-            lookup_table[entries[i]["ID"]] = i
+        for i in range(len(metadata_list)):
+            lookup_table[metadata_list[i]["ID"]] = i
 
         # Create a dummy root object where everything starts with parent 
         # "". This parent "" should not be changed as it is also used in 
@@ -140,27 +140,27 @@ class ItemManager(metaclass=Singleton):
 
         # We do this for every element, because _create_item_and_parents
         # only ensures that all parents already exist
-        for i in range(len(entries)):
-            self._create_item_and_parents(i, entries, items, lookup_table)
+        for i in range(len(metadata_list)):
+            self._create_item_and_parents(i, metadata_list, items, lookup_table)
 
         return root
 
 
-    def _create_item_and_parents(self, i, entries, items, lookup_table):
-        entry = entries[i]
-        parent_id = entry["Parent"]
+    def _create_item_and_parents(self, i, metadata_list, items, lookup_table):
+        metadata = metadata_list[i]
+        parent_id = metadata["Parent"]
 
-        if i < 0 or len(entries) <= 0 or entry["ID"] in items:
+        if i < 0 or len(metadata_list) <= 0 or metadata["ID"] in items:
             return
 
         if not parent_id in items:
             if not parent_id in lookup_table:
-                print("(Warning) No parent for item %s" % entry["VissibleName"])
+                print("(Warning) No parent for item %s" % metadata["VissibleName"])
                 parent_id = ""
             else:
                 parent_pos = lookup_table[parent_id]
-                self._create_item_and_parents(parent_pos, entries, items, lookup_table)
+                self._create_item_and_parents(parent_pos, metadata_list, items, lookup_table)
 
         parent = items[parent_id]
-        new_object = self.create_item(entry, parent)
+        new_object = self.create_item(metadata, parent)
         items[new_object.id] = new_object
