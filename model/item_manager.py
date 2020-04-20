@@ -44,7 +44,7 @@ class ItemManager(metaclass=Singleton):
         
         item = self.root if item is None else item
 
-        if item.id == id:
+        if item.id() == id:
             return item
         
         for child in item.children:
@@ -75,7 +75,7 @@ class ItemManager(metaclass=Singleton):
         for child in item.children:
             self.traverse_tree(fun, child, document, collection)
         
-        if item.is_document and document or item.is_collection and collection:
+        if item.is_document() and document or item.is_collection() and collection:
             fun(item)
 
 
@@ -163,4 +163,4 @@ class ItemManager(metaclass=Singleton):
 
         parent = items[parent_id]
         new_object = self.create_item(metadata, parent)
-        items[new_object.id] = new_object
+        items[new_object.id()] = new_object

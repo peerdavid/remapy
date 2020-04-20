@@ -102,8 +102,8 @@ class Remarkable(object):
         self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
         self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='File explorer', command=self.btn_open_in_file_explorer)
         self.context_menu.add_command(label='Toggle bookmark', command=self.btn_toggle_bookmark)
+        self.context_menu.add_command(label='File explorer', command=self.btn_open_in_file_explorer)
 
         # self.context_menu.add_command(label='Rename')
         # self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
@@ -141,9 +141,7 @@ class Remarkable(object):
         self.context_menu.entryconfig(4, state=mode)
         self.context_menu.entryconfig(5, state=mode)
         self.context_menu.entryconfig(6, state=mode)
-        # self.context_menu.entryconfig(8, state=mode)
-        # self.context_menu.entryconfig(9, state=mode)
-        # self.context_menu.entryconfig(10, state=mode)
+        self.context_menu.entryconfig(8, state=mode)
 
         bg = "#ffffff" if mode == "normal" else "#bdbdbd"
         self.tree_style.configure("remapy.style.Treeview", background=bg)
@@ -181,9 +179,9 @@ class Remarkable(object):
     def _update_tree(self, item):
         if not item.is_root_item():
             tree_id = self.tree.insert(
-                item.parent.id, 
+                item.parent().id(), 
                 0, 
-                item.id)
+                item.id())
             
             self._update_tree_item(item)
 
@@ -191,8 +189,8 @@ class Remarkable(object):
 
         # Sort by name and item type
         sorted_children = item.children
-        sorted_children.sort(key=lambda x: str.lower(x.name), reverse=True)
-        sorted_children.sort(key=lambda x: int(x.is_document), reverse=True)
+        sorted_children.sort(key=lambda x: str.lower(x.name()), reverse=True)
+        sorted_children.sort(key=lambda x: int(x.is_document()), reverse=True)
         for child in sorted_children:
             self._update_tree(child)
 
@@ -221,18 +219,20 @@ class Remarkable(object):
 
     def _update_tree_item(self, item):
         if item.state == model.item.STATE_DELETED:
-            self.tree.delete(item.id)
+            self.tree.delete(item.id())
         else:
             icon = self._get_icon(item)
             self.tree.item(
-                item.id, 
+                item.id(), 
                 image=icon, 
-                text=" " + item.name,
-                values=(item.local_modified_time(), item.current_page))
+                text=" " + item.name(),
+                values=(
+                    item.modified_time().strftime("%Y-%m-%d %H:%M:%S"), 
+                    item.current_page()))
 
 
     def _get_icon(self, item):
-        if not item.is_document:
+        if item.is_collection():
             if item.state == model.item.STATE_SYNCED:
                 return self.icon_collection
             else:
@@ -278,7 +278,7 @@ class Remarkable(object):
         selected_ids = self.tree.selection()
         item = self.item_manager.get_item(selected_ids[0])
         
-        if item.is_document:
+        if item.is_document():
             self._sync_selection_async(
                 force=False, 
                 open_file=True, 
@@ -381,9 +381,9 @@ class Remarkable(object):
                     self._sync_and_open_item(item, force, open_file, open_original, open_oap)
                 except Exception as e:
                     if open_file:
-                        self.log_console("(Error) Could not open '%s'" % item.name[0:50])
+                        self.log_console("(Error) Could not open '%s'" % item.name())
                     else:
-                        self.log_console("(Error) Could not sync '%s'" % item.name[0:50])
+                        self.log_console("(Error) Could not sync '%s'" % item.name())
                     print(e)
                     
                 q.task_done()
@@ -416,22 +416,22 @@ class Remarkable(object):
         if (force or item.state != model.item.STATE_SYNCED) and not item.is_root_item():
             item.sync()
 
-            if item.is_document:
+            if item.is_document():
                 self.log_console("Synced '%s'" %  item.full_name())
 
-        if open_file and item.is_document:
+        if open_file and item.is_document():
             if open_original:
-                file_to_open = item.get_original_file()
+                file_to_open = item.orig_file()
             elif open_oap:
-                file_to_open = item.get_oap_file()
+                file_to_open = item.oap_file()
                 if file_to_open == None:
                     messagebox.showinfo("Information", "Document is not annotated.", icon='info')
                     return
             else: 
-                file_to_open = item.get_annotated_or_original_file()
+                file_to_open = item.ann_or_orig_file()
 
             if file_to_open.endswith(".pdf"):
-                current_page = 0 if open_oap else item.current_page
+                current_page = 0 if open_oap else item.current_page()
                 subprocess.call(["evince", "-i", str(current_page), file_to_open])
             else:
                 subprocess.call(["xdg-open", file_to_open])
@@ -450,7 +450,7 @@ class Remarkable(object):
         
         count = [0, 0]
         for item in items:
-            if item.is_document:
+            if item.is_document():
                 count[0] += 1
                 continue
             
@@ -485,7 +485,7 @@ class Remarkable(object):
         
         elif len(selected_ids) == 1:
             item = self.item_manager.get_item(selected_ids[0])
-            parent_id = str(item.parent.id if item.is_document else item.id)
+            parent_id = str(item.parent().id() if item.is_document() else item.id())
         
         else:
             parent_id = ""      
@@ -501,7 +501,7 @@ class Remarkable(object):
             filetype = "pdf" if is_pdf else "epub" if is_epub else None
 
             if filetype is None:
-                messagebox.showerror("Paste error", "Only .pdf and .epub files are supported.")
+                messagebox.showerror("Paste error", "Only pdf, epub and urls are supported.")
                 return
         elif is_url:
             pass
@@ -585,7 +585,7 @@ class Remarkable(object):
         items = [self.item_manager.get_item(id) for id in selected_ids]
 
         for item in items:
-            if not item.is_document:
+            if item.is_collection():
                 continue
 
             subprocess.call(('xdg-open', item.path_remapy))
@@ -596,12 +596,7 @@ class Remarkable(object):
         items = [self.item_manager.get_item(id) for id in selected_ids]
 
         def toggle_bookmark(item):
-            item.set_bookmarked(not item.bookmarked)
-            metadata = item.get_metadata()
-            metadata["Bookmarked"] = not metadata["Bookmarked"]
-            metadata["Version"] += 1
-            metadata["ModifiedClient"] = datetime.datetime.utcnow().strftime(RFC3339Nano)
-            self.rm_client.update_metadata(metadata)
+            item.set_bookmarked(not item.bookmarked())
 
         # Add all items and child items
         for item in items:

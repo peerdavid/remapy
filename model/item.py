@@ -23,11 +23,17 @@ RFC3339Nano = "%Y-%m-%dT%H:%M:%SZ"
 def get_path(id):
     return "%s/%s" % (utils.config.PATH, id)
 
+
 def get_path_remapy(id):    
     return "%s/.remapy" % get_path(id)
 
+
 def get_path_metadata_local(id):
     return "%s/metadata.local" % get_path_remapy(id)
+
+
+def now_rfc3339():
+        return datetime.utcnow().strftime(RFC3339Nano)
 
 
 #
@@ -35,71 +41,100 @@ def get_path_metadata_local(id):
 #
 class Item(object):
 
+    #
+    # CTOR
+    #
     def __init__(self, metadata, parent=None):
         self.children = []
         self.is_root = metadata is None
         if self.is_root:
-            self.id = ""
-            self.is_document = False
-            self.parent = None
-            self.is_collection = True
-            self.is_document = False
+            self._parent = None
             return 
 
         self.metadata = metadata
         self.rm_client = RemarkableClient()
-        self.parent = parent
-        self.id = metadata["ID"]
-        self.version = metadata["Version"]
-        self.name = metadata["VissibleName"]
-        self.is_document = metadata["Type"] == "DocumentType"
-        self.is_collection = not self.is_document
-        self.success = metadata["Success"]
-        self.bookmarked = metadata["Bookmarked"]
-        self.current_page = "-"
+        self._parent = parent
         self.state_listener = []
 
-        try:
-            self.modified_client = datetime.strptime(metadata["ModifiedClient"], "%Y-%m-%dT%H:%M:%S.%fZ")
-        except:
-            self.modified_client = datetime.strptime(metadata["ModifiedClient"], "%Y-%m-%dT%H:%M:%SZ")
-        
         # Set paths
-        self.path = get_path(self.id)
-        self.path_remapy = get_path_remapy(self.id)
-        self.path_metadata_local = get_path_metadata_local(self.id)
+        self.path = get_path(self.id())
+        self.path_remapy = get_path_remapy(self.id())
+        self.path_metadata_local = get_path_metadata_local(self.id())
         
 
-    def get_metadata(self):
-        return self.metadata
+    #
+    # Getter and setter
+    #
+    def id(self):
+        return self._meta_value("ID")
+
+
+    def name(self):
+        return self._meta_value("VissibleName")
+
+
+    def version(self):
+        return self._meta_value("Version", -1)
     
+
+    def bookmarked(self):
+        return self._meta_value("Bookmarked", False)
+
+
+    def is_document(self):
+        return self._meta_value("Type", "CollectionType") == "DocumentType"
+    
+
+    def is_collection(self):
+        return self._meta_value("Type", "CollectionType") != "DocumentType"
+    
+
+    def modified_time(self):
+        modified = self.metadata["ModifiedClient"]
+        try:
+            utc = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except:
+            utc = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%SZ")
+        
+        epoch = time.mktime(utc.timetuple())
+        offset = datetime.fromtimestamp(epoch) - datetime.utcfromtimestamp(epoch)
+        return utc + offset
+
+
+    def parent(self):
+        return self._parent
+    
+
+    def _meta_value(self, key, root_value=""):
+        if self.is_root:
+            return root_value
+        return self.metadata[key]
+
+
     def set_bookmarked(self, bookmarked):
-        self.bookmarked = bookmarked
         self.metadata["Bookmarked"] = bookmarked
-        self.metadata["ModifiedClient"] = datetime.datetime.utcnow().strftime(RFC3339Nano)
+        self.metadata["ModifiedClient"] = now_rfc3339()
         self.metadata["Version"] += 1
+        self.rm_client.update_metadata(self.metadata)
+        self._write_remapy_file()
 
     def is_root_item(self):
-        return self.parent is None or self.parent == ""
+        return self.is_root
 
-    def local_modified_time(self):
-        local_time = self._from_utc_to_local_time(self.modified_client)
-        return local_time.strftime("%Y-%m-%d %H:%M:%S")
 
+    #
+    # Functions
+    #
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
+
 
     def _update_state_listener(self):
         for listener in self.state_listener:
             listener(self)
-
-
-    def _from_utc_to_local_time(self, utc):
-        epoch = time.mktime(utc.timetuple())
-        offset = datetime.fromtimestamp (epoch) - datetime.utcfromtimestamp (epoch)
-        return utc + offset
         
-    def _write_remapy_metadata(self):
+
+    def _write_remapy_file(self):
         if self.is_root:
             return 
 
