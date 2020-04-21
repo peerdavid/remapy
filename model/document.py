@@ -249,7 +249,14 @@ def create_document_zip(name, data, file_type, parent_id=""):
         "Type": "DocumentType",
         "Version": 1,
         "ModifiedClient": model.item.now_rfc3339(),
-        "CurrentPage": 0
+        "CurrentPage": 0,
+        "Bookmarked": False,
+        # "Message": "",
+        # "Success": True,
+        # "BlobURLGet": "",
+        # "BlobURLGetExpires": "",
+        # "BlobURLPut": "",
+        # "BlobURLPutExpires": ""
     }
 
     mf = BytesIO()

@@ -4,6 +4,7 @@ from io import BytesIO
 import requests
 from uuid import uuid4
 from pathlib import Path
+import json
 
 import utils.config as cfg
 from utils.helper import Singleton
@@ -141,6 +142,12 @@ class RemarkableClient():
 
         if response.ok:
             items = response.json()
+
+            # Logging only
+            # items_str = json.dumps(items, indent=4)
+            # with open("all_files.json", "wt") as f:
+            #     f.write(items_str)
+
             return items
         return None
     

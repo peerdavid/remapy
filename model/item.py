@@ -33,7 +33,7 @@ def get_path_metadata_local(id):
 
 
 def now_rfc3339():
-        return datetime.utcnow().strftime(RFC3339Nano)
+    return datetime.utcnow().strftime(RFC3339Nano)
 
 
 #
