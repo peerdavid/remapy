@@ -115,6 +115,7 @@ class Item(object):
         self.metadata["Version"] += 1
         self.rm_client.update_metadata(self.metadata)
         self._write_remapy_file()
+        self._update_state_listener()
 
 
     #

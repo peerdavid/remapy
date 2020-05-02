@@ -22,7 +22,7 @@ class Main(object):
 
         # Define app settings
         font_size = 38
-        rowheight = 30
+        row_height = 30
         window_width = 750
         window_height = 650
 
@@ -44,7 +44,7 @@ class Main(object):
         self.notebook.pack(expand=1, fill="both")
 
         frame = ttk.Frame(self.notebook)
-        self.file_explorer = FileExplorer(frame, window, font_size=font_size, rowheight=rowheight)
+        self.file_explorer = FileExplorer(frame, window, font_size=font_size, row_height=row_height)
         self.notebook.add(frame, text="File Explorer")
 
         frame = ttk.Frame(self.notebook)

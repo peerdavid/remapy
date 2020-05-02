@@ -28,11 +28,13 @@ class FileExplorer(object):
         all your rm documents and collections.
     """
 
-    def __init__(self, root, window, font_size=14, rowheight=14):
+    def __init__(self, root, window, font_size=14, row_height=14):
         
         self.root = root
-        app_dir = os.path.dirname(__file__)
-        icon_dir = os.path.join(app_dir, 'icons/')
+        self.app_dir = os.path.dirname(__file__)
+        self.icon_dir = os.path.join(self.app_dir, 'icons/')
+        self._cached_icons = {}
+        self.row_height = row_height
 
         # Create tkinter elements
         self.nodes = dict()
@@ -40,7 +42,7 @@ class FileExplorer(object):
         self.item_manager = ItemManager()
 
         self.tree_style = ttk.Style()
-        self.tree_style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=rowheight)
+        self.tree_style.configure("remapy.style.Treeview", highlightthickness=0, bd=0, font=font_size, rowheight=row_height)
         self.tree_style.configure("remapy.style.Treeview.Heading", font=font_size)
         self.tree_style.layout("remapy.style.Treeview", [('remapy.style.Treeview.treearea', {'sticky': 'nswe'})])
         
@@ -51,7 +53,6 @@ class FileExplorer(object):
         self.label_offline.place(relx=0.5, y=12, anchor="center")
 
         window.bind('<Control-v>', self.key_binding_paste)
-        window.bind('<Control-c>', self.key_binding_copy)
         window.bind('<Return>', self.key_binding_return)
         window.bind('<Delete>', self.key_binding_delete)
 
@@ -78,19 +79,6 @@ class FileExplorer(object):
 
         self.tree.tag_configure('move', background='#FF9800')    
         
-        self.icon_cloud = self._create_tree_icon(icon_dir + "cloud.png", rowheight)
-        self.icon_document_syncing = self._create_tree_icon(icon_dir + "document_syncing.png", rowheight)
-        self.icon_document_upload = self._create_tree_icon(icon_dir + "document_upload.png", rowheight)
-        self.icon_collection_syncing = self._create_tree_icon(icon_dir + "collection_syncing.png", rowheight)
-        self.icon_collection = self._create_tree_icon(icon_dir + "collection.png", rowheight)
-        self.icon_notebook = self._create_tree_icon(icon_dir + "notebook.png", rowheight)
-        self.icon_epub = self._create_tree_icon(icon_dir + "epub.png", rowheight)
-        self.icon_pdf = self._create_tree_icon(icon_dir + "pdf.png", rowheight)
-        self.icon_notebook_out_of_sync = self._create_tree_icon(icon_dir + "notebook_out_of_sync.png", rowheight)
-        self.icon_epub_out_of_sync = self._create_tree_icon(icon_dir + "epub_out_of_sync.png", rowheight)
-        self.icon_pdf_out_of_sync = self._create_tree_icon(icon_dir + "pdf_out_of_sync.png", rowheight)
-        self.icon_weird = self._create_tree_icon(icon_dir + "weird.png", rowheight)
-
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
@@ -160,15 +148,10 @@ class FileExplorer(object):
         self.log_widget.config(state=tk.DISABLED)
         self.log_widget.see(tk.END)
 
+
     #
     # Tree
     #
-    def _create_tree_icon(self, path, row_height):
-        icon = Image.open(path)
-        icon = icon.resize((row_height-4, row_height-4))
-        return itk.PhotoImage(icon)
-
-
     def sign_in_event_handler(self, event, data):
         # Also if the login failed (e.g. we are offline) we try again 
         # if we can sync the items (e.g. with old user key) and otherwise 
@@ -235,34 +218,56 @@ class FileExplorer(object):
     def _get_icon(self, item):
         if item.is_collection():
             if item.state == model.item.STATE_SYNCED:
-                return self.icon_collection
+                return self._create_tree_icon("collection", item.bookmarked())
             else:
-                return self.icon_collection_syncing
+                return self._create_tree_icon("collection_syncing")
         
 
         if item.state == model.document.STATE_NOT_SYNCED:
-            return self.icon_cloud
+            return self._create_tree_icon("cloud")
         
         elif item.state == model.item.STATE_SYNCING:
-            return self.icon_document_syncing
+            return self._create_tree_icon("document_syncing")
 
         if item.state == model.item.STATE_SYNCED:
             if item.type == model.document.TYPE_PDF:
-                return self.icon_pdf
+                return self._create_tree_icon("pdf", item.bookmarked())
             elif item.type == model.document.TYPE_EPUB:
-                return self.icon_epub
+                return self._create_tree_icon("epub", item.bookmarked())
             else: 
-                return self.icon_notebook
+                return self._create_tree_icon("notebook", item.bookmarked())
 
         if item.state == model.document.STATE_OUT_OF_SYNC:
             if item.type == model.document.TYPE_PDF:
-                return self.icon_pdf_out_of_sync
+                return self._create_tree_icon("pdf_out_of_sync")
             elif item.type == model.document.TYPE_EPUB:
-                return self.icon_epub_out_of_sync
+                return self._create_tree_icon("epub_out_of_sync")
             else: 
-                return self.icon_notebook_out_of_sync
+                return self._create_tree_icon("notebook_out_of_sync")
         
-        return self.icon_weird
+        return self._create_tree_icon("weird")
+
+    
+    def _create_tree_icon(self, name, bookmarked=False):
+
+        # If possible return icon from cache
+        key = "%s_%s" % (name, bookmarked)
+        if key in self._cached_icons:
+            return self._cached_icons[key]
+    
+        icon_size = self.row_height-4
+        path = "%s%s.png" % (self.icon_dir, name)
+        icon = Image.open(path)
+        icon = icon.resize((icon_size, icon_size))
+
+        if bookmarked:
+            icon_star = Image.open("%s%s.png" % (self.icon_dir, "star"))
+            icon_star = icon_star.resize((icon_size, icon_size))
+            icon.paste(icon_star, None, icon_star)
+        
+        self._cached_icons[key] = itk.PhotoImage(icon)
+        return self._cached_icons[key]
+
 
 
     #
@@ -547,27 +552,6 @@ class FileExplorer(object):
         threading.Thread(target=run, args=[filetype]).start()
 
 
-    def key_binding_copy(self, event):
-        self.btn_copy_async_click()
-
-
-    def btn_copy_async_click(self):
-        self.root.clipboard_clear()
-        selected_ids = self.tree.selection()
-
-        def sync_and_copy(item):
-            self._sync_and_open_item(item, force=False)
-            self.root.clipboard_append(item.path_annotated_pdf)
-
-        def run():
-            for id in selected_ids:
-                self.item_manager.traverse_tree(
-                    fun=lambda item: sync_and_copy(item),
-                    item = self.item_manager.get_item(id))
-        threading.Thread(target=run).start()
-        self.root.update()
-
-
     def btn_open_in_file_explorer(self):
         selected_ids = self.tree.selection()
         items = [self.item_manager.get_item(id) for id in selected_ids]
@@ -583,10 +567,7 @@ class FileExplorer(object):
         selected_ids = self.tree.selection()
         items = [self.item_manager.get_item(id) for id in selected_ids]
 
-        def toggle_bookmark(item):
-            item.set_bookmarked(not item.bookmarked())
-
-        # Add all items and child items
-        for item in items:
-            self.item_manager.traverse_tree(fun=toggle_bookmark, document=False, collection=True, item = item)
-            self.item_manager.traverse_tree(fun=toggle_bookmark, document=True, collection=False, item = item)
+        def run():
+            for item in items:
+                item.set_bookmarked(not item.bookmarked())
+        threading.Thread(target=run).start()
