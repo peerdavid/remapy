@@ -1,26 +1,26 @@
 # RemaPy Explorer
 
-RemaPy is an open source file explorer for your reMarkable tablet. You can upload documents via copy and paste from your local file explorer, open notebooks and annotated pdfs and delete documents or collections. RemaPy is written in Python and only tested on Linux,
-altough it should (theoretically) also work on other systems. Feel free to 
-write an issue if you find a bug or also if you have an idea for new features. 
-Details (How to install, architecture FAQ etc.) can be found in the 
-[wiki](https://github.com/peerdavid/remapy/wiki).
+RemaPy is an open source file explorer for your reMarkable tablet. You can upload documents via copy and paste from your local file explorer, open notebooks and annotated pdfs and delete documents or collections. RemaPy is written in python and only tested on Linux, altough it should (theoretically) also work on other operating systems such as windows. Feel free to write an issue if you find a bug or also if you have an idea for new features. 
+
+*Note: Details such as how to install, the software architecture or FAQ's can be found in the 
+[wiki](https://github.com/peerdavid/remapy/wiki).*
 
 *WARNING:* This project is not affiliated to, nor endorsed by, reMarkable AS. 
 I am not responsible for any damage done to your device or your data 
 due to the use of this software.
 
 <img src="doc/explorer.png" />
-Ps.: Image created with RemaPy ;)
+Ps.: Image annotated on the reMarkable and rendered with RemaPy ;)
 
-# Features
- - Synchronization via the remarkable cloud
- - Open notebooks, annotated pdf's or annotated epub's
- - Open only the pages that you annotated
- - Open the original file without annotations
- - Create backups of your annotated documents
+
+# Main features
+ - Synchronization via the remarkable cloud i.e. no usb connection is needed
+ - Show notebooks, annotated pdf's or annotated epub's (annotations are shown in different colors)
+ - Show only the pages you annotated in a file
+ - Show the original file without your annotations
+ - Create backups of all your annotated documents
  - Upload pdf and epub via copy and paste from your file explorer
- - Upload a webpage simply via copy and paste (copy and paste a url instead of a file)
+ - If you copy and paste a URL, a pdf of the given website is created and uploaded automatically
 
 
 # Acknowledgments
