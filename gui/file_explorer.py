@@ -23,7 +23,7 @@ from model.document import Document
 import utils.config
 
 
-class Remarkable(object):
+class FileExplorer(object):
     """ Main window of RemaPy which displays the tree structure of
         all your rm documents and collections.
     """

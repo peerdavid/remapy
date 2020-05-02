@@ -7,7 +7,7 @@ from tkinter import *
 from tkinter import scrolledtext
 import tkinter.ttk as ttk
 
-from gui.remarkable import Remarkable
+from gui.file_explorer import FileExplorer
 from gui.about import About
 from gui.settings import Settings
 
@@ -44,7 +44,7 @@ class Main(object):
         self.notebook.pack(expand=1, fill="both")
 
         frame = ttk.Frame(self.notebook)
-        self.remarkable = Remarkable(frame, window, font_size=font_size, rowheight=rowheight)
+        self.file_explorer = FileExplorer(frame, window, font_size=font_size, rowheight=rowheight)
         self.notebook.add(frame, text="File Explorer")
 
         frame = ttk.Frame(self.notebook)
