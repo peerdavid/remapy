@@ -3,8 +3,10 @@ import struct
 import os.path
 import argparse
 import math
+import json
 import io
 import time
+import re
 import numpy as np
 from pdfrw import PdfReader, PdfWriter, PageMerge, IndirectPdfDict, PdfDict
 from reportlab.graphics import renderPDF
@@ -20,7 +22,7 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 
 # Mappings
-stroke_color = {
+default_stroke_color = {
     0: colors.Color(48/255., 63/255., 159/255.),        # Pen color 1
     1: colors.Color(211/255., 47/255., 47/255.),        # Pen color 2
     2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
@@ -41,7 +43,8 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     annotations_pdf = []
 
     for page_nr in range(base_pdf.numPages):
-        rm_file = "%s/%d.rm" % (rm_files_path, page_nr)
+        rm_file_name = "%s/%d" % (rm_files_path, page_nr)
+        rm_file = "%s.rm" % rm_file_name
         if not os.path.exists(rm_file):
             annotations_pdf.append(None)
             continue
@@ -56,7 +59,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
                 continue
             
         image_width, image_height = float(page_layout[2]), float(page_layout[3])
-        annotated_page = _render_rm_file(rm_file, image_width=image_width, image_height=image_height, crop_box=crop_box)
+        annotated_page = _render_rm_file(rm_file_name, image_width=image_width, image_height=image_height, crop_box=crop_box)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(None)
         else:
@@ -87,13 +90,13 @@ def notebook(path, id, path_annotated_pdf, path_templates=None):
 
     p = 0
     while True:
-        file_name = "%d.rm" % p      
-        rm_file = "%s/%s" % (rm_files_path, file_name)
+        rm_file_name = "%s/%d" % (rm_files_path, p)
+        rm_file = "%s.rm" % rm_file_name
 
         if not os.path.exists(rm_file):
             break
 
-        overlay = _render_rm_file(rm_file)
+        overlay = _render_rm_file(rm_file_name)
         annotations_pdf.append(overlay)
         p += 1  
     
@@ -156,12 +159,15 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     return blank
 
 
-def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH, 
+def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH, 
         image_height=DEFAULT_IMAGE_HEIGHT, crop_box=None):
     """ Render the .rm files (old .lines). See also 
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
     
+    rm_file = "%s.rm" % rm_file_name
+    rm_file_metadata = "%s-metadata.json" % rm_file_name
+
     is_landscape = image_width > image_height
     if is_landscape:
         image_height, image_width = image_width, image_height
@@ -194,6 +200,38 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
     if (not is_v3 and not is_v5) or  nlayers < 1:
         abort('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
         return
+    
+    # Load name of layers; if layer name starts with # we use this color 
+    # for this layer
+    layer_colors = [None for l in range(nlayers)]
+    if os.path.exists(rm_file_metadata):
+        with open(rm_file_metadata, "r") as meta_file:
+            layers = json.loads(meta_file.read())["layers"]
+        
+        for l in range(len(layers)):
+            layer = layers[l]
+
+            matches = re.search(r"#([^\s]+)", layer["name"], re.M|re.I)
+            if not matches:
+                continue 
+            color_code = matches[0].lower()
+
+            # Try to parse hex code
+            try:
+                has_alpha = len(color_code) > 7
+                layer_colors[l] = colors.HexColor(color_code, hasAlpha=has_alpha)
+                continue
+            except:
+                pass
+            
+            # Try to get from name
+            color_code = color_code[1:]
+            color_names = colors.getAllNamedColors()
+            if color_code in color_names:
+                layer_colors[l] = color_names[color_code]
+            
+            # No valid color found... automatic fallback to default
+
 
     # Iterate through layers on the page (There is at least one)
     packet = io.BytesIO()
@@ -273,7 +311,12 @@ def _render_rm_file(rm_file, image_width=DEFAULT_IMAGE_WIDTH,
             # Render lines
             drawing = Drawing(image_width, image_height)
             can.setLineCap(1)
-            can.setStrokeColor(stroke_color[color])
+
+            if layer_colors[layer] is None:
+                can.setStrokeColor(default_stroke_color[color])
+            else:
+                can.setStrokeColor(layer_colors[layer])
+
             p = can.beginPath()
             p.moveTo(points[0], points[1])
             for i in range(0, len(points), 2):
