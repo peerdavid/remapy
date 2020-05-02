@@ -5,29 +5,30 @@ upload documents via copy and paste from your local file explorer, open
 notebooks and annotated pdfs and delete documents or collections. RemaPy 
 is written in python and only tested on Linux, altough it should 
 (theoretically) also work on other operating systems such as windows. 
-Feel free to write an issue if you find a bug or also if you have an 
-idea for new features. 
+A "how to install", the software architecture and FAQ's 
+can be found in the [wiki](https://github.com/peerdavid/remapy/wiki).
 
-*Note: Details such as how to install, the software architecture or FAQ's 
-can be found in the [wiki](https://github.com/peerdavid/remapy/wiki).*
-
-*WARNING: This project is not affiliated to, nor endorsed by, reMarkable AS. 
-I am not responsible for any damage done to your device or your data 
+*WARNING: This project is not affiliated to, 
+nor endorsed by, reMarkable AS. I am not responsible for any 
+damage done to your device or your data 
 due to the use of this software.*
 
-The following image shows the main features of RemaPy:
+
+# Features 
 <img src="doc/explorer.png" />
 
+## Custom colors
 Custom colors for individual layers are used by RemaPy for the rendering, 
 if the layer name contains a '#' followed by a color name or 
 [color hex code](https://www.color-hex.com/).
 For example "Layer1 #ffee11" is rendered with hex color #ffee11 or "Layer 2 #red" 
-is rendered in red. The hex code also support alpha values e.g. 
-#ffee11dd such that layers can be easily hidden if alpha values 
-#xxxxxx00 are provided.
+is rendered in red. The hex code also support alpha values (e.g. #ffee11dd).
+Therefore you can easily hide layers in the rendering process by setting the last
+two values of the hex code to zero: #xxxxxx00.
 <img src="doc/custom_colors.png" />
 
-# Main features
+
+## Other features
  - Synchronization via the remarkable cloud
  - Show notebooks, annotated pdf's or annotated epub's
  - Show only the pages you annotated in a file
@@ -36,6 +37,7 @@ is rendered in red. The hex code also support alpha values e.g.
  - Create backups of all your annotated documents
  - Upload pdf and epub via copy and paste from your file explorer
  - If you copy and paste a URL, a pdf of the given website is created and uploaded automatically
+
 
 
 # Acknowledgments
