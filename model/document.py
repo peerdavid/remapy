@@ -1,9 +1,8 @@
 import os
-from io import BytesIO
-import zipfile
 import uuid
-from zipfile import ZipFile
 import shutil
+import zipfile
+from zipfile import ZipFile
 from pathlib import Path
 import datetime
 from time import gmtime, strftime
@@ -224,51 +223,3 @@ class Document(Item):
         extension = os.path.splitext(file_to_backup)[1]
         file_name = self.name().replace("/", ".") + extension
         shutil.copyfile(file_to_backup, backup_path + "/" + file_name)
-
-        
-def create_document_zip(name, data, file_type, parent_id=""):
-    id = str(uuid.uuid4())
-
-    # .content file
-    content_file = json.dumps({
-        "extraMetadata": { },
-        "fileType": file_type,
-        "pageCount": 0,
-        "lastOpenedPage": 0,
-        "lineHeight": -1,
-        "margins": 180,
-        "textScale": 1,
-        "transform": { }
-    })
-
-    # metadata
-    metadata = {
-        "ID": id,
-        "Parent": parent_id,
-        "VissibleName": name,
-        "Type": "DocumentType",
-        "Version": 1,
-        "ModifiedClient": model.item.now_rfc3339(),
-        "CurrentPage": 0,
-        "Bookmarked": False,
-        # "Message": "",
-        # "Success": True,
-        # "BlobURLGet": "",
-        # "BlobURLGetExpires": "",
-        # "BlobURLPut": "",
-        # "BlobURLPutExpires": ""
-    }
-
-    mf = BytesIO()
-    mf.seek(0)
-    with ZipFile(mf, mode='w', compression=zipfile.ZIP_DEFLATED ) as zf:
-        zf.writestr("%s.%s" % (id, file_type), data)
-        zf.writestr("%s.content" % id, content_file)
-        zf.writestr("%s.pagedata" % id, "")
-
-    # with open("test.zip", "wb") as f:
-    #     f.write(mf.getvalue())
-    mf.seek(0)
-    return id, metadata, mf
-
-

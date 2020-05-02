@@ -3,6 +3,7 @@ import subprocess
 import threading
 import shutil
 import queue
+import uuid
 from time import gmtime, strftime
 import datetime
 import numpy as np
@@ -18,7 +19,7 @@ from api.remarkable_client import RemarkableClient
 from model.item_manager import ItemManager
 from model.item import Item
 import model.document
-from model.document import Document, create_document_zip
+from model.document import Document
 import utils.config
 
 
@@ -476,6 +477,7 @@ class Remarkable(object):
     def key_binding_paste(self, event):
         self.btn_paste_async_click()
 
+
     def btn_paste_async_click(self):
         selected_ids = self.tree.selection()
 
@@ -508,7 +510,6 @@ class Remarkable(object):
         else:
             return
        
-        
         def run(filetype):
             if is_file:
                 name = os.path.splitext(os.path.basename(clipboard))[0]
@@ -528,32 +529,19 @@ class Remarkable(object):
                         "Please follow the following installation guide to enable this feature: https://weasyprint.readthedocs.io/en/stable/install.html")
                     return
 
+            # Show new item in tree
+            id = str(uuid.uuid4())
             self.log_console("Uploading %s..." % name)
-
-            id, metadata, mf = create_document_zip(
-                name, 
-                data,
-                file_type=filetype, 
-                parent_id = parent_id)
-
-            # Show in tree
             self.tree.insert(
-                parent_id, 
-                1000, 
-                id,
-                text= " " + metadata["VissibleName"],
+                parent_id, 9999, id,
+                text= " " + name,
                 image=self.icon_document_upload)
 
-            # Upload file into cloud
-            metadata = self.rm_client.upload(id, metadata, mf)
-
-            # Add to tree
-            parent = self.item_manager.get_item(parent_id)
-            item = self.item_manager.create_item(metadata, parent)
-            item.add_state_listener(self._update_tree_item)
-
-            # Download again to get it correctly
-            item.sync()
+            # Upload
+            item = self.item_manager.upload_file(
+                id, parent_id, name, 
+                filetype, data,
+                self._update_tree_item)
             self.log_console("Successfully uploaded %s" % item.full_name())
 
         threading.Thread(target=run, args=[filetype]).start()
