@@ -216,8 +216,10 @@ class FileExplorer(object):
 
         
     def _update_tree(self, item, filter=None):
+        is_direct_match = False
         if not item.is_root():
-            if self._match_filter(item, filter):
+            is_match, is_direct_match = self._match_filter(item, filter)
+            if is_match:
                 tree_id = self.tree.insert(
                     item.parent().id(), 
                     0, 
@@ -226,6 +228,9 @@ class FileExplorer(object):
                 
                 self._update_tree_item(item)
                 item.add_state_listener(self._update_tree_item)
+                include_all_childs = item.is_collection() and is_direct_match
+                if include_all_childs:
+                    filter = None
 
         # Sort by name and item type
         sorted_children = item.children()
@@ -236,25 +241,28 @@ class FileExplorer(object):
     
 
     def _match_filter(self, item, filter):  
+        """ Returns whether we have a match on this path (to include all 
+            parent folders) and whether the given item was the matching one.
+        """
         if filter is None or filter is "":
-            return True
+            return True, True
         
         bookmarked_only = filter.startswith("*")
-        text_filter = filter[1:] if bookmarked_only else filter
-        item_is_match = (text_filter.lower() in item.full_name().lower())
+        text_filter = (filter[1:] if bookmarked_only else filter).lower()
+        is_match = (text_filter in item.name().lower())
+        
         if bookmarked_only:
-            item_is_match = item_is_match and item.bookmarked()
+            is_match = is_match and item.bookmarked()
 
-        if item_is_match:
-            return item_is_match
+        if is_match:
+            return is_match, True
 
-        if item.is_collection():
-            child_match = False
-            for child in item.children():
-                child_match = child_match or self._match_filter(child, filter)
-            return child_match
+        for child in item.children():
+            child_match, _ = self._match_filter(child, filter)
+            if child_match:
+                return child_match, False
 
-        return item_is_match
+        return False, False
     
 
     def tree_right_click(self, event):
