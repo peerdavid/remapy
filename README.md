@@ -42,7 +42,7 @@ search for all bookmarked documents that contain "remapy", enter "*remapy".
  - Create backups of all your annotated documents
  - Upload pdf and epub via copy and paste from your file explorer
  - If you copy and paste a URL, a pdf of the given website is created and uploaded automatically
-
+ - Offline mode allows you to read your documents, but the upload is disabled
 
 
 # Acknowledgments
