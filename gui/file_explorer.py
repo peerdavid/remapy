@@ -592,7 +592,7 @@ class FileExplorer(object):
             self.tree.insert(
                 parent_id, 9999, id,
                 text= " " + name,
-                image=self.icon_document_upload)
+                image=self._create_tree_icon("document_upload"))
 
             # Upload
             item = self.item_manager.upload_file(
