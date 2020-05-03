@@ -15,6 +15,7 @@ due to the use of this software.*
 
 
 # Features 
+## Overview
 <img src="doc/explorer.png" />
 
 ## Custom colors
@@ -38,7 +39,6 @@ search for all bookmarked documents that contain "remapy", enter "*remapy".
  - Show notebooks, annotated pdf's or annotated epub's
  - Show only the pages you annotated in a file
  - Show the original file without your annotations
- - Supports custom colors via layer names. 
  - Create backups of all your annotated documents
  - Upload pdf and epub via copy and paste from your file explorer
  - If you copy and paste a URL, a pdf of the given website is created and uploaded automatically
