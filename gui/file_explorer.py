@@ -508,8 +508,11 @@ class FileExplorer(object):
                 file_to_open = item.ann_or_orig_file()
 
             if file_to_open.endswith(".pdf"):
-                current_page = 0 if open_oap else item.current_page()
-                subprocess.call(["evince", "-i", str(current_page), file_to_open])
+                try:
+                    current_page = 0 if open_oap else item.current_page()
+                    subprocess.call(["evince", "-i", str(current_page), file_to_open])
+                except:
+                    subprocess.call(["xdg-open", file_to_open])    
             else:
                 subprocess.call(["xdg-open", file_to_open])
 
