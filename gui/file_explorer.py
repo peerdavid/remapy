@@ -11,6 +11,7 @@ from pathlib import Path
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
+from tkinter import simpledialog
 from PIL import ImageTk as itk
 from PIL import Image
 
@@ -92,20 +93,18 @@ class FileExplorer(object):
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
         self.tree.bind("<Button-3>", self.tree_right_click)
         self.context_menu =tk.Menu(root, tearoff=0, font=font_size)
-        self.context_menu.add_command(label='Open', command=self.btn_open_item_click)
+        self.context_menu.add_command(label='Open <Return>', command=self.btn_open_item_click)
         self.context_menu.add_command(label='Open only annotated pages', command=self.btn_open_oap_item_click)
         self.context_menu.add_command(label='Open without annotations', command=self.btn_open_item_original_click)
+        self.context_menu.add_command(label='Open folder', command=self.btn_open_in_file_explorer)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='ReSync', command=self.btn_resync_item_click)
-        self.context_menu.add_command(label='Paste', command=self.btn_paste_async_click)
-        self.context_menu.add_command(label='Delete', command=self.btn_delete_item_click)
+        self.context_menu.add_command(label='ReSync <F5>', command=self.btn_resync_item_click)
+        self.context_menu.add_command(label='Toggle bookmark <Ctrl+b>', command=self.btn_toggle_bookmark)
+        self.context_menu.add_command(label='Rename <F2>', command=self.btn_rename_item_click)
+        self.context_menu.add_command(label='Delete <Del>', command=self.btn_delete_item_click)
         self.context_menu.add_separator()
-        self.context_menu.add_command(label='Toggle bookmark', command=self.btn_toggle_bookmark)
-        self.context_menu.add_command(label='File explorer', command=self.btn_open_in_file_explorer)
-
-        # self.context_menu.add_command(label='Rename')
-        # self.context_menu.add_command(label='Copy', command=self.btn_copy_async_click)
-        # self.context_menu.add_command(label='Cut')   
+        self.context_menu.add_command(label='Paste <Ctrl+v>', command=self.btn_paste_async_click)
+        
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -136,10 +135,11 @@ class FileExplorer(object):
     def _set_online_mode(self, mode):
         self.btn_sync.config(state=mode)
         self.btn_resync.config(state=mode)
-        self.context_menu.entryconfig(4, state=mode)
         self.context_menu.entryconfig(5, state=mode)
         self.context_menu.entryconfig(6, state=mode)
+        self.context_menu.entryconfig(7, state=mode)
         self.context_menu.entryconfig(8, state=mode)
+        self.context_menu.entryconfig(10, state=mode)
 
         bg = "#ffffff" if mode == "normal" else "#bdbdbd"
         self.tree_style.configure("remapy.style.Treeview", background=bg)
@@ -165,13 +165,19 @@ class FileExplorer(object):
         self.window.unbind("<Return>")
         self.window.unbind("<Delete>")
         self.window.unbind("<Control-f>")
+        self.window.unbind("<Control-b>")
+        self.window.unbind("<F5>")
+        self.window.unbind("<F2>")
     
 
     def tree_focus_in_event_handler(self, *args):
         self.window.bind("<Control-f>", self.key_binding_filter)
         self.window.bind("<Control-v>", self.key_binding_paste)
+        self.window.bind("<Control-b>", self.key_binding_toggle_bookmark)
+        self.window.bind("<F5>", self.key_binding_resync)
         self.window.bind("<Return>", self.key_binding_return)
         self.window.bind("<Delete>", self.key_binding_delete)
+        self.window.bind("<F2>", self.key_binding_rename)
 
 
     def sign_in_event_handler(self, event, data):
@@ -246,10 +252,8 @@ class FileExplorer(object):
             return False
 
         return (filter.lower() in item.full_name().lower())
-        
-
-
     
+
     def tree_right_click(self, event):
         selected_ids = self.tree.selection()
         if selected_ids:
@@ -340,10 +344,31 @@ class FileExplorer(object):
         return self._cached_icons[key]
 
 
+    def key_binding_rename(self, event):
+        self.btn_rename_item_click()
 
-    #
-    # SYNC AND OPEN
-    #
+
+    def btn_rename_item_click(self):
+        selected_ids = self.tree.selection()
+        if len(selected_ids) != 1:
+            messagebox.showerror("Error", "Select exactly one item to rename.", icon='error')
+            return
+        
+        item = self.item_manager.get_item(selected_ids[0])
+
+        if item.name() == "Quick sheets" and item.parent().is_root():
+            messagebox.showerror("Error", "You can not rename the Quick sheets.", icon='error')
+            return
+
+        name = simpledialog.askstring('Rename', 'Enter new name', initialvalue=item.name())
+        if name is None:
+            return
+
+        item.rename(name)
+
+    def key_binding_resync(self, event):
+        self.btn_resync_item_click()
+
     def btn_resync_item_click(self):
         self._sync_selection_async(
                 force=True, 
@@ -545,6 +570,10 @@ class FileExplorer(object):
 
         def run():
             for item in items:
+                if item.name() == "Quick sheets" and item.parent().is_root():
+                    self.log_console("(Warning) You can not delete the Quick sheets.")
+                    continue
+
                 item.delete()
                 self.log_console("Deleted %s" % item.full_name())
         threading.Thread(target=run).start()
@@ -643,7 +672,9 @@ class FileExplorer(object):
 
             subprocess.call(('xdg-open', item.path_remapy))
     
-
+    def key_binding_toggle_bookmark(self, event):
+        self.btn_toggle_bookmark()
+        
     def btn_toggle_bookmark(self):
         selected_ids = self.tree.selection()
         items = [self.item_manager.get_item(id) for id in selected_ids]

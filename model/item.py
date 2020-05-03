@@ -112,6 +112,9 @@ class Item(object):
         return self.metadata[key]
 
 
+    #
+    # Functions
+    #
     def set_bookmarked(self, bookmarked):
         self.metadata["Bookmarked"] = bookmarked
         self.metadata["ModifiedClient"] = now_rfc3339()
@@ -121,9 +124,15 @@ class Item(object):
         self._update_state_listener()
 
 
-    #
-    # Functions
-    #
+    def rename(self, new_name):
+        self.metadata["VissibleName"] = new_name
+        self.metadata["ModifiedClient"] = now_rfc3339()
+        self.metadata["Version"] += 1
+        self.rm_client.update_metadata(self.metadata)
+        self._write_remapy_file()
+        self._update_state_listener()
+
+
     def add_state_listener(self, listener):
         self.state_listener.append(listener)
 
