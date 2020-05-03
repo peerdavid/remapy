@@ -185,8 +185,15 @@ class FileExplorer(object):
     def key_binding_filter(self, event):
         self.entry_filter.focus_set()
     
+
     def key_binding_escape(self, event):
         self.tree.focus_set()
+        children = self.tree.get_children()
+        if len(children) > 0:
+            self.tree.focus(children[0])
+        else:
+            print("NOP")
+            self.tree.focus()
             
 
     def filter_changed_event_handler(self, placeholder, *args):
