@@ -225,7 +225,6 @@ class FileExplorer(object):
                     open=filter!=None)
                 
                 self._update_tree_item(item)
-
                 item.add_state_listener(self._update_tree_item)
 
         # Sort by name and item type
@@ -240,18 +239,22 @@ class FileExplorer(object):
         if filter is None or filter is "":
             return True
         
+        bookmarked_only = filter.startswith("*")
+        text_filter = filter[1:] if bookmarked_only else filter
+        item_is_match = (text_filter.lower() in item.full_name().lower())
+        if bookmarked_only:
+            item_is_match = item_is_match and item.bookmarked()
+
+        if item_is_match:
+            return item_is_match
+
         if item.is_collection():
             child_match = False
             for child in item.children():
                 child_match = child_match or self._match_filter(child, filter)
             return child_match
 
-        bookmarked_only = filter.startswith("*")
-        filter = filter[1:] if bookmarked_only else filter
-        if (bookmarked_only and not item.bookmarked()):
-            return False
-
-        return (filter.lower() in item.full_name().lower())
+        return item_is_match
     
 
     def tree_right_click(self, event):
