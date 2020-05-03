@@ -47,12 +47,12 @@ class Item(object):
     def __init__(self, metadata, parent=None):
         self.metadata = metadata
         self._parent = parent
+        self._children = []
         self.path = get_path(self.id())
         self.path_remapy = get_path_remapy(self.id())
         self.path_metadata_local = get_path_metadata_local(self.id())
 
         self.rm_client = RemarkableClient()
-        self.children = []
         self.state_listener = []
         
 
@@ -101,6 +101,9 @@ class Item(object):
 
     def parent(self):
         return self._parent
+    
+    def children(self):
+        return self._children
     
 
     def _meta_value(self, key, root_value=""):

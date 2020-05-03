@@ -14,6 +14,7 @@ from tkinter import messagebox
 from PIL import ImageTk as itk
 from PIL import Image
 
+from gui.elements.entry_with_placeholder import EntryWithPlaceholder
 import api.remarkable_client
 from api.remarkable_client import RemarkableClient
 from model.item_manager import ItemManager
@@ -31,6 +32,7 @@ class FileExplorer(object):
     def __init__(self, root, window, font_size=14, row_height=14):
         
         self.root = root
+        self.window = window
         self.app_dir = os.path.dirname(__file__)
         self.icon_dir = os.path.join(self.app_dir, 'icons/')
         self._cached_icons = {}
@@ -52,13 +54,17 @@ class FileExplorer(object):
         self.label_offline = tk.Label(window, fg="#f44336", font='Arial 13 bold')
         self.label_offline.place(relx=0.5, y=12, anchor="center")
 
-        window.bind('<Control-v>', self.key_binding_paste)
-        window.bind('<Return>', self.key_binding_return)
-        window.bind('<Delete>', self.key_binding_delete)
+        self.entry_filter = None
+        self.entry_filter_var = tk.StringVar()
+        self.entry_filter_var.trace("w", self.filter_changed_event_handler)
+        self.entry_filter = EntryWithPlaceholder(window, "Filter...", textvariable=self.entry_filter_var)
+        self.entry_filter.place(relx=1.0, y=12, anchor="e")
 
         # Add tree and scrollbars
         self.tree = ttk.Treeview(self.upper_frame, style="remapy.style.Treeview")
         self.tree.pack(side=tk.LEFT, expand=True, fill=tk.BOTH)
+        self.tree.bind("<FocusOut>", self.tree_focus_out_event_handler)
+        self.tree.bind("<FocusIn>", self.tree_focus_in_event_handler)
         
         self.vsb = ttk.Scrollbar(self.upper_frame, orient="vertical", command=self.tree.yview)
         self.vsb.pack(side=tk.LEFT, fill='y')
@@ -147,11 +153,22 @@ class FileExplorer(object):
         self.log_widget.insert(tk.END, "\n[%s] %s" % (str(now), text))
         self.log_widget.config(state=tk.DISABLED)
         self.log_widget.see(tk.END)
-
-
+    
     #
     # Tree
     #
+    def tree_focus_out_event_handler(self, *args):
+        self.window.unbind("<Control-v>")
+        self.window.unbind("<Return>")
+        self.window.unbind("<Delete>")
+    
+
+    def tree_focus_in_event_handler(self, *args):
+        self.window.bind("<Control-v>", self.key_binding_paste)
+        self.window.bind("<Return>", self.key_binding_return)
+        self.window.bind("<Delete>", self.key_binding_delete)
+
+
     def sign_in_event_handler(self, event, data):
         # Also if the login failed (e.g. we are offline) we try again 
         # if we can sync the items (e.g. with old user key) and otherwise 
@@ -159,24 +176,52 @@ class FileExplorer(object):
         if event == api.remarkable_client.EVENT_SUCCESS or event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.btn_sync_click()
 
-    
-    def _update_tree(self, item):
-        if not item.is_root():
-            tree_id = self.tree.insert(
-                item.parent().id(), 
-                0, 
-                item.id())
-            
-            self._update_tree_item(item)
 
-            item.add_state_listener(self._update_tree_item)    
+    def filter_changed_event_handler(self, placeholder, *args):
+        if self.entry_filter is None:
+            return 
+
+        filter_text = self.entry_filter_var.get()
+        if filter_text == self.entry_filter.placeholder:
+            filter_text = None
+        
+        root = self.item_manager.get_root()
+        self.tree.delete(*self.tree.get_children())
+        self._update_tree(root, filter_text)
+
+        
+    def _update_tree(self, item, filter=None):
+        if not item.is_root():
+            if self._match_filter(item, filter):
+                tree_id = self.tree.insert(
+                    item.parent().id(), 
+                    0, 
+                    item.id(),
+                    open=filter!=None)
+                
+                self._update_tree_item(item)
+
+                item.add_state_listener(self._update_tree_item)
 
         # Sort by name and item type
-        sorted_children = item.children
+        sorted_children = item.children()
         sorted_children.sort(key=lambda x: str.lower(x.name()), reverse=True)
         sorted_children.sort(key=lambda x: int(x.is_document()), reverse=True)
         for child in sorted_children:
-            self._update_tree(child)
+            self._update_tree(child, filter)
+    
+
+    def _match_filter(self, item, filter):
+        if (filter is None or filter.lower() in item.full_name().lower()) and item.is_document():
+            return True
+        
+        if filter == "*" and item.bookmarked():
+            return True
+        
+        child_match = False
+        for child in item.children():
+            child_match = child_match or self._match_filter(child, filter)
+        return child_match
 
     
     def tree_right_click(self, event):

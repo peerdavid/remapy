@@ -53,7 +53,7 @@ class ItemManager(metaclass=Singleton):
         if item.id() == id:
             return item
         
-        for child in item.children:
+        for child in item.children():
             found = self.get_item(id, child)
             if found != None:
                 return found
@@ -104,7 +104,7 @@ class ItemManager(metaclass=Singleton):
         """
         item = self.get_root() if item == None else item
         
-        for child in item.children:
+        for child in item.children():
             self.traverse_tree(fun, child, document, collection)
         
         if (item.is_document() and document) or (item.is_collection() and collection):

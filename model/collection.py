@@ -26,7 +26,7 @@ class Collection(Item):
     # Functions
     #
     def add_child(self, child: Item):
-        self.children.append(child)
+        self._children.append(child)
         child.add_state_listener(self.listen_child_state_change)
 
 
@@ -42,7 +42,7 @@ class Collection(Item):
 
     def delete(self):
         
-        for child in self.children:
+        for child in self._children:
             ok = child.delete()
             if not ok:
                 return False
@@ -78,7 +78,7 @@ class Collection(Item):
             return: (num_documents, num_collections)
         """
         count = [0, 1]
-        for child in self.children:
+        for child in self._children:
             if child.is_document():
                 count[0] += 1
                 continue
@@ -89,7 +89,7 @@ class Collection(Item):
     
 
     def is_parent_of(self, item):
-        for child in self.children:
+        for child in self._children:
             if child.id() == item.id():
                 return True
             
@@ -101,11 +101,11 @@ class Collection(Item):
 
     def listen_child_state_change(self, item):
         if item.state == model.item.STATE_DELETED:
-            self.children.remove(item)
+            self._children.remove(item)
             return
         
         # Check sync stage
-        for child in self.children:
+        for child in self._children:
             if child.state == model.item.STATE_SYNCING:
                 self._update_state(model.item.STATE_SYNCING)
                 return
