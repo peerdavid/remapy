@@ -1,9 +1,9 @@
 # RemaPy Explorer
 
-RemaPy is an open source file explorer for your reMarkable tablet. You can 
-upload documents via copy and paste from your local file explorer, open 
+RemaPy is an open source file explorer for your reMarkable tablet that uses 
+the remarkable cloud. You can upload documents (via copy and paste), open 
 notebooks and annotated pdfs and delete documents or collections. RemaPy 
-is written in python and only tested on Linux, altough it should 
+is written in python and only tested on Linux, although it should 
 (theoretically) also work on other operating systems such as windows. 
 A "how to install", the software architecture and FAQ's 
 can be found in the [wiki](https://github.com/peerdavid/remapy/wiki).
@@ -19,30 +19,47 @@ due to the use of this software.*
 <img src="doc/explorer.png" />
 
 ## Custom colors
-Custom colors for individual layers are used by RemaPy for the rendering, 
-if the layer name contains a '#' followed by a color name or 
-[color hex code](https://www.color-hex.com/).
+Custom colors for individual layers are used by RemaPy for rendering
+if the layer name contains a '#' followed by a valid color name or 
+[hex code](https://www.color-hex.com/).
 For example "Layer1 #ffee11" is rendered with hex color #ffee11 or "Layer 2 #red" 
-is rendered in red. The hex code also support alpha values (e.g. #ffee11dd).
+is rendered in red. The hex code also supports alpha values (e.g. #ffee11dd).
 Therefore you can easily hide layers in the rendering process by setting the last
 two values of the hex code to zero: #xxxxxx00.
 <img src="doc/custom_colors.png" />
 
+## Open with or without annotations
+With remapy you can open the annotated pdf file (double click). You can also
+open the original file without annotations or you can open the file containing
+only the pages that are annotated (right click). Note that if you open 
+a collection, all child items are opened recursively. 
+
+## Backup
+In the settings tab you can find an option "Backup". This creates a 
+backup of all your annotated pdf files into the given folder. Note that it 
+it is not possible to backup or restore the *raw* items.
+
+## Upload webpages
+If you copy and paste a URL in remapy, the given website is automatically 
+converted into a pdf and uploaded to your remarkable. Note that some heuristics
+are implemented to accepts the "terms of usage" of pages automatically, 
+but this will not work in every case 
+(see also [FAQ](https://github.com/peerdavid/remapy/wiki)). Please also note 
+that some additional packages must be installed to use this feature 
+(pdfkit and wkhtmltopdf).
+
 ## Filter
-You can use the filter (upper right) to display only a documents
-that contain the given search string (not case sensitive). To search only 
-for bookmarked icons, start your search string with "*". For example to 
-search for all bookmarked documents that contain "remapy", enter "*remapy".
+You can use the filter (upper right) to display only a subset of 
+documents and collections (not case sensitive). To search only 
+for bookmarked items, start your search string with "*". For example to 
+search for all bookmarked items that contain "remapy", enter "*remapy".
+To search all items that contain "remapy" enter only "remapy".
 
 ## Other features
- - Synchronization via the remarkable cloud
- - Show notebooks, annotated pdf's or annotated epub's
- - Show only the pages you annotated in a file
- - Show the original file without your annotations
- - Create backups of all your annotated documents
- - Upload pdf and epub via copy and paste from your file explorer
- - If you copy and paste a URL, a pdf of the given website is created and uploaded automatically
- - Offline mode allows you to read your documents, but the upload is disabled
+ - Upload a pdf or epub via copy and paste
+ - Rename or delete items
+ - Toggle bookmark
+ - Offline mode
 
 
 # Acknowledgments
