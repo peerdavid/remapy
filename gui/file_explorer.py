@@ -84,6 +84,9 @@ class FileExplorer(object):
         self.tree.heading("#2", text="Current Page", anchor="center")
 
         self.tree.tag_configure('move', background='#FF9800')    
+        self.tree.focus_set()
+
+        self.window.bind("<Escape>", self.key_binding_escape)
         
         # Context menu on right click
         # Check out drag and drop: https://stackoverflow.com/questions/44887576/how-can-i-create-a-drag-and-drop-interface
@@ -161,9 +164,11 @@ class FileExplorer(object):
         self.window.unbind("<Control-v>")
         self.window.unbind("<Return>")
         self.window.unbind("<Delete>")
+        self.window.unbind("<Control-f>")
     
 
     def tree_focus_in_event_handler(self, *args):
+        self.window.bind("<Control-f>", self.key_binding_filter)
         self.window.bind("<Control-v>", self.key_binding_paste)
         self.window.bind("<Return>", self.key_binding_return)
         self.window.bind("<Delete>", self.key_binding_delete)
@@ -176,6 +181,13 @@ class FileExplorer(object):
         if event == api.remarkable_client.EVENT_SUCCESS or event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.btn_sync_click()
 
+
+    def key_binding_filter(self, event):
+        self.entry_filter.focus_set()
+    
+    def key_binding_escape(self, event):
+        self.tree.focus_set()
+            
 
     def filter_changed_event_handler(self, placeholder, *args):
         if self.entry_filter is None:
