@@ -31,8 +31,9 @@ two values of the hex code to zero: #xxxxxx00.
 ## Open with or without annotations
 With remapy you can open the annotated pdf file (double click). You can also
 open the original file without annotations or you can open the file containing
-only the pages that are annotated (right click). Note that if you open 
-a collection, all child items are opened recursively. 
+only the pages that are annotated (right click). If evince is installed on your 
+system, RemaPy opens the same page as on your tablet. Note that if you open 
+a collection, all child items are opened recursively.
 
 ## Backup
 In the settings tab you can find an option "Backup". This creates a 
