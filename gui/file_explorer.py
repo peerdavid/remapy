@@ -593,16 +593,23 @@ class FileExplorer(object):
                     data = f.read()
             elif is_url:
                 try:
-                    import weasyprint
+                    import pdfkit
                     self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
                     name = clipboard
-                    data = weasyprint.HTML(clipboard).write_pdf()
+                    options = {
+                        # Here we can manually set some cookies to 
+                        # for example automatically accept terms of usage etc.
+                        'cookie': [
+                            ('DSGVO_ZUSAGE_V1', 'true')
+                        ]
+                    }
+                    data = pdfkit.from_url(clipboard, False, options=options)
                     filetype = "pdf"
-
-                except ImportError:
+                except Exception as e:
+                    print(e)
                     messagebox.showerror(
-                        "WeasyPrint not installed", 
-                        "Please follow the following installation guide to enable this feature: https://weasyprint.readthedocs.io/en/stable/install.html")
+                        "Failed to convert html to pdf", 
+                        "Please ensure that you installed pdfkit and wkhtmltopdf correctly https://pypi.org/project/pdfkit/")
                     return
 
             # Show new item in tree
