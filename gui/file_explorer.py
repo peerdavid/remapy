@@ -211,17 +211,24 @@ class FileExplorer(object):
             self._update_tree(child, filter)
     
 
-    def _match_filter(self, item, filter):
-        if (filter is None or filter.lower() in item.full_name().lower()) and item.is_document():
+    def _match_filter(self, item, filter):  
+        if filter is None or filter is "":
             return True
         
-        if filter == "*" and item.bookmarked():
-            return True
+        if item.is_collection():
+            child_match = False
+            for child in item.children():
+                child_match = child_match or self._match_filter(child, filter)
+            return child_match
+
+        bookmarked_only = filter.startswith("*")
+        filter = filter[1:] if bookmarked_only else filter
+        if (bookmarked_only and not item.bookmarked()):
+            return False
+
+        return (filter.lower() in item.full_name().lower())
         
-        child_match = False
-        for child in item.children():
-            child_match = child_match or self._match_filter(child, filter)
-        return child_match
+
 
     
     def tree_right_click(self, event):

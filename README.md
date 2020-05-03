@@ -27,6 +27,11 @@ Therefore you can easily hide layers in the rendering process by setting the las
 two values of the hex code to zero: #xxxxxx00.
 <img src="doc/custom_colors.png" />
 
+## Filter
+You can use the filter (upper right) to display only a documents
+that contain the given search string (not case sensitive). To search only 
+for bookmarked icons, start your search string with "*". For example to 
+search for all bookmarked documents that contain "remapy", enter "*remapy".
 
 ## Other features
  - Synchronization via the remarkable cloud
