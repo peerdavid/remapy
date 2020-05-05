@@ -94,8 +94,13 @@ class Item(object):
         except:
             utc = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%SZ")
         
-        epoch = time.mktime(utc.timetuple())
-        offset = datetime.fromtimestamp(epoch) - datetime.utcfromtimestamp(epoch)
+        try:
+            epoch = time.mktime(utc.timetuple())
+            offset = datetime.fromtimestamp(epoch) - datetime.utcfromtimestamp(epoch)
+        except:
+            print("(Warning) Failed to parse datetime for item %s" % self.id())
+            return datetime(1970, 1, 1, 0, 0, 0)
+        
         return utc + offset
 
 
