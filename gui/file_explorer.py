@@ -214,30 +214,39 @@ class FileExplorer(object):
         self.tree.delete(*self.tree.get_children())
         self._update_tree(root, filter_text)
 
-        
-    def _update_tree(self, item, filter=None):
-        is_direct_match = False
-        if not item.is_root():
-            is_match, is_direct_match = self._match_filter(item, filter)
-            if is_match:
-                tree_id = self.tree.insert(
-                    item.parent().id(), 
-                    0, 
-                    item.id(),
-                    open=filter!=None)
-                
-                self._update_tree_item(item)
-                item.add_state_listener(self._update_tree_item)
-                include_all_childs = item.is_collection() and is_direct_match
-                if include_all_childs:
-                    filter = None
 
-        # Sort by name and item type
-        sorted_children = item.children()
-        sorted_children.sort(key=lambda x: str.lower(x.name()), reverse=True)
-        sorted_children.sort(key=lambda x: int(x.is_document()), reverse=True)
-        for child in sorted_children:
-            self._update_tree(child, filter)
+    def _update_tree(self, item, filter=None):
+        try:
+            is_direct_match = False
+            if not item.is_root():
+                is_match, is_direct_match = self._match_filter(item, filter)
+                if is_match:
+                    self.tree.insert(
+                        item.parent().id(), 
+                        0, 
+                        item.id(),
+                        open=filter!=None)
+
+                    self._update_tree_item(item)
+                    item.add_state_listener(self._update_tree_item)
+                    include_all_childs = item.is_collection() and is_direct_match
+                    if include_all_childs:
+                        filter = None
+
+            # Sort by name and item type
+            sorted_children = item.children()
+            sorted_children.sort(key=lambda x: str.lower(x.name()), reverse=True)
+            sorted_children.sort(key=lambda x: int(x.is_document()), reverse=True)
+            for child in sorted_children:
+                self._update_tree(child, filter)
+        except Exception as e:
+            print("(Warning) Failed to add item %s" % item.id())
+            print(e)
+            # Try to remove wrong item from tree
+            try:
+                self.tree.delete(item.id())
+            except:
+                pass
     
 
     def _match_filter(self, item, filter):  
