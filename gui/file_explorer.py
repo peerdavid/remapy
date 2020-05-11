@@ -37,6 +37,7 @@ class FileExplorer(object):
         self.app_dir = os.path.dirname(__file__)
         self.icon_dir = os.path.join(self.app_dir, 'icons/')
         self._cached_icons = {}
+        self._icon_lock = threading.Lock()
         self.row_height = row_height
 
         # Create tkinter elements
@@ -344,24 +345,29 @@ class FileExplorer(object):
 
     
     def _create_tree_icon(self, name, bookmarked=False):
-
-        # If possible return icon from cache
         key = "%s_%s" % (name, bookmarked)
         if key in self._cached_icons:
-            return self._cached_icons[key]
-    
-        icon_size = self.row_height-4
-        path = "%s%s.png" % (self.icon_dir, name)
-        icon = Image.open(path)
-        icon = icon.resize((icon_size, icon_size))
+                return self._cached_icons[key]
 
-        if bookmarked:
-            icon_star = Image.open("%s%s.png" % (self.icon_dir, "star"))
-            icon_star = icon_star.resize((icon_size, icon_size))
-            icon.paste(icon_star, None, icon_star)
+        # If possible return icon from cache
+        with self._icon_lock:
+
+            # Double check if key is in cached icons
+            if key in self._cached_icons:
+                return self._cached_icons[key]
         
-        self._cached_icons[key] = itk.PhotoImage(icon)
-        return self._cached_icons[key]
+            icon_size = self.row_height-4
+            path = "%s%s.png" % (self.icon_dir, name)
+            icon = Image.open(path)
+            icon = icon.resize((icon_size, icon_size))
+
+            if bookmarked:
+                icon_star = Image.open("%s%s.png" % (self.icon_dir, "star"))
+                icon_star = icon_star.resize((icon_size, icon_size))
+                icon.paste(icon_star, None, icon_star)
+            
+            self._cached_icons[key] = itk.PhotoImage(icon)
+            return self._cached_icons[key]
 
 
     def key_binding_rename(self, event):
