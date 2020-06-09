@@ -614,7 +614,7 @@ class FileExplorer(object):
 
     def btn_paste_async_click(self):
         selected_ids = self.tree.selection()
-
+        print("Start paste of file or url.")
         if len(selected_ids) > 1:
             messagebox.showerror("Paste error", "Can paste only into one collection.")
             return
@@ -626,10 +626,14 @@ class FileExplorer(object):
         else:
             parent_id = ""      
 
+        print("Get content from clipboard...")
         clipboard = self.root.clipboard_get()
+        print("Read content " + str(clipboard))
         is_file = os.path.exists(clipboard)
         is_url = clipboard.startswith("http")
         filetype = None
+        print("IsFile = " + str(is_file))
+        print("IsUrl = " + str(is_url))
 
         if is_file:
             is_pdf = clipboard.endswith(".pdf")
@@ -637,6 +641,7 @@ class FileExplorer(object):
             filetype = "pdf" if is_pdf else "epub" if is_epub else None
 
             if filetype is None:
+                print("(Error) Wrong file type.")
                 messagebox.showerror("Paste error", "Only pdf, epub and urls are supported.")
                 return
         elif is_url:
