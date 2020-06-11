@@ -614,7 +614,7 @@ class FileExplorer(object):
 
     def btn_paste_async_click(self):
         selected_ids = self.tree.selection()
-        print("Start paste of file or url.")
+        
         if len(selected_ids) > 1:
             messagebox.showerror("Paste error", "Can paste only into one collection.")
             return
@@ -625,43 +625,44 @@ class FileExplorer(object):
         
         else:
             parent_id = ""      
-
-        clipboard = self.root.clipboard_get()
     
+        def is_file(path):
+            if not os.path.exists(path):
+                return None
+            elif path.endswith(".pdf"):
+                return "pdf"
+            elif path.endswith(".epub"):
+                return "epub"
+            return None            
+        
+        def is_url(url):
+            return url.startswith("http")
+
         # Some versions of nautilus include "x-special/nautilus-clipboard file://..." 
+        # Or dolphin simple adds "file://..."
         # See also issue #11
-        clipboard = clipboard.split("\n")
-        clipboard = clipboard[len(clipboard)-1]
-        clipboard = clipboard.split("file://")
-        clipboard = clipboard[len(clipboard)-1]
+        print("Clipboard: " + str(self.root.clipboard_get()))
+        paths = self.root.clipboard_get().split("\n")
+        print("Paths 1: " + str(paths))
+        paths = [path.replace("file://", "") for path in paths]
+        print("Paths 2: " + str(paths))
+        paths = list(filter(lambda path: is_file(path) != None or is_url(path), paths))
+        print("Paths 3: " + str(paths))
 
-        print("Read content " + str(clipboard))
-        is_file = os.path.exists(clipboard)
-        is_url = clipboard.startswith("http")
-        filetype = None
-        print("IsFile = " + str(is_file))
-        print("IsUrl = " + str(is_url))
-
-        if is_file:
-            is_pdf = clipboard.endswith(".pdf")
-            is_epub = clipboard.endswith(".epub")
-            filetype = "pdf" if is_pdf else "epub" if is_epub else None
-
-            if filetype is None:
-                print("(Error) Wrong file type.")
-                messagebox.showerror("Paste error", "Only pdf, epub and urls are supported.")
-                return
-        elif is_url:
-            pass
-        else:
+        if len(paths) <= 0:
+            messagebox.showerror(
+                        "Failed to copy from clipboard", 
+                        "The given clipboard is invalid. Only .pdf, .epub and urls are supported.\n\n%s" % self.root.clipboard_get())
             return
        
-        def run(filetype):
-            if is_file:
+        def run(clipboard):
+            filetype = is_file(clipboard)
+            if filetype != None:
                 name = os.path.splitext(os.path.basename(clipboard))[0]
                 with open(clipboard, "rb") as f:
                     data = f.read()
-            elif is_url:
+
+            elif is_url(path):
                 try:
                     import pdfkit
                     self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
@@ -676,7 +677,6 @@ class FileExplorer(object):
                     data = pdfkit.from_url(clipboard, False, options=options)
                     filetype = "pdf"
                 except Exception as e:
-                    print(e)
                     messagebox.showerror(
                         "Failed to convert html to pdf", 
                         "Please ensure that you installed pdfkit and wkhtmltopdf correctly https://pypi.org/project/pdfkit/")
@@ -697,7 +697,8 @@ class FileExplorer(object):
                 self._update_tree_item)
             self.log_console("Successfully uploaded %s" % item.full_name())
 
-        threading.Thread(target=run, args=[filetype]).start()
+        for path in paths:
+            threading.Thread(target=run, args=[path]).start()
 
 
     def btn_open_in_file_explorer(self):
