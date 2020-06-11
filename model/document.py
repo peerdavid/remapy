@@ -45,8 +45,8 @@ class Document(Item):
         self.path_rm_files = "%s/%s" % (self.path, self.id())
 
         # RemaPy paths
-        self.path_annotated_pdf = "%s/%s.pdf" % (self.path_remapy, self.name().replace("/", "."))
-        self.path_oap_pdf = "%s/%s_oap.pdf" % (self.path_remapy, self.name().replace("/", "."))
+        self.path_annotated_pdf = self._get_path_annotated_pdf()
+        self.path_oap_pdf = self._get_path_oap_pdf()
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id())
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id())
 
@@ -63,6 +63,13 @@ class Document(Item):
     #
     # Getter and setter
     #
+    def _get_path_annotated_pdf(self):
+        return "%s/%s.pdf" % (self.path_remapy, self.name().replace("/", "."))
+    
+    def _get_path_oap_pdf(self):
+        return "%s/%s_oap.pdf" % (self.path_remapy, self.name().replace("/", "."))
+
+
     def current_page(self):
         return self._meta_value("CurrentPage", 0) + 1
 
@@ -80,6 +87,26 @@ class Document(Item):
             return self.path_annotated_pdf
         
         return self.orig_file()
+    
+
+    def rename(self, new_name):
+        
+        self.path_oap_pdf
+        super(Document, self).rename(new_name)
+
+        try:
+            old = self.path_annotated_pdf
+            self.path_annotated_pdf = self._get_path_annotated_pdf()
+            os.rename(old, self.path_annotated_pdf)
+        except:
+            pass
+
+        try:
+            old = self.path_oap_pdf
+            self.path_oap_pdf = self._get_path_oap_pdf()
+            os.rename(old, self.path_oap_pdf)
+        except:
+            pass
 
 
     def oap_file(self):
