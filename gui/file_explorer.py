@@ -655,10 +655,16 @@ class FileExplorer(object):
                         "The given clipboard is invalid. Only .pdf, .epub and urls are supported.\n\n%s" % self.root.clipboard_get())
             return
        
-        def run(clipboard):
+        def run(clipboard):       
+            id = str(uuid.uuid4())         
             filetype = is_file(clipboard)
             if filetype != None:
                 name = os.path.splitext(os.path.basename(clipboard))[0]
+                self.tree.insert(
+                    parent_id, 9999, id,
+                    text= " " + name,
+                    image=self._create_tree_icon("document_upload"))
+
                 with open(clipboard, "rb") as f:
                     data = f.read()
 
@@ -667,6 +673,11 @@ class FileExplorer(object):
                     import pdfkit
                     self.log_console("Converting webpage '%s'. This could take a few minutes." % clipboard)
                     name = clipboard
+                    self.tree.insert(
+                        parent_id, 9999, id,
+                        text= " " + name,
+                        image=self._create_tree_icon("document_upload"))
+
                     options = {
                         # Here we can manually set some cookies to 
                         # for example automatically accept terms of usage etc.
@@ -680,15 +691,11 @@ class FileExplorer(object):
                     messagebox.showerror(
                         "Failed to convert html to pdf", 
                         "Please ensure that you installed pdfkit and wkhtmltopdf correctly https://pypi.org/project/pdfkit/")
+                    self.tree.delete(id)
                     return
 
             # Show new item in tree
-            id = str(uuid.uuid4())
-            self.log_console("Uploading %s..." % name)
-            self.tree.insert(
-                parent_id, 9999, id,
-                text= " " + name,
-                image=self._create_tree_icon("document_upload"))
+            self.log_console("Upload document %s..." % name)
 
             # Upload
             item = self.item_manager.upload_file(
