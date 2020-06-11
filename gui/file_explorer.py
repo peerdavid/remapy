@@ -199,7 +199,6 @@ class FileExplorer(object):
         if len(children) > 0:
             self.tree.focus(children[0])
         else:
-            print("NOP")
             self.tree.focus()
             
 
@@ -267,7 +266,7 @@ class FileExplorer(object):
             bookmarked_only = False
             text_filter = filter
 
-        is_match = (text_filter in item.name().lower())
+        is_match = (text_filter.lower() in item.name().lower())
         
         if bookmarked_only:
             is_match = is_match and item.bookmarked()
