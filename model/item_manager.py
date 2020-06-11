@@ -202,14 +202,43 @@ class ItemManager(metaclass=Singleton):
 
         # .content file
         content_file = json.dumps({
-            "extraMetadata": { },
+            "dummyDocument": False,
+            "extraMetadata": {
+                "LastBrushColor":           "Black",
+                "LastBrushThicknessScale":  "2",
+                "LastColor":                "Black",
+                "LastEraserThicknessScale": "2",
+                "LastEraserTool":           "Eraser",
+                "LastPen":                  "Finelinerv2",
+                "LastPenColor":             "Black",
+                "LastPenThicknessScale":    "2",
+                "LastPencil":               "SharpPencil",
+                "LastPencilColor":          "Black",
+                "LastPencilThicknessScale": "2",
+                "LastTool":                 "Finelinerv2",
+                "ThicknessScale":           "2",
+                "LastFinelinerv2Size":      "1",
+		    },
             "fileType": file_type,
             "pageCount": 0,
+            "pages": [],
+            "fontName": "",
             "lastOpenedPage": 0,
             "lineHeight": -1,
             "margins": 180,
+            "orientation": "portrait",
             "textScale": 1,
-            "transform": { }
+            "transform": { 
+                "m11": 1,
+                "m12": 0,
+                "m13": 0,
+                "m21": 0,
+                "m22": 1,
+                "m23": 0,
+                "m31": 0,
+                "m32": 0,
+                "m33": 1,
+            }
         })
 
         # metadata
