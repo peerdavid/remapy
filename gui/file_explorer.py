@@ -648,13 +648,9 @@ class FileExplorer(object):
         # Some versions of nautilus include "x-special/nautilus-clipboard file://..." 
         # Or dolphin simple adds "file://..."
         # See also issue #11
-        print("Clipboard: " + str(self.root.clipboard_get()))
         paths = self.root.clipboard_get().split("\n")
-        print("Paths 1: " + str(paths))
         paths = [path.replace("file://", "") for path in paths]
-        print("Paths 2: " + str(paths))
         paths = list(filter(lambda path: is_file(path) != None or is_url(path), paths))
-        print("Paths 3: " + str(paths))
 
         if len(paths) <= 0:
             messagebox.showerror(
