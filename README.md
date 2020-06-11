@@ -52,8 +52,8 @@ that some additional packages must be installed to use this feature
 ## Filter
 You can use the filter (upper right) to display only a subset of 
 documents and collections (not case sensitive). To search only 
-for bookmarked items, start your search string with "*". For example to 
-search for all bookmarked items that contain "remapy", enter "*remapy".
+for bookmarked items, start your search string with "!b". For example to 
+search for all bookmarked items that contain "remapy", enter "!b remapy".
 To search all items that contain "remapy" enter only "remapy".
 
 ## Other features

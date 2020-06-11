@@ -257,8 +257,16 @@ class FileExplorer(object):
         if filter is None or filter == "":
             return True, True
         
-        bookmarked_only = filter.startswith("*")
-        text_filter = (filter[1:] if bookmarked_only else filter).lower()
+        if filter.startswith("!b "):
+            bookmarked_only = True
+            text_filter = filter[3:]
+        elif filter == "!b":
+            bookmarked_only = True
+            text_filter = ""
+        else:
+            bookmarked_only = False
+            text_filter = filter
+
         is_match = (text_filter in item.name().lower())
         
         if bookmarked_only:
