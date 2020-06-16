@@ -24,6 +24,7 @@ class ItemManager(metaclass=Singleton):
     def __init__(self,):
         self.rm_client = RemarkableClient()
         self.root = None
+        self.trash = None
 
 
     def get_root(self, force=False):
@@ -38,7 +39,7 @@ class ItemManager(metaclass=Singleton):
         metadata_list, is_online = self._get_metadata_list()
         
         self._clean_local_items(metadata_list)
-        self.root = self._create_tree(metadata_list)
+        self.root, self.trash = self._create_tree(metadata_list)
         return self.root, is_online
 
 
@@ -189,7 +190,7 @@ class ItemManager(metaclass=Singleton):
         for i in range(len(metadata_list)):
             self._create_item_and_parents(i, metadata_list, items, lookup_table)
 
-        return root
+        return root, trash
 
 
     def _create_item_and_parents(self, i, metadata_list, items, lookup_table):

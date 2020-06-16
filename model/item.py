@@ -89,6 +89,9 @@ class Item(object):
 
     def modified_time(self):
         modified = self.metadata["ModifiedClient"]
+        if modified == None:
+            return None
+
         try:
             utc = datetime.strptime(modified, "%Y-%m-%dT%H:%M:%S.%fZ")
         except:
@@ -109,7 +112,6 @@ class Item(object):
     
     def children(self):
         return self._children
-    
 
     def _meta_value(self, key, root_value=""):
         if self.is_root():
@@ -134,6 +136,21 @@ class Item(object):
         self.metadata["ModifiedClient"] = now_rfc3339()
         self.metadata["Version"] += 1
         self.rm_client.update_metadata(self.metadata)
+        self._write_remapy_file()
+        self._update_state_listener()
+
+
+    def move(self, new_parent):
+        self._parent = new_parent
+        self.metadata["Parent"] = new_parent.id()
+        self.metadata["ModifiedClient"] = now_rfc3339()
+        self.metadata["Version"] += 1
+        self.rm_client.update_metadata(self.metadata)
+
+        # Seems that this operation updates the version internally!
+        # Therefore we increase the version only locally to have a valid 
+        # version number without an additional sync.
+        self.metadata["Version"] += 1
         self._write_remapy_file()
         self._update_state_listener()
 

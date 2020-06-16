@@ -17,8 +17,10 @@ ABOUT = \
 
    David Peer (2020)           
 
-   RemaPy is an open source tool explorer for your remarkable tablet. 
-   The source is available on https://github.com/peerdavid/remapy and is 
+   RemaPy is an open source tool explorer for your remarkable tablet.
+   Ensure that you updated your tablet to version 2.2 before using RemaPy, 
+   otherwise the trash will not work as expected. The source is available on 
+   https://github.com/peerdavid/remapy and is 
    published under the Apache 2.0 License which is shown below. Please note 
    that you use this tool on your own risk and don't contact the 
    reMarkable support team if anything doesn't work as described here. This 

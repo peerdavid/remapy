@@ -103,9 +103,9 @@ class FileExplorer(object):
         self.context_menu.add_command(label='Toggle bookmark', accelerator="Ctrl+B", command=self.btn_toggle_bookmark)
         self.context_menu.add_command(label='Rename...', accelerator="F2", command=self.btn_rename_item_click)
         self.context_menu.add_command(label='Delete', accelerator="Del", command=self.btn_delete_item_click)
+        self.context_menu.add_command(label='Restore', command=self.btn_restore_item_click)
         self.context_menu.add_separator()
         self.context_menu.add_command(label='Paste', accelerator="Ctrl+V", command=self.btn_paste_async_click)
-        
 
         self.tree.bind("<Double-1>", self.tree_double_click)
 
@@ -140,7 +140,8 @@ class FileExplorer(object):
         self.context_menu.entryconfig(6, state=mode)
         self.context_menu.entryconfig(7, state=mode)
         self.context_menu.entryconfig(8, state=mode)
-        self.context_menu.entryconfig(10, state=mode)
+        self.context_menu.entryconfig(9, state=mode)
+        self.context_menu.entryconfig(11, state=mode)
 
         bg = "#ffffff" if mode == "normal" else "#bdbdbd"
         self.tree_style.configure("remapy.style.Treeview", background=bg)
@@ -223,7 +224,7 @@ class FileExplorer(object):
                 if is_match:
                     self.tree.insert(
                         item.parent().id(), 
-                        0, 
+                        0 if item.id() != "trash" else 99999, 
                         item.id(),
                         open=filter!=None)
 
@@ -241,7 +242,7 @@ class FileExplorer(object):
             for child in sorted_children:
                 self._update_tree(child, filter)
         except Exception as e:
-            print("(Warning) Failed to add item %s" % item.id())
+            self.log_console("(Warning) Failed to add item %s" % item.id())
             print(e)
             # Try to remove wrong item from tree
             try:
@@ -394,6 +395,10 @@ class FileExplorer(object):
 
         if item.name() == "Quick sheets" and item.parent().is_root():
             messagebox.showerror("Error", "You can not rename the Quick sheets.", icon='error')
+            return
+        
+        if item.name() == "Trash" and item.parent().is_root():
+            messagebox.showerror("Error", "You can not rename the Trash.", icon='error')
             return
 
         name = simpledialog.askstring('Rename', 'Enter new name', initialvalue=item.name())
@@ -598,7 +603,7 @@ class FileExplorer(object):
             child_count = item.get_exact_children_count()
             count = np.add(count, child_count)
         
-        message = "Do you really want to delete %d collection(s) and %d file(s)?" % (count[1], count[0])
+        message = "Do you really want to delete (or trash) %d collection(s) and %d file(s)?" % (count[1], count[0])
         result = messagebox.askquestion("Delete", message, icon='warning')
 
         if result != "yes":
@@ -609,11 +614,56 @@ class FileExplorer(object):
                 if item.name() == "Quick sheets" and item.parent().is_root():
                     self.log_console("(Warning) You can not delete the Quick sheets.")
                     continue
-
-                item.delete()
-                self.log_console("Deleted %s" % item.full_name())
+                    
+                if item.name() == "Trash" and item.parent().is_root():
+                    self.log_console("(Warning) You can not delete the trash.")
+                    continue
+                
+                if item.parent().id() == "trash":
+                    item.delete()
+                    self.log_console("Deleted %s" % item.full_name())
+                else: 
+                    trash = self.item_manager.trash
+                    self._move(item, trash)
+                    
         threading.Thread(target=run).start()
 
+
+    #
+    # RESTORE
+    #
+    def btn_restore_item_click(self):
+        selected_ids = self.tree.selection()
+        items = [self.item_manager.get_item(id) for id in selected_ids]
+
+        def run():
+            for item in items:
+                if item.parent().id() != "trash":
+                    self.log_console("(Warning) Restore of '%s' not necessary." % item.full_name())
+                    continue
+                
+                self._move(item, self.item_manager.root)
+                    
+        threading.Thread(target=run).start()
+
+
+    def _move(self, item, new_parent):
+        old_parent_id = item.parent().id()
+
+        # Move on cloud
+        item.move(new_parent)
+
+        # Remove from old parent (tree view)
+        old_parent_children = list(self.tree.get_children(old_parent_id))
+        old_parent_children.remove(item.id())
+        self.tree.set_children(old_parent_id, *old_parent_children)
+        
+        # Add to trash (tree view)
+        new_parent_children = list(self.tree.get_children(new_parent.id()))
+        new_parent_children.append(item.id())
+        self.tree.set_children(new_parent.id(), *new_parent_children)
+        
+        self.log_console("Moved '%s' into '%s'" % (item.full_name(), new_parent.full_name()))
 
     #
     # Copy, Paste, Cut
