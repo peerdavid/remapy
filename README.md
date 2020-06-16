@@ -67,4 +67,4 @@ To search all items that contain "remapy" enter only "remapy".
 [1] Python remarkable api, https://github.com/subutux/rmapy <br />
 [2] Golang remarkable tool, https://github.com/juruen/rmapi/ <br />
 [3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, 
-Good ware, prettycons, Payungkead, dDara from www.flaticon.com <br />
+Good ware, prettycons, Payungkead, bqlqn from www.flaticon.com <br />
