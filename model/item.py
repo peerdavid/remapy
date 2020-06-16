@@ -59,6 +59,9 @@ class Item(object):
     #
     # Getter and setter
     #
+    def is_trash(self):
+        return self.id() == "trash"
+
     def is_root(self):
         return self.metadata is None
 
@@ -123,6 +126,9 @@ class Item(object):
     # Functions
     #
     def set_bookmarked(self, bookmarked):
+        if self.is_trash() or self.is_root():
+            return 
+
         self.metadata["Bookmarked"] = bookmarked
         self.metadata["ModifiedClient"] = now_rfc3339()
         self.metadata["Version"] += 1
@@ -132,6 +138,9 @@ class Item(object):
 
 
     def rename(self, new_name):
+        if self.is_trash() or self.is_root():
+            return 
+
         self.metadata["VissibleName"] = new_name
         self.metadata["ModifiedClient"] = now_rfc3339()
         self.metadata["Version"] += 1
@@ -141,6 +150,9 @@ class Item(object):
 
 
     def move(self, new_parent):
+        if self.is_trash() or self.is_root():
+            return 
+
         self._parent = new_parent
         self.metadata["Parent"] = new_parent.id()
         self.metadata["ModifiedClient"] = now_rfc3339()
