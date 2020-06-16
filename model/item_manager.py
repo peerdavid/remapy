@@ -158,20 +158,34 @@ class ItemManager(metaclass=Singleton):
 
     def _create_tree(self, metadata_list):
 
-        lookup_table = {}
-        for i in range(len(metadata_list)):
-            lookup_table[metadata_list[i]["ID"]] = i
-
         # Create a dummy root object where everything starts with parent 
         # "". This parent "" should not be changed as it is also used in 
-        # the rm cloud
+        # the rm cloud. Additionally with version 2.2 of the software 
+        # every tablet implicitly includes a trash.
         root = Collection(None, None)
-        items = {
-            "": root
+
+        trash_metadata = {
+            "ID": "trash",
+            "Parent": root,
+            "VissibleName": "Trash",
+            "Version": 1,
+            "Bookmarked": False,
+            "Type": "CollectionType",
+            "ModifiedClient": "2000-01-01T00:00:00.000000Z"
         }
+        trash = self._create_item(trash_metadata, root)
+        metadata_list.append(trash_metadata)
 
         # We do this for every element, because _create_item_and_parents
         # only ensures that all parents already exist
+        items = {
+            "": root,
+            "trash": trash
+        }
+        lookup_table = {}
+        for i in range(len(metadata_list)):
+            lookup_table[metadata_list[i]["ID"]] = i
+        
         for i in range(len(metadata_list)):
             self._create_item_and_parents(i, metadata_list, items, lookup_table)
 

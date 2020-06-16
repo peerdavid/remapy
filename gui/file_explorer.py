@@ -237,6 +237,7 @@ class FileExplorer(object):
             sorted_children = item.children()
             sorted_children.sort(key=lambda x: str.lower(x.name()), reverse=True)
             sorted_children.sort(key=lambda x: int(x.is_document()), reverse=True)
+            sorted_children.sort(key=lambda x: int(x.id()=="trash"), reverse=True)
             for child in sorted_children:
                 self._update_tree(child, filter)
         except Exception as e:
@@ -320,12 +321,14 @@ class FileExplorer(object):
 
     def _get_icon(self, item):
         if item.is_collection():
+            if item.id() == "trash":
+                return self._create_tree_icon("trash")    
+
             if item.state == model.item.STATE_SYNCED:
                 return self._create_tree_icon("collection", item.bookmarked())
             else:
                 return self._create_tree_icon("collection_syncing")
         
-
         if item.state == model.document.STATE_NOT_SYNCED:
             return self._create_tree_icon("cloud")
         
