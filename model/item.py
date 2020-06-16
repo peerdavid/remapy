@@ -146,11 +146,6 @@ class Item(object):
         self.metadata["ModifiedClient"] = now_rfc3339()
         self.metadata["Version"] += 1
         self.rm_client.update_metadata(self.metadata)
-
-        # Seems that this operation updates the version internally!
-        # Therefore we increase the version only locally to have a valid 
-        # version number without an additional sync.
-        self.metadata["Version"] += 1
         self._write_remapy_file()
         self._update_state_listener()
 

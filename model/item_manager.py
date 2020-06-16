@@ -167,7 +167,7 @@ class ItemManager(metaclass=Singleton):
 
         trash_metadata = {
             "ID": "trash",
-            "Parent": root,
+            "Parent": "",
             "VissibleName": "Trash",
             "Version": 1,
             "Bookmarked": False,
