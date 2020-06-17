@@ -13,8 +13,8 @@ nor endorsed by, reMarkable AS. I am not responsible for any
 damage done to your device or your data 
 due to the use of this software.*
 
-*NOTE: The newest trashing logic is already implemented in RemaPy and 
-therefore the software version 2.2 is needed to successfullly delete items.*
+*NOTE: The newest delete logic (trash) is already implemented in RemaPy and 
+therefore your reMarkable tablet should run with software version 2.2*
 
 
 # Features 
