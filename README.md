@@ -21,6 +21,13 @@ therefore your reMarkable tablet should run with software version 2.2*
 ## Overview
 <img src="doc/explorer.png" />
 
+## Open with or without annotations
+With RemaPy you can open the annotated pdf file (double click). You can also
+open the original file without annotations or you can open the file containing
+only the pages that are annotated (right-click). If evince is installed on your
+system, RemaPy opens the same page as on your tablet. Note that if you open a
+collection, all child items are opened recursively.
+
 ## Upload pdfs, epubs or webpages
 If you copy and paste a file from your file explorer into RemaPy, it
 is uploaded if the file ends with .pdf or .epub. Select the base folder 
@@ -43,24 +50,17 @@ Therefore you can easily hide layers in the rendering process by setting the las
 two values of the hex code to zero: #xxxxxx00.
 <img src="doc/custom_colors.png" />
 
-## Open with or without annotations
-With RemaPy you can open the annotated pdf file (double click). You can also
-open the original file without annotations or you can open the file containing
-only the pages that are annotated (right-click). If evince is installed on your
-system, RemaPy opens the same page as on your tablet. Note that if you open a
-collection, all child items are opened recursively.
-
-## Backup
-In the settings tab you can find an option "Backup". This creates a 
-backup of all your annotated pdf files into the given folder. Note that it 
-it is not possible to backup or restore the *raw* items.
-
 ## Filter
 You can use the filter (upper right) to display only a subset of documents and
 collections (not case sensitive). To search only for bookmarked items, start
 your search string with "!b". For example to search for all bookmarked items
 that contain "RemaPy", enter "!b RemaPy".
 To search all items that contain "RemaPy" enter only "RemaPy".
+
+## Backup
+In the settings tab you can find an option "Backup". This creates a 
+backup of all your annotated pdf files into the given folder. Note that it 
+it is not possible to backup or restore the *raw* items.
 
 ## Trash
 RemaPy uses the same delete logic than the ReMarkable V2.2. Therefore if
