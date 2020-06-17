@@ -21,6 +21,18 @@ therefore your reMarkable tablet should run with software version 2.2*
 ## Overview
 <img src="doc/explorer.png" />
 
+## Upload pdfs, epubs or webpages
+If you copy and paste a file from your file explorer into RemaPy, it
+is uploaded if the file ends with .pdf or .epub. Select the base folder 
+(or any item in this folder) where the file should be located after the upload.
+If you copy and paste a URL, the given website is automatically converted into
+a pdf and uploaded to your reMarkable. Note that some heuristics
+are implemented to accepts the "terms of usage" of pages automatically, 
+but this will not work in every case 
+(see also [FAQ](https://github.com/peerdavid/RemaPy/wiki)). Please also note
+that some additional packages must be installed to use this feature 
+(pdfkit and wkhtmltopdf).
+
 ## Custom colors
 Custom colors for individual layers are used by RemaPy for rendering
 if the layer name contains a '#' followed by a valid color name or 
@@ -42,18 +54,6 @@ collection, all child items are opened recursively.
 In the settings tab you can find an option "Backup". This creates a 
 backup of all your annotated pdf files into the given folder. Note that it 
 it is not possible to backup or restore the *raw* items.
-
-## Upload pdfs, epubs or webpages
-If you copy and paste a file from your file explorer into RemaPy, it
-is uploaded if the file ends with .pdf or .epub. Select the base folder 
-(or any item in this folder) where the file should be located after the upload.
-If you copy and paste a URL, the given website is automatically converted into
-a pdf and uploaded to your reMarkable. Note that some heuristics
-are implemented to accepts the "terms of usage" of pages automatically, 
-but this will not work in every case 
-(see also [FAQ](https://github.com/peerdavid/RemaPy/wiki)). Please also note
-that some additional packages must be installed to use this feature 
-(pdfkit and wkhtmltopdf).
 
 ## Filter
 You can use the filter (upper right) to display only a subset of documents and
