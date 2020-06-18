@@ -82,7 +82,10 @@ class Settings(object):
         label.grid(row=10, column=2, sticky="W")
         self.backup_text = tk.StringVar()
 
-        backup_path = Path.joinpath(Path.home(), "Backup/Remarkable/%s" % str(date.today().strftime("%Y-%m-%d")))
+        backup_base_default = Path.joinpath(Path.home(), "Backup","Remarkable")
+        backup_base = cfg.get("general.backuppath", default=str(backup_base_default))
+        backup_folder = str(date.today().strftime("%Y-%m-%d"))
+        backup_path = Path.joinpath(Path(backup_base), backup_folder)
         self.backup_text.set(backup_path)
         self.entry_backup = tk.Entry(root, textvariable=self.backup_text)
         self.entry_backup.grid(row=10, column=4, sticky="W") 
