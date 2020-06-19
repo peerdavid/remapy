@@ -305,7 +305,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
                 xpos = ratio * xpos + float(crop_box[0])
                 ypos = image_height - ratio * ypos + float(crop_box[1])
                 points.extend([xpos, ypos])
-            if is_eraser_area:
+            if is_eraser_area or is_eraser:
                 continue
             
             # Render lines

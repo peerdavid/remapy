@@ -71,30 +71,41 @@ class Settings(object):
         label = tk.Label(root, justify="left", anchor="w", text="A local folder that contains all template PNG files. \nYou can copy the template files from your tablet: \n'/usr/share/remarkable'")
         label.grid(row=7, column=7, sticky="W") 
 
+        label = tk.Label(root, text="Backup root path:")
+        label.grid(row=8, column=2, sticky="W")
+        self.backup_root_text = tk.StringVar()
+        backup_root_default = Path.joinpath(Path.home(), "Backup","Remarkable")
+        backup_root = cfg.get("general.backuproot", default=str(backup_root_default))
+        self.backup_root_text.set(backup_root)
+        self.entry_backup_root = tk.Entry(root, textvariable=self.backup_root_text)
+        self.entry_backup_root.grid(row=8, column=4, sticky="W")
+
+        label = tk.Label(root, justify="left", anchor="w", text="A local folder that will be used as the root folder for backups.")
+        label.grid(row=8, column=7, sticky="W") 
 
         self.btn_save = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
-        self.btn_save.grid(row=8, column=4, sticky="W")
+        self.btn_save.grid(row=9, column=4, sticky="W")
 
         label = tk.Label(root, text="Backup", font="Helvetica 14 bold")
-        label.grid(row=9, column=2, sticky="W")
+        label.grid(row=10, column=2, sticky="W")
 
         label = tk.Label(root, text="Backup path:")
-        label.grid(row=10, column=2, sticky="W")
-        self.backup_text = tk.StringVar()
+        label.grid(row=11, column=2, sticky="W")
+        self.backup_folder_text = tk.StringVar()
 
-        backup_path = Path.joinpath(Path.home(), "Backup/Remarkable/%s" % str(date.today().strftime("%Y-%m-%d")))
-        self.backup_text.set(backup_path)
-        self.entry_backup = tk.Entry(root, textvariable=self.backup_text)
-        self.entry_backup.grid(row=10, column=4, sticky="W") 
-
-        label = tk.Label(root, justify="left", anchor="w", text="Copy currently downloaded and annotated PDF files \ninto the given directory. Note that those files can not \nbe restored on the tablet.")
-        label.grid(row=10, column=7, sticky="W") 
-
-        self.btn_create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
-        self.btn_create_backup.grid(row=11, column=4, sticky="W")
+        backup_folder = str(date.today().strftime("%Y-%m-%d"))
+        self.backup_folder_text.set(backup_folder)
+        self.entry_backup_folder = tk.Entry(root, textvariable=self.backup_folder_text)
+        self.entry_backup_folder.grid(row=11, column=4, sticky="W")
 
         self.label_backup_progress = tk.Label(root)
-        self.label_backup_progress.grid(row=10, column=6)
+        self.label_backup_progress.grid(row=11, column=6)
+
+        label = tk.Label(root, justify="left", anchor="w", text="Copy currently downloaded and annotated PDF files \ninto the given directory. Note that those files can not \nbe restored on the tablet.")
+        label.grid(row=11, column=7, sticky="W") 
+
+        self.btn_create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
+        self.btn_create_backup.grid(row=12, column=4, sticky="W")
 
         # Subscribe to sign in event. Outer logic (i.e. main) can try to 
         # sign in automatically...
@@ -110,7 +121,8 @@ class Settings(object):
         self.entry_onetime_code.config(state="normal")
         self.btn_create_backup.config(state="disabled")
         self.btn_save.config(state="disabled")
-        self.entry_backup.config(state="disabled")
+        self.entry_backup_root.config(state="disabled")
+        self.entry_backup_folder.config(state="disabled")
         self.entry_templates.config(state="disabled")
 
         if event == api.remarkable_client.EVENT_SUCCESS:
@@ -118,7 +130,8 @@ class Settings(object):
             self.entry_onetime_code.config(state="disabled")
             self.btn_create_backup.config(state="normal")
             self.btn_save.config(state="normal")
-            self.entry_backup.config(state="normal")
+            self.entry_backup_root.config(state="normal")
+            self.entry_backup_folder.config(state="normal")
             self.entry_templates.config(state="normal")
             self.label_auth_status.config(text="Successfully signed in", fg="green")
             
@@ -141,7 +154,8 @@ class Settings(object):
 
     def btn_save_click(self):
         general = {
-            "templates": self.entry_templates_text.get()
+            "templates": self.entry_templates_text.get(),
+            "backuproot": self.backup_root_text.get()
         }
         cfg.save({"general": general})
 
@@ -153,7 +167,9 @@ class Settings(object):
         if result != "yes":
             return
 
-        backup_path = self.backup_text.get()
+        backup_root = self.backup_root_text.get()
+        backup_folder = self.backup_folder_text.get()
+        backup_path = Path.joinpath(Path(backup_root), backup_folder)
         self.label_backup_progress.config(text="Writing backup '%s'" % backup_path)
 
         def run():
