@@ -2,6 +2,6 @@
 Type=Application
 Terminal=false
 Name=RemaPy Explorer
-Exec=rema.py
-Icon=icon.png
+Exec=REMAPY_PATH/launch.sh
+Icon=REMAPY_PATH/icon.png
 StartupWMClass=remaPy
