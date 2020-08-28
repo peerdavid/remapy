@@ -8,6 +8,8 @@ problems with RemaPy. See also [Issue 10](https://github.com/peerdavid/remapy/is
 A "how to install", the software architecture and FAQ's 
 can be found in the [wiki](https://github.com/peerdavid/RemaPy/wiki).
 
+Checkout also the app RemaDroid on the [Google Play Store](https://play.google.com/store/apps/details?id=org.remadroid).
+
 *WARNING: This project is not affiliated to, 
 nor endorsed by, reMarkable AS. I am not responsible for any 
 damage done to your device or your data 
