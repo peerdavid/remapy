@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 import threading
 import shutil
@@ -572,15 +573,18 @@ class FileExplorer(object):
                     return
             else: 
                 file_to_open = item.ann_or_orig_file()
-
-            if file_to_open.endswith(".pdf"):
-                try:
-                    current_page = 0 if open_oap else item.current_page()
-                    subprocess.call(["evince", "-i", str(current_page), file_to_open])
-                except:
-                    subprocess.call(["xdg-open", file_to_open])    
+                
+            if sys.platform == "win32":
+                os.startfile(os.path.normpath(file_to_open))
             else:
-                subprocess.call(["xdg-open", file_to_open])
+                if file_to_open.endswith(".pdf"):
+                    try:
+                        current_page = 0 if open_oap else item.current_page()
+                        subprocess.call(["evince", "-i", str(current_page), file_to_open])
+                    except:
+                        subprocess.call(["xdg-open", file_to_open])    
+                else:
+                    subprocess.call(["xdg-open", file_to_open])
 
 
     #
@@ -772,7 +776,10 @@ class FileExplorer(object):
             if item.is_collection():
                 continue
 
-            subprocess.call(('xdg-open', item.path_remapy))
+            if sys.platform == "win32":
+                os.startfile(os.path.normpath(item.path_remapy))
+            else:
+                subprocess.call(('xdg-open', item.path_remapy))
     
     def key_binding_toggle_bookmark(self, event):
         self.btn_toggle_bookmark()
