@@ -3,8 +3,10 @@
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
 reMarkable cloud. You can upload documents (via copy and paste), open notebooks
 and annotated pdfs and delete documents or collections. RemaPy is written in
-Python and only tested on Linux. Especially for OSX we have currently some 
-problems with RemaPy. See also [Issue 10](https://github.com/peerdavid/remapy/issues/10).
+Python and only tested on Linux. Thanks to the community for adding scripts 
+and code to make RemaPy also executable on Windows! 
+Note that for OSX we have currently some  problems with RemaPy. 
+See also [Issue 10](https://github.com/peerdavid/remapy/issues/10).
 A "how to install", the software architecture and FAQ's 
 can be found in the [wiki](https://github.com/peerdavid/RemaPy/wiki).
 
@@ -14,9 +16,6 @@ Checkout also the app RemaDroid on the [Google Play Store](https://play.google.c
 nor endorsed by, reMarkable AS. I am not responsible for any 
 damage done to your device or your data 
 due to the use of this software.*
-
-*NOTE: The newest delete logic (trash) is already implemented in RemaPy and 
-therefore your reMarkable tablet should run with software version 2.2*
 
 
 # Features 
