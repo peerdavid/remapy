@@ -263,6 +263,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             is_ballpoint = (pen == 2 or pen == 15)
             is_fineliner = (pen == 4 or pen == 17)
             is_brush = (pen == 0 or pen == 12)
+            is_calligraphy = pen == 21
 
             if is_sharp_pencil or is_tilt_pencil:
                 color = 4
@@ -271,7 +272,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
                 pass
             elif is_ballpoint or is_fineliner:
                 pen_width = 32 * pen_width * pen_width - 116 * pen_width + 107
-            elif is_marker:
+            elif is_marker or is_calligraphy:
                 pen_width = 64 * pen_width - 112
                 opacity = 0.9
             elif is_highlighter:
