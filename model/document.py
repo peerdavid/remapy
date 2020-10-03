@@ -43,6 +43,7 @@ class Document(Item):
         # Remarkable tablet paths
         self.path_zip = "%s.zip" % self.path
         self.path_rm_files = "%s/%s" % (self.path, self.id())
+        self.path_content_file = "%s/%s.content" % (self.path, self.id())
 
         # RemaPy paths
         self.path_annotated_pdf = self._get_path_annotated_pdf()
@@ -88,6 +89,11 @@ class Document(Item):
         
         return self.orig_file()
     
+    def is_landscape(self):
+        with open(self.path_content_file, "r") as f:
+            content_file = json.load(f)
+            orientation = content_file["orientation"]
+        return orientation.lower() == "landscape"
 
     def rename(self, new_name):
         
@@ -169,6 +175,7 @@ class Document(Item):
                 self.path, 
                 self.id(), 
                 self.path_annotated_pdf,
+                self.is_landscape(),
                 path_templates=cfg.get("general.templates"))
         
         else:

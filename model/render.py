@@ -83,8 +83,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     writer_oap.write(path_oap_pdf)
 
 
-def notebook(path, id, path_annotated_pdf, path_templates=None):
-    
+def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
     rm_files_path = "%s/%s" % (path, id)
     annotations_pdf = []
 
@@ -113,7 +112,7 @@ def notebook(path, id, path_annotated_pdf, path_templates=None):
     # Overlay empty notebook with annotations
     templates_pdf = PdfReader(path_annotated_pdf)
     for i in range(len(annotations_pdf)):
-
+        templates_pdf.pages[i].Rotate = 90 if is_landscape else 0
         empty_page = len(annotations_pdf[i].pages) <= 0
         if empty_page:
             continue 
