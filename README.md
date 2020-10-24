@@ -41,10 +41,10 @@ but this will not work in every case
 that some additional packages must be installed to use this feature 
 (pdfkit and wkhtmltopdf).
 
-## Custom rendering and custom colors
-Thanks to https://github.com/lschwetlick/maxio which improved the rendering 
-a lot:<br />
-<img src="doc/goofy.png" width="200sp" />
+## Rendering and custom colors
+Thanks to https://github.com/lschwetlick/maxio - this improved the rendering 
+of RemaPy a lot:<br />
+<img src="doc/goofy.png" width="250sp" />
 
 Custom colors for individual layers are used by RemaPy for rendering
 if the layer name contains a '#' followed by a valid color name or 
