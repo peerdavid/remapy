@@ -322,14 +322,14 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             # Render lines after the arrays are filled
             # such that we have access to the next and previous points
             drawing = Drawing(image_width, image_height)
-            can.setLineCap(1)
+            can.setLineCap(0 if is_highlighter else 1)
             for i in range(2, len(segment_points), 2):
-                p = can.beginPath()
-                p.moveTo(segment_points[i-2], segment_points[i-1])
                 can.setStrokeColor(segment_colors[int(i/2)])
                 can.setLineWidth(segment_widths[int(i/2)])
                 can.setStrokeAlpha(segment_opacities[int(i/2)])
-
+                
+                p = can.beginPath()
+                p.moveTo(segment_points[i-2], segment_points[i-1])
                 p.lineTo(segment_points[i], segment_points[i+1])
                 p.moveTo(segment_points[i], segment_points[i+1])
                 p.close()
@@ -426,7 +426,7 @@ class Pencil(Pen):
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
         segment_width = 0.7 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8) - (0.6 * speed / 50))
         #segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
-        max_widthHighligh = self.base_width * 10
+        max_width = self.base_width * 10
         segment_width = segment_width if segment_width < max_width else max_width
         return segment_width * self.ratio
 
@@ -472,7 +472,7 @@ class Highlighter(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, 3)
         self.stroke_cap = "square"
-        self.base_opacity = 0.05
+        self.base_opacity = 0.2
         self.name = "Highlighter"
         self.segment_length = 2
     
