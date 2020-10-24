@@ -474,7 +474,7 @@ class Highlighter(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, 3)
         self.stroke_cap = "square"
-        self.base_opacity = 0.3
+        self.base_opacity = 0.1
         self.name = "Highlighter"
     
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
