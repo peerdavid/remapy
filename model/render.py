@@ -27,8 +27,7 @@ default_stroke_color = {
     1: (211/255., 47/255., 47/255.),        # Pen color 2
     2: (255/255., 255/255., 255/255.),      # Eraser
     3: (255/255., 255/255., 0),             # Highlighter
-    # Own defined colors
-    4: (0., 0., 0.)             # Pencil
+    4: (50/255., 50/255., 50/255.)          # Pencil
 }
 
 
@@ -338,7 +337,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
 
             #p.close()
             #can.drawPath(p)
-        
+        Pen
     can.save()
     packet.seek(0)
     overlay = PdfReader(packet)
@@ -365,7 +364,6 @@ class Pen:
         self.base_width = base_width
         self.base_color = default_stroke_color[base_color]
         self.segment_length = 1000
-        self.stroke_cap = "round"
         self.base_opacity = 1
         self.ratio = ratio**2
         self.name = "Basic Pen"
@@ -428,7 +426,7 @@ class Pencil(Pen):
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
         segment_width = 0.7 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8) - (0.6 * speed / 50))
         #segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
-        max_width = self.base_width * 10
+        max_widthHighligh = self.base_width * 10
         segment_width = segment_width if segment_width < max_width else max_width
         return segment_width * self.ratio
 
@@ -474,8 +472,9 @@ class Highlighter(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, 3)
         self.stroke_cap = "square"
-        self.base_opacity = 0.1
+        self.base_opacity = 0.05
         self.name = "Highlighter"
+        self.segment_length = 2
     
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
         return self.base_width * math.sqrt(self.ratio)
