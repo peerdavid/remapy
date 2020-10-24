@@ -304,7 +304,6 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
                     segment_color = pen.get_segment_color(speed, tilt, width, pressure, last_width)
                     segment_width = pen.get_segment_width(speed, tilt, width, pressure, last_width)
                     segment_opacity = pen.get_segment_opacity(speed, tilt, width, pressure, last_width)
-                    segment_opacity = max(0, min(1, segment_opacity))
                 
                 segment_widths.append(segment_width)
                 segment_opacities.append(segment_opacity)
@@ -325,19 +324,20 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             # such that we have access to the next and previous points
             drawing = Drawing(image_width, image_height)
             can.setLineCap(1)
-            p = can.beginPath()
-            p.moveTo(segment_points[0], segment_points[1])
-            for i in range(0, len(segment_points), 2):
+            for i in range(2, len(segment_points), 2):
+                p = can.beginPath()
+                p.moveTo(segment_points[i-2], segment_points[i-1])
                 can.setStrokeColor(segment_colors[int(i/2)])
                 can.setLineWidth(segment_widths[int(i/2)])
                 can.setStrokeAlpha(segment_opacities[int(i/2)])
 
                 p.lineTo(segment_points[i], segment_points[i+1])
                 p.moveTo(segment_points[i], segment_points[i+1])
-                if i % 10 == 0:
-                    p.close()
-            p.close()
-            can.drawPath(p)
+                p.close()
+                can.drawPath(p)
+
+            #p.close()
+            #can.drawPath(p)
         
     can.save()
     packet.seek(0)
@@ -433,9 +433,8 @@ class Pencil(Pen):
         return segment_width * self.ratio
 
     def get_segment_opacity(self, speed, tilt, width, pressure, last_width):
-        segment_opacity = (0.1 * -(speed / 35)) + (1 * pressure)
-        segment_opacity = self.cutoff(segment_opacity) - 0.1
-        return segment_opacity
+        segment_opacity = max(0.05, min(0.7, pressure**3))
+        return self.cutoff(segment_opacity)
 
 
 class Mechanical_Pencil(Pen):
@@ -505,5 +504,5 @@ class Caligraphy(Pen):
         self.name = "Calligraphy"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.9 * (((1 + pressure) * (1 * width)) - 0.3 * tilt) + (0.1 * last_width)
+        segment_width = 0.5 * (((1 + pressure) * (1 * width)) - 0.3 * tilt) + (0.1 * last_width)
         return segment_width * self.ratio
