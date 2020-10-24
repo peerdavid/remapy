@@ -41,7 +41,11 @@ but this will not work in every case
 that some additional packages must be installed to use this feature 
 (pdfkit and wkhtmltopdf).
 
-## Custom colors
+## Custom rendering and custom colors
+Thanks to https://github.com/lschwetlick/maxio which improved the rendering 
+a lot:<br />
+<img src="doc/goofy.png" width="200sp" />
+
 Custom colors for individual layers are used by RemaPy for rendering
 if the layer name contains a '#' followed by a valid color name or 
 [hex code](https://www.color-hex.com/).
@@ -50,6 +54,8 @@ is rendered in red. The hex code also supports alpha values (e.g. #ffee11dd).
 Therefore you can easily hide layers in the rendering process by setting the last
 two values of the hex code to zero: #xxxxxx00.
 <img src="doc/custom_colors.png" />
+
+
 
 ## Filter
 You can use the filter (upper right) to display only a subset of documents and
@@ -81,4 +87,4 @@ the trash. You can also restore files that are deleted from the trash.
 [2] Golang reMarkable tool, https://github.com/juruen/rmapi/ <br />
 [3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, 
 Good ware, prettycons, Payungkead, bqlqn from www.flaticon.com <br />
-[4] Rendering, https://github.com/lschwetlick/maxio <br />
+[4] Improved our rendering a lot, https://github.com/lschwetlick/maxio <br />
