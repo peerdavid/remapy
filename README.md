@@ -42,8 +42,7 @@ that some additional packages must be installed to use this feature
 (pdfkit and wkhtmltopdf).
 
 ## Rendering and custom colors
-Thanks to https://github.com/lschwetlick/maxio - this improved the rendering 
-of RemaPy a lot:<br />
+The rendering is implemented accordingly to [4]:<br />
 <img src="doc/goofy.png" width="500sp" />
 
 Custom colors for individual layers are used by RemaPy for rendering
@@ -52,7 +51,7 @@ if the layer name contains a '#' followed by a valid color name or
 For example "Layer1 #ffee11" is rendered with hex color #ffee11 or "Layer 2 #red" 
 is rendered in red. The hex code also supports alpha values (e.g. #ffee11dd).
 Therefore you can easily hide layers in the rendering process by setting the last
-two values of the hex code to zero: #xxxxxx00.
+two values of the hex code to zero: #xxxxxx00.<br />
 <img src="doc/custom_colors.png" />
 
 
