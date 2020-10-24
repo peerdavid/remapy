@@ -23,12 +23,12 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 # Mappings
 default_stroke_color = {
-    0: colors.Color(48/255., 63/255., 159/255.),        # Pen color 1
-    1: colors.Color(211/255., 47/255., 47/255.),        # Pen color 2
-    2: colors.Color(255/255., 255/255., 255/255.),      # Eraser
-    3: colors.Color(255/255., 255/255., 0, alpha=0.25), # Highlighter
+    0: (48/255., 63/255., 159/255.),        # Pen color 1
+    1: (211/255., 47/255., 47/255.),        # Pen color 2
+    2: (255/255., 255/255., 255/255.),      # Eraser
+    3: (255/255., 255/255., 0),             # Highlighter
     # Own defined colors
-    4: colors.Color(97/255., 97/255., 97/255.)             # Pencil
+    4: (0., 0., 0.)             # Pencil
 }
 
 
@@ -243,86 +243,97 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
         for stroke in range(nstrokes):
             if is_v3:
                 fmt = '<IIIfI'
-                pen, color, i_unk, pen_width, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen_nr, color, i_unk, width, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
             if is_v5:
                 fmt = '<IIIffI'
-                pen, color, i_unk, pen_width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen_nr, color, i_unk, width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
             
             opacity = 1
             last_x = -1.; last_y = -1.
+            last_width = 0
 
             # Check which tool is used for both, v3 and v5 and set props
             # https://support.remarkable.com/hc/en-us/articles/115004558545-5-1-Tools-Overview
-            is_highlighter = (pen == 5 or pen == 18)
-            is_eraser = pen == 6
-            is_eraser_area = pen == 8
-            is_sharp_pencil = (pen == 7 or pen == 13) 
-            is_tilt_pencil = (pen == 1 or pen == 14)
-            is_marker = (pen == 3 or pen == 16)
-            is_ballpoint = (pen == 2 or pen == 15)
-            is_fineliner = (pen == 4 or pen == 17)
-            is_brush = (pen == 0 or pen == 12)
-            is_calligraphy = pen == 21
+            is_highlighter = (pen_nr == 5 or pen_nr == 18)
+            is_eraser = pen_nr == 6
+            is_eraser_area = pen_nr == 8
+            is_sharp_pencil = (pen_nr == 7 or pen_nr == 13) 
+            is_tilt_pencil = (pen_nr == 1 or pen_nr == 14)
+            is_marker = (pen_nr == 3 or pen_nr == 16)
+            is_ballpoint = (pen_nr == 2 or pen_nr == 15)
+            is_fineliner = (pen_nr == 4 or pen_nr == 17)
+            is_brush = (pen_nr == 0 or pen_nr == 12)
+            is_calligraphy = pen_nr == 21
 
             if is_sharp_pencil or is_tilt_pencil:
-                color = 4
-
+                pen = Mechanical_Pencil(ratio, width, color)
             if is_brush:
-                pass
-            elif is_ballpoint or is_fineliner:
-                pen_width = 32 * pen_width * pen_width - 116 * pen_width + 107
-            elif is_marker or is_calligraphy:
-                pen_width = 64 * pen_width - 112
-                opacity = 0.9
+                pen = Brush(ratio, width, color)
+            elif is_ballpoint:
+                pen = Ballpoint(ratio, width, color)
+            elif is_fineliner:
+                pen = Fineliner(ratio, width, color)
+            elif is_marker:
+                pen = Marker(ratio, width, color)
+            elif is_calligraphy:
+                pen = Caligraphy(ratio, width, color)
             elif is_highlighter:
-                pen_width = 30
-                opacity = 0.2
-                color = 3
+                pen = Highlighter(ratio, 30, color)
             elif is_eraser:
-                pen_width = 1280 * pen_width * pen_width - 4800 * pen_width + 4510
-                color = 2
-            elif is_sharp_pencil or is_tilt_pencil:
-                pen_width = 16 * pen_width - 27
-                opacity = 0.9
+                pen = Eraser(ratio, width, color)
             elif is_eraser_area:
-                opacity = 0.
+                pen = Erase_Area(ratio, width, color)
+            elif is_tilt_pencil:
+                pen = Pencil(ratio, width, color)
+            elif is_sharp_pencil:
+                pen = Mechanical_Pencil(ratio, width, color)
             else: 
-                print('Unknown pen: {}'.format(pen))
+                print('Unknown pen: {}'.format(pen_nr))
                 opacity = 0.
 
             # Iterate through the segments to form a polyline
-            points = []
-            width = []
+            segment_points = []
+            segment_widths = []
+            segment_opacities = []
+            segment_colors = []
             for segment in range(nsegments):
                 fmt = '<ffffff'
-                xpos, ypos, i_unk2, pressure, tilt, _ = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                xpos, ypos, speed, tilt, width, pressure = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
                 
-                if is_ballpoint or is_brush:
-                    width.append((6*pen_width + 2*pressure) / 8 * ratio)
+                if segment % pen.segment_length == 0:
+                    segment_color = pen.get_segment_color(speed, tilt, width, pressure, last_width)
+                    segment_width = pen.get_segment_width(speed, tilt, width, pressure, last_width)
+                    segment_opacity = pen.get_segment_opacity(speed, tilt, width, pressure, last_width)
+                    segment_opacity = max(0, min(1, segment_opacity))
+                
+                segment_widths.append(segment_width)
+                segment_opacities.append(segment_opacity)
+                if layer_colors[layer] is None:
+                    segment_colors.append(segment_color)
                 else:
-                    width.append((5*pen_width + 2*tilt + 1*pressure) / 8 * ratio)
+                    segment_colors.append(layer_colors[layer])                
 
                 xpos = ratio * xpos + float(crop_box[0])
                 ypos = image_height - ratio * ypos + float(crop_box[1])
-                points.extend([xpos, ypos])
+                segment_points.extend([xpos, ypos])
+                last_width = segment_width
+
             if is_eraser_area or is_eraser:
                 continue
             
-            # Render lines
+            # Render lines after the arrays are filled
+            # such that we have access to the next and previous points
             drawing = Drawing(image_width, image_height)
             can.setLineCap(1)
-
-            if layer_colors[layer] is None:
-                can.setStrokeColor(default_stroke_color[color])
-            else:
-                can.setStrokeColor(layer_colors[layer])
-
             p = can.beginPath()
-            p.moveTo(points[0], points[1])
-            for i in range(0, len(points), 2):
-                can.setLineWidth(width[int(i/2)])
-                p.lineTo(points[i], points[i+1])
-                p.moveTo(points[i], points[i+1])
+            p.moveTo(segment_points[0], segment_points[1])
+            for i in range(0, len(segment_points), 2):
+                can.setStrokeColor(segment_colors[int(i/2)])
+                can.setLineWidth(segment_widths[int(i/2)])
+                can.setStrokeAlpha(segment_opacities[int(i/2)])
+
+                p.lineTo(segment_points[i], segment_points[i+1])
+                p.moveTo(segment_points[i], segment_points[i+1])
                 if i % 10 == 0:
                     p.close()
             p.close()
@@ -339,5 +350,160 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
     return overlay
 
 
-if __name__ == "__main__":
-    main()
+def _get_color(color):
+    if len(color) == 3:
+        return colors.Color(color[0], color[1], color[2])
+    else:
+        return colors.Color(color[0], color[1], color[2], color[3])
+
+
+#
+# Credit: https://github.com/lschwetlick/maxio
+#
+class Pen:
+    def __init__(self, ratio, base_width, base_color):
+        self.base_width = base_width
+        self.base_color = default_stroke_color[base_color]
+        self.segment_length = 1000
+        self.stroke_cap = "round"
+        self.base_opacity = 1
+        self.ratio = ratio**2
+        self.name = "Basic Pen"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        return self.base_width * self.ratio
+
+    def get_segment_color(self, speed, tilt, width, pressure, last_width):
+        return _get_color(self.base_color)
+
+    def get_segment_opacity(self, speed, tilt, width, pressure, last_width):
+        return self.base_opacity
+
+    def cutoff(self, value):
+        """return value \in [0, 1]"""
+        return max(0, min(1, value))
+
+class Fineliner(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.base_width = ((0.5*base_width) ** 2) * 3
+        self.name = "Fineliner"
+
+
+class Ballpoint(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.segment_length = 5
+        self.name = "Ballpoint"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        segment_width = (0.5 + pressure) + (1 * width) - 0.5*(speed/50)
+        return segment_width * self.ratio
+
+    # def get_segment_color(self, speed, tilt, width, pressure, last_width):
+    #     intensity = (0.1 * -(speed / 35)) + (1.2 * pressure) + 0.5
+    #     intensity = self.cutoff(intensity)
+    #     # using segment color not opacity because the dots interfere with each other.
+    #     # Color must be 255 rgb
+    #     segment_color = [abs(intensity - 1)] * 3
+    #     return _get_color(segment_color)
+
+class Marker(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.segment_length = 3
+        self.name = "Marker"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        segment_width = 0.9 * (((1 * width)) - 0.4 * tilt) + (0.1 * last_width)
+        return segment_width * self.ratio
+
+
+class Pencil(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, 4)
+        self.segment_length = 2
+        self.name = "Pencil"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        segment_width = 0.7 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8) - (0.6 * speed / 50))
+        #segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
+        max_width = self.base_width * 10
+        segment_width = segment_width if segment_width < max_width else max_width
+        return segment_width * self.ratio
+
+    def get_segment_opacity(self, speed, tilt, width, pressure, last_width):
+        segment_opacity = (0.1 * -(speed / 35)) + (1 * pressure)
+        segment_opacity = self.cutoff(segment_opacity) - 0.1
+        return segment_opacity
+
+
+class Mechanical_Pencil(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.base_width = self.base_width ** 2
+        self.base_opacity = 0.7
+        self.name = "Machanical Pencil"
+
+
+class Brush(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.segment_length = 2
+        self.stroke_cap = "round"
+        self.opacity = 1
+        self.name = "Brush"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        segment_width = 0.7 * (((1 + (1.4 * pressure)) * (1 * width)) - (0.5 * tilt) - (0.5 * speed / 50))  #+ (0.2 * last_width)
+        return segment_width * self.ratio
+
+    # def get_segment_color(self, speed, tilt, width, pressure, last_width):
+    #     intensity = (pressure ** 1.5  - 0.2 * (speed / 50))*1.5
+    #     intensity = self.cutoff(intensity)
+    #     # using segment color not opacity because the dots interfere with each other.
+    #     # Color must be 255 rgb
+    #     rev_intensity = abs(intensity - 1)
+    #     segment_color = [(rev_intensity-1.0) * (self.base_color[0]),
+    #                      (rev_intensity-1.0) * (self.base_color[1]),
+    #                      (rev_intensity-1.0) * (self.base_color[2])]
+
+    #     return _get_color(segment_color)
+
+
+class Highlighter(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, 3)
+        self.stroke_cap = "square"
+        self.base_opacity = 0.3
+        self.name = "Highlighter"
+    
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        return self.base_width * math.sqrt(self.ratio)
+        
+
+
+class Eraser(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, 2)
+        self.stroke_cap = "square"
+        self.base_width = self.base_width * 2
+        self.name = "Eraser"
+
+class Erase_Area(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.stroke_cap = "square"
+        self.base_opacity = 0
+        self.name = "Erase Area"
+
+
+class Caligraphy(Pen):
+    def __init__(self, ratio, base_width, base_color):
+        super().__init__(ratio, base_width, base_color)
+        self.segment_length = 2
+        self.name = "Calligraphy"
+
+    def get_segment_width(self, speed, tilt, width, pressure, last_width):
+        segment_width = 0.9 * (((1 + pressure) * (1 * width)) - 0.3 * tilt) + (0.1 * last_width)
+        return segment_width * self.ratio

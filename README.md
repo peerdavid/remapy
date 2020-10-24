@@ -81,3 +81,4 @@ the trash. You can also restore files that are deleted from the trash.
 [2] Golang reMarkable tool, https://github.com/juruen/rmapi/ <br />
 [3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, 
 Good ware, prettycons, Payungkead, bqlqn from www.flaticon.com <br />
+[4] Rendering, https://github.com/lschwetlick/maxio <br />
