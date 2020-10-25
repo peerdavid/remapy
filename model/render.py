@@ -323,6 +323,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             # such that we have access to the next and previous points
             drawing = Drawing(image_width, image_height)
             can.setLineCap(0 if is_highlighter else 1)
+
             for i in range(2, len(segment_points), 2):
                 can.setStrokeColor(segment_colors[int(i/2)])
                 can.setLineWidth(segment_widths[int(i/2)])
@@ -424,7 +425,7 @@ class Pencil(Pen):
         self.name = "Pencil"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.7 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8) - (0.6 * speed / 50))
+        segment_width = 0.5 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8)) #- (0.6 * speed / 50))
         #segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
         max_width = self.base_width * 10
         segment_width = segment_width if segment_width < max_width else max_width
