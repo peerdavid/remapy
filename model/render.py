@@ -366,7 +366,7 @@ class Pen:
         self.base_color = default_stroke_color[base_color]
         self.segment_length = 1000
         self.base_opacity = 1
-        self.ratio = ratio**2
+        self.ratio = ratio
         self.name = "Basic Pen"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
@@ -478,7 +478,7 @@ class Highlighter(Pen):
         self.segment_length = 2
     
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        return self.base_width * math.sqrt(self.ratio)
+        return self.base_width * self.ratio
         
 
 
@@ -504,5 +504,5 @@ class Caligraphy(Pen):
         self.name = "Calligraphy"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.5 * (((1 + pressure) * (1 * width)) - 0.3 * tilt) + (0.1 * last_width)
+        segment_width = 0.5 * (((1 + pressure) * (1*width)) - 0.3 * tilt) + (0.2 * last_width)
         return segment_width * self.ratio
