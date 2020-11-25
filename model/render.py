@@ -1,20 +1,13 @@
-import sys
-import struct
-import os.path
-import argparse
-import math
-import json
 import io
-import time
+import json
+import os
+import os.path
 import re
-import numpy as np
-from pdfrw import PdfReader, PdfWriter, PageMerge, IndirectPdfDict, PdfDict
-from reportlab.graphics import renderPDF
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.graphics.shapes import PolyLine, Drawing, Line
+import struct
 
+from pdfrw import PdfReader, PdfWriter, PageMerge
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
 
 # Size
 DEFAULT_IMAGE_WIDTH = 1404
@@ -22,58 +15,57 @@ DEFAULT_IMAGE_HEIGHT = 1872
 DEFAULT_LANDSCAPE_IMAGE_WIDTH = 1872
 DEFAULT_LANDSCAPE_IMAGE_HEIGHT = 1404
 
-
 # Mappings
 default_stroke_color = {
-    0: (48/255., 63/255., 159/255.),        # Pen color 1
-    1: (211/255., 47/255., 47/255.),        # Pen color 2
-    2: (255/255., 255/255., 255/255.),      # Eraser
-    3: (255/255., 255/255., 0),             # Highlighter
-    4: (50/255., 50/255., 50/255.)          # Pencil
+    0: (48 / 255., 63 / 255., 159 / 255.),        # Pen color 1
+    1: (211 / 255., 47 / 255., 47 / 255.),        # Pen color 2
+    2: (255 / 255., 255 / 255., 255 / 255.),      # Eraser
+    3: (255 / 255., 255 / 255., 0),               # Highlighter
+    4: (50 / 255., 50 / 255., 50 / 255.)          # Pencil
 }
 
 
 class PDFPageLayout:
-    def __init__(self,pdf_page=None,is_landscape=False):
+    def __init__(self, pdf_page=None, is_landscape=False):
         if not pdf_page:
             if is_landscape:
-                self.layout=[0,0,DEFAULT_IMAGE_HEIGHT,DEFAULT_IMAGE_WIDTH]
+                self.layout = [0, 0, DEFAULT_IMAGE_HEIGHT, DEFAULT_IMAGE_WIDTH]
             else:
-                self.layout=[0,0,DEFAULT_IMAGE_WIDTH,DEFAULT_IMAGE_HEIGHT]
+                self.layout = [0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT]
         else:
             self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.MediaBox or pdf_page.ArtBox
             if self.layout is None:
                 return
 
-        self.layout=[float(self.layout[0]), float(self.layout[1]), float(self.layout[2]), float(self.layout[3])]
-        self.x_start=self.layout[0]
-        self.y_start=self.layout[1]
-        self.x_end=self.layout[2]
-        self.y_end=self.layout[3]
-        self.width=self.x_end-self.x_start
-        self.height=self.y_end-self.y_start
-        self.is_landscape=self.width>self.height
+        self.layout = [float(self.layout[0]), float(self.layout[1]), float(self.layout[2]), float(self.layout[3])]
+        self.x_start = self.layout[0]
+        self.y_start = self.layout[1]
+        self.x_end = self.layout[2]
+        self.y_end = self.layout[3]
+        self.width = self.x_end - self.x_start
+        self.height = self.y_end - self.y_start
+        self.is_landscape = self.width > self.height
 
         if self.is_landscape:
-            default_width=DEFAULT_IMAGE_HEIGHT
-            default_height=DEFAULT_IMAGE_WIDTH
+            default_width = DEFAULT_IMAGE_HEIGHT
+            default_height = DEFAULT_IMAGE_WIDTH
         else:
-            default_width=DEFAULT_IMAGE_WIDTH
-            default_height=DEFAULT_IMAGE_HEIGHT
-        if self.width/self.height>default_width/default_height:
+            default_width = DEFAULT_IMAGE_WIDTH
+            default_height = DEFAULT_IMAGE_HEIGHT
+        if self.width / self.height > default_width / default_height:
             # height is shorter
-            self.height = self.width*default_height/default_width
+            self.height = self.width * default_height / default_width
         else:
             # width is shorter
-            self.width = self.height*default_width/default_height
+            self.width = self.height * default_width / default_height
         self.scale = self.width / default_width
-
 
     def __str__(self):
         if self.layout:
-            return "PDFPageLayout%s, scale=%f"%(self.layout,self.scale)
+            return "PDFPageLayout: %s, scale=%f" % (self.layout, self.scale)
         else:
-            return "None"
+            return "PDFPageLayout: None"
+
 
 def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     """ Render pdf with annotations. The path_oap_pdf defines the pdf
@@ -110,7 +102,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     for i in range(base_pdf.numPages):
         annotations_page = annotations_pdf[i]
 
-        if annotations_page != None:
+        if annotations_page is not None:
             merger = PageMerge(base_pdf.pages[i])
             merger.add(annotations_page).render()
             writer_oap.addpage(base_pdf.pages[i])
@@ -121,8 +113,8 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     writer_oap.write(path_oap_pdf)
 
 
-def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
-    rm_files_path = "%s/%s" % (path, id)
+def notebook(path, uuid, path_annotated_pdf, is_landscape, path_templates=None):
+    rm_files_path = "%s/%s" % (path, uuid)
     annotations_pdf = []
 
     p = 0
@@ -133,13 +125,13 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
         if not os.path.exists(rm_file):
             break
 
-        overlay = _render_rm_file(rm_file_name,PDFPageLayout(is_landscape=is_landscape))
+        overlay = _render_rm_file(rm_file_name, PDFPageLayout(is_landscape=is_landscape))
         annotations_pdf.append(overlay)
         p += 1
 
     # Write empty notebook notes containing blank pages or templates
     writer = PdfWriter()
-    templates = _get_templates_per_page(path, id, path_templates)
+    templates = _get_templates_per_page(path, uuid, path_templates)
     for template in templates:
         if template is None:
             writer.addpage(_blank_page())
@@ -156,19 +148,16 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
             continue
 
         annotated_page = annotations_pdf[i].pages[0]
-        annotated_page.Rotate=-90 if is_landscape else 0
+        annotated_page.Rotate = -90 if is_landscape else 0
         merger = PageMerge(templates_pdf.pages[i])
         merger.add(annotated_page).render()
-
 
     writer = PdfWriter()
     writer.write(path_annotated_pdf, templates_pdf)
 
 
-
-def _get_templates_per_page(path, id, path_templates):
-
-    pagedata_file = "%s/%s.pagedata" % (path, id)
+def _get_templates_per_page(path, uuid, path_templates):
+    pagedata_file = "%s/%s.pagedata" % (path, uuid)
     with open(pagedata_file, 'r') as f:
         template_paths = ["%s/%s.png" % (path_templates, l.rstrip('\n')) for l in f]
 
@@ -190,7 +179,7 @@ def _get_templates_per_page(path, id, path_templates):
 
 def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     blank = PageMerge()
-    blank.mbox = [0, 0, width, height] # 8.5 x 11
+    blank.mbox = [0, 0, width, height]  # 8.5 x 11
     blank = blank.render()
     return blank
 
@@ -207,22 +196,24 @@ def _render_rm_file(rm_file_name, page_layout=None):
     with open(rm_file, 'rb') as f:
         data = f.read()
     offset = 0
-    expected_header_v3=b'reMarkable .lines file, version=3          '
-    expected_header_v5=b'reMarkable .lines file, version=5          '
+    expected_header_v3 = b'reMarkable .lines file, version=3          '
+    expected_header_v5 = b'reMarkable .lines file, version=5          '
     if len(data) < len(expected_header_v5) + 4:
-        abort('File too short to be a valid file')
+        print('File too short to be a valid file')
+        os.abort()
 
     fmt = '<{}sI'.format(len(expected_header_v5))
-    header, nlayers = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+    header, nlayers = struct.unpack_from(fmt, data, offset)
+    offset += struct.calcsize(fmt)
     is_v3 = (header == expected_header_v3)
     is_v5 = (header == expected_header_v5)
-    if (not is_v3 and not is_v5) or  nlayers < 1:
-        abort('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
-        return
+    if (not is_v3 and not is_v5) or nlayers < 1:
+        print('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
+        os.abort()
 
     # Load name of layers; if layer name starts with # we use this color
     # for this layer
-    layer_colors = [None for l in range(nlayers)]
+    layer_colors = [None for _ in range(nlayers)]
     if os.path.exists(rm_file_metadata):
         with open(rm_file_metadata, "r") as meta_file:
             layers = json.loads(meta_file.read())["layers"]
@@ -230,7 +221,7 @@ def _render_rm_file(rm_file_name, page_layout=None):
         for l in range(len(layers)):
             layer = layers[l]
 
-            matches = re.search(r"#([^\s]+)", layer["name"], re.M|re.I)
+            matches = re.search(r"#([^\s]+)", layer["name"], re.M | re.I)
             if not matches:
                 continue
             color_code = matches[0].lower()
@@ -251,25 +242,25 @@ def _render_rm_file(rm_file_name, page_layout=None):
 
             # No valid color found... automatic fallback to default
 
-
     # Iterate through layers on the page (There is at least one)
     packet = io.BytesIO()
-    can = canvas.Canvas(packet, pagesize=(page_layout.x_end,page_layout.y_end))
+    can = canvas.Canvas(packet, pagesize=(page_layout.x_end, page_layout.y_end))
     for layer in range(nlayers):
         fmt = '<I'
-        (nstrokes,) = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+        (strokes_count,) = struct.unpack_from(fmt, data, offset)
+        offset += struct.calcsize(fmt)
 
         # Iterate through the strokes in the layer (If there is any)
-        for stroke in range(nstrokes):
+        for stroke in range(strokes_count):
             if is_v3:
                 fmt = '<IIIfI'
-                pen_nr, color, i_unk, width, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen_nr, color, i_unk, width, segments_count = struct.unpack_from(fmt, data, offset)
+                offset += struct.calcsize(fmt)
             if is_v5:
                 fmt = '<IIIffI'
-                pen_nr, color, i_unk, width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                pen_nr, color, i_unk, width, unknown, segments_count = struct.unpack_from(fmt, data, offset)
+                offset += struct.calcsize(fmt)
 
-            opacity = 1
-            last_x = -1.; last_y = -1.
             last_width = 0
 
             # Check which tool is used for both, v3 and v5 and set props
@@ -316,9 +307,10 @@ def _render_rm_file(rm_file_name, page_layout=None):
             segment_widths = []
             segment_opacities = []
             segment_colors = []
-            for segment in range(nsegments):
+            for segment in range(segments_count):
                 fmt = '<ffffff'
-                xpos, ypos, speed, tilt, width, pressure = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
+                x_pos, y_pos, speed, tilt, width, pressure = struct.unpack_from(fmt, data, offset)
+                offset += struct.calcsize(fmt)
 
                 if segment % pen.segment_length == 0:
                     segment_color = pen.get_segment_color(speed, tilt, width, pressure, last_width)
@@ -333,11 +325,11 @@ def _render_rm_file(rm_file_name, page_layout=None):
                     segment_colors.append(layer_colors[layer])
 
                 if page_layout.is_landscape:
-                    render_xpos = page_layout.x_end - page_layout.scale * ypos
-                    render_ypos = page_layout.y_end - page_layout.scale * xpos
+                    render_xpos = page_layout.x_end - page_layout.scale * y_pos
+                    render_ypos = page_layout.y_end - page_layout.scale * x_pos
                 else:
-                    render_xpos = page_layout.x_start + page_layout.scale * xpos
-                    render_ypos = page_layout.y_end - page_layout.scale * ypos
+                    render_xpos = page_layout.x_start + page_layout.scale * x_pos
+                    render_ypos = page_layout.y_end - page_layout.scale * y_pos
                 segment_points.extend([render_xpos, render_ypos])
                 last_width = segment_width
 
@@ -349,27 +341,20 @@ def _render_rm_file(rm_file_name, page_layout=None):
             can.setLineCap(0 if is_highlighter else 1)
 
             for i in range(2, len(segment_points), 2):
-                can.setStrokeColor(segment_colors[int(i/2)])
-                can.setLineWidth(segment_widths[int(i/2)])
-                can.setStrokeAlpha(segment_opacities[int(i/2)])
+                can.setStrokeColor(segment_colors[int(i / 2)])
+                can.setLineWidth(segment_widths[int(i / 2)])
+                can.setStrokeAlpha(segment_opacities[int(i / 2)])
 
                 p = can.beginPath()
-                p.moveTo(segment_points[i-2], segment_points[i-1])
-                p.lineTo(segment_points[i], segment_points[i+1])
-                p.moveTo(segment_points[i], segment_points[i+1])
+                p.moveTo(segment_points[i - 2], segment_points[i - 1])
+                p.lineTo(segment_points[i], segment_points[i + 1])
+                p.moveTo(segment_points[i], segment_points[i + 1])
                 p.close()
                 can.drawPath(p)
 
-            #p.close()
-            #can.drawPath(p)
-        Pen
     can.save()
     packet.seek(0)
     overlay = PdfReader(packet)
-
-    # if page_layout.is_landscape:
-    #     for page in overlay.pages:
-    #         page.Rotate=90
 
     return overlay
 
@@ -403,13 +388,14 @@ class Pen:
         return self.base_opacity
 
     def cutoff(self, value):
-        """return value \in [0, 1]"""
+        """return value in [0, 1]"""
         return max(0, min(1, value))
+
 
 class Fineliner(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, base_color)
-        self.base_width = ((0.5*base_width) ** 10) * 3
+        self.base_width = ((0.5 * base_width) ** 10) * 3
         self.name = "Fineliner"
 
 
@@ -420,7 +406,7 @@ class Ballpoint(Pen):
         self.name = "Ballpoint"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = (0.5 + pressure) + (1 * width) - 0.5*(speed/50)
+        segment_width = (0.5 + pressure) + (1 * width) - 0.5 * (speed / 50)
         return segment_width * self.ratio
 
     # def get_segment_color(self, speed, tilt, width, pressure, last_width):
@@ -430,6 +416,7 @@ class Ballpoint(Pen):
     #     # Color must be 255 rgb
     #     segment_color = [abs(intensity - 1)] * 3
     #     return _get_color(segment_color)
+
 
 class Marker(Pen):
     def __init__(self, ratio, base_width, base_color):
@@ -449,14 +436,15 @@ class Pencil(Pen):
         self.name = "Pencil"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.5 * ((((0.8*self.base_width) + (0.5 * pressure)) * (1 * width)) - (0.25 * tilt**1.8)) #- (0.6 * speed / 50))
-        #segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
+        segment_width = 0.5 * ((((0.8 * self.base_width) + (0.5 * pressure)) * (1 * width)) - (
+                0.25 * tilt ** 1.8))  # - (0.6 * speed / 50))
+        # segment_width = 1.3*(((self.base_width * 0.4) * pressure) - 0.5 * ((tilt ** 0.5)) + (0.5 * last_width))
         max_width = self.base_width * 10
         segment_width = segment_width if segment_width < max_width else max_width
         return segment_width * self.ratio
 
     def get_segment_opacity(self, speed, tilt, width, pressure, last_width):
-        segment_opacity = max(0.05, min(0.7, pressure**3))
+        segment_opacity = max(0.05, min(0.7, pressure ** 3))
         return self.cutoff(segment_opacity)
 
 
@@ -477,7 +465,8 @@ class Brush(Pen):
         self.name = "Brush"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.7 * (((1 + (1.4 * pressure)) * (1 * width)) - (0.5 * tilt) - (0.5 * speed / 50))  #+ (0.2 * last_width)
+        segment_width = 0.7 * (
+                ((1 + (1.4 * pressure)) * (1 * width)) - (0.5 * tilt) - (0.5 * speed / 50))  # + (0.2 * last_width)
         return segment_width * self.ratio
 
     # def get_segment_color(self, speed, tilt, width, pressure, last_width):
@@ -505,13 +494,13 @@ class Highlighter(Pen):
         return self.base_width * self.ratio
 
 
-
 class Eraser(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, 2)
         self.stroke_cap = "square"
         self.base_width = self.base_width * 2
         self.name = "Eraser"
+
 
 class Erase_Area(Pen):
     def __init__(self, ratio, base_width, base_color):
@@ -528,5 +517,5 @@ class Caligraphy(Pen):
         self.name = "Calligraphy"
 
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
-        segment_width = 0.5 * (((1 + pressure) * (1*width)) - 0.3 * tilt) + (0.2 * last_width)
+        segment_width = 0.5 * (((1 + pressure) * (1 * width)) - 0.3 * tilt) + (0.2 * last_width)
         return segment_width * self.ratio
