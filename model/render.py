@@ -19,6 +19,8 @@ from reportlab.graphics.shapes import PolyLine, Drawing, Line
 # Size
 DEFAULT_IMAGE_WIDTH = 1404
 DEFAULT_IMAGE_HEIGHT = 1872
+DEFAULT_LANDSCAPE_IMAGE_WIDTH = 1872
+DEFAULT_LANDSCAPE_IMAGE_HEIGHT = 1404
 
 
 # Mappings
@@ -36,7 +38,7 @@ class PDFPageLayout:
         if not pdf_page:
             self.layout=[0,0,DEFAULT_IMAGE_WIDTH,DEFAULT_IMAGE_HEIGHT]
         else:
-            self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.ArtBox
+            self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.MediaBox or pdf_page.ArtBox
             if self.layout is None:
                 return
 
@@ -49,18 +51,26 @@ class PDFPageLayout:
         self.height=self.y_end-self.y_start
         self.is_landscape=self.width>self.height
 
-        if self.width/self.height>DEFAULT_IMAGE_WIDTH/DEFAULT_IMAGE_HEIGHT:
+        if self.is_landscape:
+            default_width=DEFAULT_IMAGE_HEIGHT
+            default_height=DEFAULT_IMAGE_WIDTH
+        else:
+            default_width=DEFAULT_IMAGE_WIDTH
+            default_height=DEFAULT_IMAGE_HEIGHT
+        if self.width/self.height>default_width/default_height:
             # height is shorter
-            new_height = self.width*DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH
-            self.height=new_height
+            self.height = self.width*default_height/default_width
         else:
             # width is shorter
-            new_width = self.height*DEFAULT_IMAGE_WIDTH/DEFAULT_IMAGE_HEIGHT
-            self.width = new_width
-        self.scale = self.width / DEFAULT_IMAGE_WIDTH
+            self.width = self.height*default_width/default_height
+        self.scale = self.width / default_width
+
 
     def __str__(self):
-        return "PDFPageLayout%s, scale=%f"%(self.layout,self.scale)
+        if self.layout:
+            return "PDFPageLayout%s, scale=%f"%(self.layout,self.scale)
+        else:
+            return "None"
 
 def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     """ Render pdf with annotations. The path_oap_pdf defines the pdf
@@ -190,6 +200,7 @@ def _render_rm_file(rm_file_name, page_layout=None):
 
     if not page_layout:
         page_layout = PDFPageLayout()
+    print(page_layout)
 
     rm_file = "%s.rm" % rm_file_name
     rm_file_metadata = "%s-metadata.json" % rm_file_name
@@ -323,9 +334,13 @@ def _render_rm_file(rm_file_name, page_layout=None):
                 else:
                     segment_colors.append(layer_colors[layer])
 
-                xpos = page_layout.scale * xpos + page_layout.x_start
-                ypos = page_layout.y_end - page_layout.scale * ypos
-                segment_points.extend([xpos, ypos])
+                if page_layout.is_landscape:
+                    render_xpos = page_layout.x_end - page_layout.scale * ypos
+                    render_ypos = page_layout.y_end - page_layout.scale * xpos
+                else:
+                    render_xpos = page_layout.x_start + page_layout.scale * xpos
+                    render_ypos = page_layout.y_end - page_layout.scale * ypos
+                segment_points.extend([render_xpos, render_ypos])
                 last_width = segment_width
 
             if is_eraser_area or is_eraser:
@@ -354,9 +369,9 @@ def _render_rm_file(rm_file_name, page_layout=None):
     packet.seek(0)
     overlay = PdfReader(packet)
 
-    if page_layout.is_landscape:
-        for page in overlay.pages:
-            page.Rotate=90
+    # if page_layout.is_landscape:
+    #     for page in overlay.pages:
+    #         page.Rotate=90
 
     return overlay
 
