@@ -31,8 +31,39 @@ default_stroke_color = {
 }
 
 
+class PDFPageLayout:
+    def __init__(self,pdf_page=None):
+        if not pdf_page:
+            self.layout=[0,0,DEFAULT_IMAGE_WIDTH,DEFAULT_IMAGE_HEIGHT]
+        else:
+            self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.ArtBox
+            if self.layout is None:
+                return
+
+        self.layout=[float(self.layout[0]), float(self.layout[1]), float(self.layout[2]), float(self.layout[3])]
+        self.x_start=self.layout[0]
+        self.y_start=self.layout[1]
+        self.x_end=self.layout[2]
+        self.y_end=self.layout[3]
+        self.width=self.x_end-self.x_start
+        self.height=self.y_end-self.y_start
+        self.is_landscape=self.width>self.height
+
+        if self.width/self.height>DEFAULT_IMAGE_WIDTH/DEFAULT_IMAGE_HEIGHT:
+            # height is shorter
+            new_height = self.width*DEFAULT_IMAGE_HEIGHT/DEFAULT_IMAGE_WIDTH
+            self.height=new_height
+        else:
+            # width is shorter
+            new_width = self.height*DEFAULT_IMAGE_WIDTH/DEFAULT_IMAGE_HEIGHT
+            self.width = new_width
+        self.scale = self.width / DEFAULT_IMAGE_WIDTH
+
+    def __str__(self):
+        return "PDFPageLayout%s, scale=%f"%(self.layout,self.scale)
+
 def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
-    """ Render pdf with annotations. The path_oap_pdf defines the pdf 
+    """ Render pdf with annotations. The path_oap_pdf defines the pdf
         which includes only annotated pages.
     """
 
@@ -47,28 +78,23 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
         if not os.path.exists(rm_file):
             annotations_pdf.append(None)
             continue
-            
-        page_layout = base_pdf.pages[page_nr].MediaBox
-        crop_box = base_pdf.pages[page_nr].CropBox
-        if page_layout is None:
-            page_layout = base_pdf.pages[page_nr].ArtBox
 
-            if page_layout is None:
-                annotations_pdf.append(None)
-                continue
-            
-        image_width, image_height = float(page_layout[2]), float(page_layout[3])
-        annotated_page = _render_rm_file(rm_file_name, image_width=image_width, image_height=image_height, crop_box=crop_box)
+        page_layout = PDFPageLayout(base_pdf.pages[page_nr])
+        if page_layout.layout is None:
+            annotations_pdf.append(None)
+            continue
+
+        annotated_page = _render_rm_file(rm_file_name, page_layout=page_layout)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(None)
         else:
             page = annotated_page.pages[0]
             annotations_pdf.append(page)
-       
+
     # Merge annotations pdf and original pdf
     writer_full = PdfWriter()
     writer_oap = PdfWriter()
-    for i in range(base_pdf.numPages):          
+    for i in range(base_pdf.numPages):
         annotations_page = annotations_pdf[i]
 
         if annotations_page != None:
@@ -96,8 +122,8 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
 
         overlay = _render_rm_file(rm_file_name)
         annotations_pdf.append(overlay)
-        p += 1  
-    
+        p += 1
+
     # Write empty notebook notes containing blank pages or templates
     writer = PdfWriter()
     templates = _get_templates_per_page(path, id, path_templates)
@@ -107,14 +133,14 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
         else:
             writer.addpage(template.pages[0])
     writer.write(path_annotated_pdf)
-    
+
     # Overlay empty notebook with annotations
     templates_pdf = PdfReader(path_annotated_pdf)
     for i in range(len(annotations_pdf)):
         templates_pdf.pages[i].Rotate = 90 if is_landscape else 0
         empty_page = len(annotations_pdf[i].pages) <= 0
         if empty_page:
-            continue 
+            continue
 
         annotated_page = annotations_pdf[i].pages[0]
         if templates != None:
@@ -122,7 +148,7 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
             merger.add(annotated_page).render()
         else:
             output_pdf.addPage(annotated_page)
-    
+
     writer = PdfWriter()
     writer.write(path_annotated_pdf, templates_pdf)
 
@@ -132,8 +158,8 @@ def _get_templates_per_page(path, id, path_templates):
 
     pagedata_file = "%s/%s.pagedata" % (path, id)
     with open(pagedata_file, 'r') as f:
-        template_paths = ["%s/%s.png" % (path_templates, l.rstrip('\n')) for l in f] 
-        
+        template_paths = ["%s/%s.png" % (path_templates, l.rstrip('\n')) for l in f]
+
     templates = []
     for template_path in template_paths:
         if not os.path.exists(template_path):
@@ -157,31 +183,17 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     return blank
 
 
-def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH, 
-        image_height=DEFAULT_IMAGE_HEIGHT, crop_box=None):
-    """ Render the .rm files (old .lines). See also 
+def _render_rm_file(rm_file_name, page_layout=None):
+    """ Render the .rm files (old .lines). See also
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
-    
+
+    if not page_layout:
+        page_layout = PDFPageLayout()
+
     rm_file = "%s.rm" % rm_file_name
     rm_file_metadata = "%s-metadata.json" % rm_file_name
 
-    is_landscape = image_width > image_height
-    if is_landscape:
-        image_height, image_width = image_width, image_height
-
-    crop_box = [0.0, 0.0, image_width, image_height] if crop_box is None else crop_box
-
-    # Calculate the image height and width that we use for the overlay
-    if is_landscape:
-        image_width = float(crop_box[2]) - float(crop_box[0])
-        image_height = max(image_height, image_width * DEFAULT_IMAGE_HEIGHT / DEFAULT_IMAGE_WIDTH)
-        ratio = (image_height) / (DEFAULT_IMAGE_HEIGHT)
-    else:    
-        image_height = float(crop_box[3]) - float(crop_box[1])
-        image_width = max(image_width, image_height * DEFAULT_IMAGE_WIDTH / DEFAULT_IMAGE_HEIGHT)
-        ratio = (image_width) / (DEFAULT_IMAGE_WIDTH)
-    
     # Is this a reMarkable .lines file?
     with open(rm_file, 'rb') as f:
         data = f.read()
@@ -198,20 +210,20 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
     if (not is_v3 and not is_v5) or  nlayers < 1:
         abort('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
         return
-    
-    # Load name of layers; if layer name starts with # we use this color 
+
+    # Load name of layers; if layer name starts with # we use this color
     # for this layer
     layer_colors = [None for l in range(nlayers)]
     if os.path.exists(rm_file_metadata):
         with open(rm_file_metadata, "r") as meta_file:
             layers = json.loads(meta_file.read())["layers"]
-        
+
         for l in range(len(layers)):
             layer = layers[l]
 
             matches = re.search(r"#([^\s]+)", layer["name"], re.M|re.I)
             if not matches:
-                continue 
+                continue
             color_code = matches[0].lower()
 
             # Try to parse hex code
@@ -221,19 +233,19 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
                 continue
             except:
                 pass
-            
+
             # Try to get from name
             color_code = color_code[1:]
             color_names = colors.getAllNamedColors()
             if color_code in color_names:
                 layer_colors[l] = color_names[color_code]
-            
+
             # No valid color found... automatic fallback to default
 
 
     # Iterate through layers on the page (There is at least one)
     packet = io.BytesIO()
-    can = canvas.Canvas(packet, pagesize=(image_width, image_height))
+    can = canvas.Canvas(packet, pagesize=(page_layout.x_end,page_layout.y_end))
     for layer in range(nlayers):
         fmt = '<I'
         (nstrokes,) = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
@@ -246,7 +258,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             if is_v5:
                 fmt = '<IIIffI'
                 pen_nr, color, i_unk, width, unknown, nsegments = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
-            
+
             opacity = 1
             last_x = -1.; last_y = -1.
             last_width = 0
@@ -256,7 +268,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             is_highlighter = (pen_nr == 5 or pen_nr == 18)
             is_eraser = pen_nr == 6
             is_eraser_area = pen_nr == 8
-            is_sharp_pencil = (pen_nr == 7 or pen_nr == 13) 
+            is_sharp_pencil = (pen_nr == 7 or pen_nr == 13)
             is_tilt_pencil = (pen_nr == 1 or pen_nr == 14)
             is_marker = (pen_nr == 3 or pen_nr == 16)
             is_ballpoint = (pen_nr == 2 or pen_nr == 15)
@@ -265,28 +277,28 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             is_calligraphy = pen_nr == 21
 
             if is_sharp_pencil or is_tilt_pencil:
-                pen = Mechanical_Pencil(ratio, width, color)
+                pen = Mechanical_Pencil(page_layout.scale, width, color)
             if is_brush:
-                pen = Brush(ratio, width, color)
+                pen = Brush(page_layout.scale, width, color)
             elif is_ballpoint:
-                pen = Ballpoint(ratio, width, color)
+                pen = Ballpoint(page_layout.scale, width, color)
             elif is_fineliner:
-                pen = Fineliner(ratio, width, color)
+                pen = Fineliner(page_layout.scale, width, color)
             elif is_marker:
-                pen = Marker(ratio, width, color)
+                pen = Marker(page_layout.scale, width, color)
             elif is_calligraphy:
-                pen = Caligraphy(ratio, width, color)
+                pen = Caligraphy(page_layout.scale, width, color)
             elif is_highlighter:
-                pen = Highlighter(ratio, 30, color)
+                pen = Highlighter(page_layout.scale, 30, color)
             elif is_eraser:
-                pen = Eraser(ratio, width, color)
+                pen = Eraser(page_layout.scale, width, color)
             elif is_eraser_area:
-                pen = Erase_Area(ratio, width, color)
+                pen = Erase_Area(page_layout.scale, width, color)
             elif is_tilt_pencil:
-                pen = Pencil(ratio, width, color)
+                pen = Pencil(page_layout.scale, width, color)
             elif is_sharp_pencil:
-                pen = Mechanical_Pencil(ratio, width, color)
-            else: 
+                pen = Mechanical_Pencil(page_layout.scale, width, color)
+            else:
                 print('Unknown pen: {}'.format(pen_nr))
                 opacity = 0.
 
@@ -298,37 +310,36 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
             for segment in range(nsegments):
                 fmt = '<ffffff'
                 xpos, ypos, speed, tilt, width, pressure = struct.unpack_from(fmt, data, offset); offset += struct.calcsize(fmt)
-                
+
                 if segment % pen.segment_length == 0:
                     segment_color = pen.get_segment_color(speed, tilt, width, pressure, last_width)
                     segment_width = pen.get_segment_width(speed, tilt, width, pressure, last_width)
                     segment_opacity = pen.get_segment_opacity(speed, tilt, width, pressure, last_width)
-                
+
                 segment_widths.append(segment_width)
                 segment_opacities.append(segment_opacity)
                 if layer_colors[layer] is None:
                     segment_colors.append(segment_color)
                 else:
-                    segment_colors.append(layer_colors[layer])                
+                    segment_colors.append(layer_colors[layer])
 
-                xpos = ratio * xpos + float(crop_box[0])
-                ypos = image_height - ratio * ypos + float(crop_box[1])
+                xpos = page_layout.scale * xpos + page_layout.x_start
+                ypos = page_layout.y_end - page_layout.scale * ypos
                 segment_points.extend([xpos, ypos])
                 last_width = segment_width
 
             if is_eraser_area or is_eraser:
                 continue
-            
+
             # Render lines after the arrays are filled
             # such that we have access to the next and previous points
-            drawing = Drawing(image_width, image_height)
             can.setLineCap(0 if is_highlighter else 1)
 
             for i in range(2, len(segment_points), 2):
                 can.setStrokeColor(segment_colors[int(i/2)])
                 can.setLineWidth(segment_widths[int(i/2)])
                 can.setStrokeAlpha(segment_opacities[int(i/2)])
-                
+
                 p = can.beginPath()
                 p.moveTo(segment_points[i-2], segment_points[i-1])
                 p.lineTo(segment_points[i], segment_points[i+1])
@@ -343,7 +354,7 @@ def _render_rm_file(rm_file_name, image_width=DEFAULT_IMAGE_WIDTH,
     packet.seek(0)
     overlay = PdfReader(packet)
 
-    if is_landscape:
+    if page_layout.is_landscape:
         for page in overlay.pages:
             page.Rotate=90
 
@@ -476,10 +487,10 @@ class Highlighter(Pen):
         self.base_opacity = 0.2
         self.name = "Highlighter"
         self.segment_length = 2
-    
+
     def get_segment_width(self, speed, tilt, width, pressure, last_width):
         return self.base_width * self.ratio
-        
+
 
 
 class Eraser(Pen):
