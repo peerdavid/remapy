@@ -34,9 +34,12 @@ default_stroke_color = {
 
 
 class PDFPageLayout:
-    def __init__(self,pdf_page=None):
+    def __init__(self,pdf_page=None,is_landscape=False):
         if not pdf_page:
-            self.layout=[0,0,DEFAULT_IMAGE_WIDTH,DEFAULT_IMAGE_HEIGHT]
+            if is_landscape:
+                self.layout=[0,0,DEFAULT_IMAGE_HEIGHT,DEFAULT_IMAGE_WIDTH]
+            else:
+                self.layout=[0,0,DEFAULT_IMAGE_WIDTH,DEFAULT_IMAGE_HEIGHT]
         else:
             self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.MediaBox or pdf_page.ArtBox
             if self.layout is None:
@@ -130,7 +133,7 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
         if not os.path.exists(rm_file):
             break
 
-        overlay = _render_rm_file(rm_file_name)
+        overlay = _render_rm_file(rm_file_name,PDFPageLayout(is_landscape=is_landscape))
         annotations_pdf.append(overlay)
         p += 1
 
@@ -138,7 +141,7 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
     writer = PdfWriter()
     templates = _get_templates_per_page(path, id, path_templates)
     for template in templates:
-        if template == None:
+        if template is None:
             writer.addpage(_blank_page())
         else:
             writer.addpage(template.pages[0])
@@ -148,16 +151,15 @@ def notebook(path, id, path_annotated_pdf, is_landscape, path_templates=None):
     templates_pdf = PdfReader(path_annotated_pdf)
     for i in range(len(annotations_pdf)):
         templates_pdf.pages[i].Rotate = 90 if is_landscape else 0
-        empty_page = len(annotations_pdf[i].pages) <= 0
-        if empty_page:
+        is_empty_page = len(annotations_pdf[i].pages) <= 0
+        if is_empty_page:
             continue
 
         annotated_page = annotations_pdf[i].pages[0]
-        if templates != None:
-            merger = PageMerge(templates_pdf.pages[i])
-            merger.add(annotated_page).render()
-        else:
-            output_pdf.addPage(annotated_page)
+        annotated_page.Rotate=-90 if is_landscape else 0
+        merger = PageMerge(templates_pdf.pages[i])
+        merger.add(annotated_page).render()
+
 
     writer = PdfWriter()
     writer.write(path_annotated_pdf, templates_pdf)
@@ -197,10 +199,6 @@ def _render_rm_file(rm_file_name, page_layout=None):
     """ Render the .rm files (old .lines). See also
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
-
-    if not page_layout:
-        page_layout = PDFPageLayout()
-    print(page_layout)
 
     rm_file = "%s.rm" % rm_file_name
     rm_file_metadata = "%s-metadata.json" % rm_file_name
