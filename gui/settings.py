@@ -17,6 +17,7 @@ class Settings(object):
         self.rm_client=RemarkableClient()
         self.item_manager = ItemManager()
 
+
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)
         root.grid_rowconfigure(2, minsize=30)
@@ -26,7 +27,9 @@ class Settings(object):
         root.grid_rowconfigure(7, minsize=30)
         root.grid_rowconfigure(8, minsize=30)
         root.grid_rowconfigure(9, minsize=50)
-        
+        root.grid_rowconfigure(13, minsize=50)
+        root.grid_rowconfigure(14, minsize=50)
+
         # gaps between columns
         label = tk.Label(root, text="    ")
         label.grid(row=1, column=1)
@@ -35,11 +38,12 @@ class Settings(object):
         label = tk.Label(root, text="  ")
         label.grid(row=1, column=5)
 
+        # Authentication
         label = tk.Label(root, text="Authentication", font="Helvetica 14 bold")
         label.grid(row=1, column=2, sticky="W")
 
         self.onetime_code_link = "https://my.remarkable.com/connect/remarkable"
-        self.label_onetime_code = tk.Label(root, justify="left", anchor="w", 
+        self.label_onetime_code = tk.Label(root, justify="left", anchor="w",
                     fg="blue", cursor="hand2", text="\nDownload one-time code from \n" + self.onetime_code_link)
         self.label_onetime_code.grid(row=2, column=7, sticky="SW")
         self.label_onetime_code.bind("<Button-1>", lambda e: webbrowser.open_new(self.onetime_code_link))
@@ -53,11 +57,12 @@ class Settings(object):
         label.grid(row=3, column=2, sticky="W")
         self.entry_onetime_code_text = tk.StringVar()
         self.entry_onetime_code = tk.Entry(root, textvariable=self.entry_onetime_code_text)
-        self.entry_onetime_code.grid(row=3, column=4, sticky="W")        
+        self.entry_onetime_code.grid(row=3, column=4, sticky="W")
 
         self.btn_sign_in = tk.Button(root, text="Sign In", command=self.btn_sign_in_click, width=17)
         self.btn_sign_in.grid(row=4, column=4, sticky="W")
 
+        # General
         label = tk.Label(root, text="General", font="Helvetica 14 bold")
         label.grid(row=6, column=2, sticky="W")
 
@@ -66,10 +71,10 @@ class Settings(object):
         self.entry_templates_text = tk.StringVar()
         self.entry_templates_text.set(cfg.get("general.templates", default=""))
         self.entry_templates = tk.Entry(root, textvariable=self.entry_templates_text)
-        self.entry_templates.grid(row=7, column=4, sticky="W")        
+        self.entry_templates.grid(row=7, column=4, sticky="W")
 
         label = tk.Label(root, justify="left", anchor="w", text="A local folder that contains all template PNG files. \nYou can copy the template files from your tablet: \n'/usr/share/remarkable'")
-        label.grid(row=7, column=7, sticky="W") 
+        label.grid(row=7, column=7, sticky="W")
 
         label = tk.Label(root, text="Backup root path:")
         label.grid(row=8, column=2, sticky="W")
@@ -81,11 +86,12 @@ class Settings(object):
         self.entry_backup_root.grid(row=8, column=4, sticky="W")
 
         label = tk.Label(root, justify="left", anchor="w", text="A local folder that will be used as the root folder for backups.")
-        label.grid(row=8, column=7, sticky="W") 
+        label.grid(row=8, column=7, sticky="W")
 
         self.btn_save = tk.Button(root, text="Save", command=self.btn_save_click, width=17)
         self.btn_save.grid(row=9, column=4, sticky="W")
 
+        # Backup
         label = tk.Label(root, text="Backup", font="Helvetica 14 bold")
         label.grid(row=10, column=2, sticky="W")
 
@@ -102,15 +108,33 @@ class Settings(object):
         self.label_backup_progress.grid(row=11, column=6)
 
         label = tk.Label(root, justify="left", anchor="w", text="Copy currently downloaded and annotated PDF files \ninto the given directory. Note that those files can not \nbe restored on the tablet.")
-        label.grid(row=11, column=7, sticky="W") 
+        label.grid(row=11, column=7, sticky="W")
 
         self.btn_create_backup = tk.Button(root, text="Create backup", command=self.btn_create_backup, width=17)
         self.btn_create_backup.grid(row=12, column=4, sticky="W")
 
-        # Subscribe to sign in event. Outer logic (i.e. main) can try to 
+        # UI
+        label = tk.Label(root, text="UI", font="Helvetica 14 bold")
+        label.grid(row=13, column=2, sticky="W")
+
+        label = tk.Label(root, text="Scaling")
+        label.grid(row=14, column=2, sticky="W")
+
+        self.scaling_text = tk.StringVar()
+        self.scaling_text.set(str(cfg.get("scaling",1/root.tk.call('tk', 'scaling'))*100)+"%")
+        self.entry_scaling=tk.Entry(root, textvariable=self.scaling_text)
+        self.entry_scaling.grid(row=14,column=4, sticky="W")
+
+        label = tk.Label(root, justify="left", anchor="w", text="UI scalling will be applied after a restart.")
+        label.grid(row=14, column=7, sticky="W")
+
+        self.btn_apply_scaling = tk.Button(root, text="Save scaling", command=self.btn_apply_scaling, width=17)
+        self.btn_apply_scaling.grid(row=15, column=4, sticky="W")
+
+        # Subscribe to sign in event. Outer logic (i.e. main) can try to
         # sign in automatically...
         self.rm_client.listen_sign_in_event(self)
-    
+
 
     #
     # EVENT HANDLER
@@ -134,14 +158,14 @@ class Settings(object):
             self.entry_backup_folder.config(state="normal")
             self.entry_templates.config(state="normal")
             self.label_auth_status.config(text="Successfully signed in", fg="green")
-            
+
         elif event == api.remarkable_client.EVENT_USER_TOKEN_FAILED:
             self.label_auth_status.config(text="Could not renew user token\n(please try again).", fg="red")
             self.entry_onetime_code.config(state="disabled")
 
         elif event == api.remarkable_client.EVENT_ONETIMECODE_NEEDED:
             self.label_auth_status.config(text="Enter one-time code.", fg="red")
-        
+
         else:
             self.label_auth_status.config(text="Could not sign in.", fg="red")
 
@@ -149,8 +173,8 @@ class Settings(object):
     def btn_sign_in_click(self):
         onetime_code = self.entry_onetime_code_text.get()
         self.rm_client.sign_in(onetime_code)
-            
-    
+
+
 
     def btn_save_click(self):
         general = {
@@ -162,7 +186,7 @@ class Settings(object):
 
     def btn_create_backup(self):
         message = "If your explorer is not synchronized, some files are not included in the backup. Should we continue?"
-        result = messagebox.askquestion("Info", message, icon='warning')       
+        result = messagebox.askquestion("Info", message, icon='warning')
 
         if result != "yes":
             return
@@ -175,7 +199,19 @@ class Settings(object):
         def run():
             self.item_manager.create_backup(backup_path)
             self.label_backup_progress.config(text="")
-            messagebox.showinfo("Info", "Successfully created backup '%s'" % backup_path)       
+            messagebox.showinfo("Info", "Successfully created backup '%s'" % backup_path)
 
         threading.Thread(target=run).start()
 
+    def btn_apply_scaling(self):
+        scaling_text=self.scaling_text.get().strip()
+        try:
+            if len(scaling_text)>=2 and scaling_text[-1]=="%":
+                scaling=float(scaling_text[0:-1])/100
+            else:
+                scaling=float(scaling_text)
+        except ValueError:
+            return
+
+        print("scaling: ",scaling)
+        cfg.save({"scaling":scaling})
