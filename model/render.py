@@ -12,8 +12,6 @@ from reportlab.pdfgen import canvas
 # Size
 DEFAULT_IMAGE_WIDTH = 1404
 DEFAULT_IMAGE_HEIGHT = 1872
-DEFAULT_LANDSCAPE_IMAGE_WIDTH = 1872
-DEFAULT_LANDSCAPE_IMAGE_HEIGHT = 1404
 
 # Mappings
 default_stroke_color = {
@@ -287,13 +285,13 @@ def _render_rm_file(rm_file_name, page_layout=None):
             elif is_marker:
                 pen = Marker(page_layout.scale, width, color)
             elif is_calligraphy:
-                pen = Caligraphy(page_layout.scale, width, color)
+                pen = Calligraphy(page_layout.scale, width, color)
             elif is_highlighter:
                 pen = Highlighter(page_layout.scale, 30, color)
             elif is_eraser:
                 pen = Eraser(page_layout.scale, width, color)
             elif is_eraser_area:
-                pen = Erase_Area(page_layout.scale, width, color)
+                pen = EraseArea(page_layout.scale, width, color)
             elif is_tilt_pencil:
                 pen = Pencil(page_layout.scale, width, color)
             elif is_sharp_pencil:
@@ -502,7 +500,7 @@ class Eraser(Pen):
         self.name = "Eraser"
 
 
-class Erase_Area(Pen):
+class EraseArea(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, base_color)
         self.stroke_cap = "square"
@@ -510,7 +508,7 @@ class Erase_Area(Pen):
         self.name = "Erase Area"
 
 
-class Caligraphy(Pen):
+class Calligraphy(Pen):
     def __init__(self, ratio, base_width, base_color):
         super().__init__(ratio, base_width, base_color)
         self.segment_length = 2
