@@ -1,22 +1,23 @@
-from datetime import date
-import time
-import webbrowser
-import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter import messagebox
 import threading
+import tkinter as tk
+import webbrowser
+from datetime import date
 from pathlib import Path
+from tkinter import messagebox
 
 import api.remarkable_client
-from api.remarkable_client import RemarkableClient
 import utils.config as cfg
+from api.remarkable_client import RemarkableClient
 from model.item_manager import ItemManager
 
+
 class Settings(object):
-    def __init__(self, root, font_size):
+    def __init__(self, root):
         self.rm_client=RemarkableClient()
         self.item_manager = ItemManager()
 
+        scaling = cfg.get("scaling", 1 / root.tk.call('tk', 'scaling'))
+        title_font = "Helvetica %d bold" % int(14 * scaling)
 
         root.grid_columnconfigure(4, minsize=180)
         root.grid_rowconfigure(1, minsize=50)
@@ -39,7 +40,7 @@ class Settings(object):
         label.grid(row=1, column=5)
 
         # Authentication
-        label = tk.Label(root, text="Authentication", font="Helvetica 14 bold")
+        label = tk.Label(root, text="Authentication", font=title_font)
         label.grid(row=1, column=2, sticky="W")
 
         self.onetime_code_link = "https://my.remarkable.com/connect/remarkable"
@@ -63,7 +64,7 @@ class Settings(object):
         self.btn_sign_in.grid(row=4, column=4, sticky="W")
 
         # General
-        label = tk.Label(root, text="General", font="Helvetica 14 bold")
+        label = tk.Label(root, text="General", font=title_font)
         label.grid(row=6, column=2, sticky="W")
 
         label = tk.Label(root, text="Templates path:")
@@ -92,7 +93,7 @@ class Settings(object):
         self.btn_save.grid(row=9, column=4, sticky="W")
 
         # Backup
-        label = tk.Label(root, text="Backup", font="Helvetica 14 bold")
+        label = tk.Label(root, text="Backup", font=title_font)
         label.grid(row=10, column=2, sticky="W")
 
         label = tk.Label(root, text="Backup path:")
@@ -114,7 +115,7 @@ class Settings(object):
         self.btn_create_backup.grid(row=12, column=4, sticky="W")
 
         # UI
-        label = tk.Label(root, text="UI", font="Helvetica 14 bold")
+        label = tk.Label(root, text="UI", font=title_font)
         label.grid(row=13, column=2, sticky="W")
 
         label = tk.Label(root, text="Scaling")
@@ -125,7 +126,7 @@ class Settings(object):
         self.entry_scaling=tk.Entry(root, textvariable=self.scaling_text)
         self.entry_scaling.grid(row=14,column=4, sticky="W")
 
-        label = tk.Label(root, justify="left", anchor="w", text="UI scalling will be applied after a restart.")
+        label = tk.Label(root, justify="left", anchor="w", text="UI scaling will be applied after a restart.")
         label.grid(row=14, column=7, sticky="W")
 
         self.btn_apply_scaling = tk.Button(root, text="Save scaling", command=self.btn_apply_scaling, width=17)
@@ -204,14 +205,14 @@ class Settings(object):
         threading.Thread(target=run).start()
 
     def btn_apply_scaling(self):
-        scaling_text=self.scaling_text.get().strip()
+        scaling_text = self.scaling_text.get().strip()
         try:
-            if len(scaling_text)>=2 and scaling_text[-1]=="%":
-                scaling=float(scaling_text[0:-1])/100
+            if len(scaling_text) >= 2 and scaling_text[-1] == "%":
+                scaling = float(scaling_text[0:-1]) / 100
             else:
-                scaling=float(scaling_text)
+                scaling = float(scaling_text)
         except ValueError:
             return
 
-        print("scaling: ",scaling)
-        cfg.save({"scaling":scaling})
+        print("scaling: ", scaling)
+        cfg.save({"scaling": scaling})

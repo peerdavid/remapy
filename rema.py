@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 
-import os
-import utils.config as cfg
-from pathlib import Path
 import tkinter as tk
-from tkinter import *
-from tkinter import scrolledtext
 import tkinter.ttk as ttk
-
-from gui.file_explorer import FileExplorer
-from gui.about import About
-from gui.settings import Settings
+from pathlib import Path
 
 import api.remarkable_client
-from api.remarkable_client import RemarkableClient
 import utils.config
+import utils.config as cfg
+from api.remarkable_client import RemarkableClient
+from gui.about import About
+from gui.file_explorer import FileExplorer
+from gui.settings import Settings
+
 
 class Main(object):
 
@@ -22,13 +19,10 @@ class Main(object):
         self.rm_client = RemarkableClient()
 
         # Define app settings
-        scale=cfg.get("scaling",1/window.tk.call('tk', 'scaling'))
-        print(scale)
-        window.tk.call('tk', 'scaling',1/scale)
-        font_size = int(38*scale)
-        row_height = int(30*scale)
-        window_width = 750*scale
-        window_height = 650*scale
+        scale = cfg.get("scaling", 1 / window.tk.call('tk', 'scaling'))
+        window.tk.call('tk', 'scaling', 1 / scale)
+        window_width = 750 * scale
+        window_height = 650 * scale
 
         # Subscribe to events
         self.rm_client.listen_sign_in_event(self)
@@ -48,7 +42,7 @@ class Main(object):
         self.notebook.pack(expand=1, fill="both")
 
         frame = ttk.Frame(self.notebook)
-        self.file_explorer = FileExplorer(frame, window, font_size=font_size, row_height=row_height)
+        self.file_explorer = FileExplorer(frame, window)
         self.notebook.add(frame, text="File Explorer")
 
         frame = ttk.Frame(self.notebook)
@@ -64,7 +58,7 @@ class Main(object):
         self.notebook.add(frame, text="SSH", state="hidden")
 
         frame = ttk.Frame(self.notebook)
-        self.settings = Settings(frame, font_size)
+        self.settings = Settings(frame)
         self.notebook.add(frame, text="Settings")
 
         frame = ttk.Frame(self.notebook)
