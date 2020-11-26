@@ -22,7 +22,7 @@ class Main(object):
         scale = cfg.get("scaling", 1 / window.tk.call('tk', 'scaling'))
         window.tk.call('tk', 'scaling', 1 / scale)
         window_width = 750 * scale
-        window_height = 650 * scale
+        window_height = 700 * scale
 
         # Subscribe to events
         self.rm_client.listen_sign_in_event(self)
