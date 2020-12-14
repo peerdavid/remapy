@@ -39,7 +39,7 @@ class FileExplorer(object):
         self.icon_dir = os.path.join(self.app_dir, 'icons/')
         self._cached_icons = {}
         self._icon_lock = threading.Lock()
-        scaling=utils.config.get("scaling",1/root.tk.call('tk', 'scaling'))
+        scaling=utils.config.get("scaling",1)
         self.row_height=int(30*scaling)
         self.font="TkDefaultFont %d"%int(12*scaling)
 

@@ -16,7 +16,7 @@ class Settings(object):
         self.rm_client=RemarkableClient()
         self.item_manager = ItemManager()
 
-        scaling = cfg.get("scaling", 1 / root.tk.call('tk', 'scaling'))
+        scaling = cfg.get("scaling", 1)
         title_font = "Helvetica %d bold" % int(14 * scaling)
 
         root.grid_columnconfigure(4, minsize=180)
@@ -122,7 +122,7 @@ class Settings(object):
         label.grid(row=14, column=2, sticky="W")
 
         self.scaling_text = tk.StringVar()
-        self.scaling_text.set(str(cfg.get("scaling",1/root.tk.call('tk', 'scaling'))*100)+"%")
+        self.scaling_text.set(str(cfg.get("scaling")*100)+"%")
         self.entry_scaling=tk.Entry(root, textvariable=self.scaling_text)
         self.entry_scaling.grid(row=14,column=4, sticky="W")
 
