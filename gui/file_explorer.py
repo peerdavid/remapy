@@ -9,6 +9,7 @@ from time import gmtime, strftime
 import datetime
 import numpy as np
 from pathlib import Path
+from urllib.parse import urlparse, unquote
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import messagebox
@@ -702,11 +703,17 @@ class FileExplorer(object):
         def is_url(url):
             return url.startswith("http")
 
+        def file_url_to_path(url):
+            parts = urlparse(url)
+            if parts.scheme == 'file':
+                return unquote(parts.path)
+            return url
+
         # Some versions of nautilus include "x-special/nautilus-clipboard file://..." 
         # Or dolphin simple adds "file://..."
         # See also issue #11
         paths = self.root.clipboard_get().split("\n")
-        paths = [path.replace("file://", "") for path in paths]
+        paths = [file_url_to_path(path) for path in paths]
         paths = list(filter(lambda path: is_file(path) != None or is_url(path), paths))
 
         if len(paths) <= 0:
