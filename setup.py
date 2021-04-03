@@ -13,7 +13,6 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/peerdavid/remapy",
     author="Peer David",
-    author_email="TODO",
     packages=find_packages(where="."),
     python_requires=">=3.6, <4",
     install_requires=[
