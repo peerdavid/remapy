@@ -15,7 +15,7 @@ ABOUT = \
                                      |____| v0.1.0
 
 
-   David Peer (2020)           
+   David Peer (2021)           
 
    RemaPy is an open source tool explorer for your remarkable tablet.
    Ensure that you updated your tablet to version 2.2 before using RemaPy, 
@@ -220,7 +220,7 @@ ABOUT = \
          same "printed page" as the copyright notice for easier
          identification within third-party archives.
 
-      Copyright 2020 David Peer
+      Copyright 2021 David Peer
 
       Licensed under the Apache License, Version 2.0 (the "License");
       you may not use this file except in compliance with the License.
