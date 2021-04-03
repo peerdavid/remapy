@@ -1,7 +1,7 @@
 
 import yaml
 from pathlib import Path
-
+import os
 
 PATH = Path.joinpath(Path.home(), ".remapy", "data")
 if "XDG_DATA_HOME" in os.environ:
