@@ -3,7 +3,9 @@ import yaml
 from pathlib import Path
 
 
-PATH = Path.joinpath(Path.home(), ".remapy/data")
+PATH = Path.joinpath(Path.home(), ".remapy", "data")
+if "XDG_DATA_HOME" in os.environ:
+    PATH = Path.joinpath(Path(os.getenv("XDG_DATA_HOME")), "remapy")
 
 
 def save(new_config: dict) -> None:
@@ -65,4 +67,7 @@ def get(config_path, default=None):
 # HELPER
 #
 def _get_path():
-    return Path.joinpath(Path.home(), ".remapy/config")
+    if "XDG_CONFIG_HOME" in os.environ:
+        return Path.joinpath(Path(os.getenv("XDG_CONFIG_HOME")), "remapy", "config")
+    else:
+        return Path.joinpath(Path.home(), ".remapy", "config")
