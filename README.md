@@ -12,7 +12,7 @@ can be found in the [wiki](https://github.com/peerdavid/RemaPy/wiki).
 
 Checkout also my reMarkable Uploader App on the [Google Play Store](https://play.google.com/store/apps/details?id=org.remadroid).
 
-*rM v2.7 is now supported! (snapped highlights)*
+*Snapped highlights of rM v2.7 are now supported!*
 
 *WARNING: This project is not affiliated to,
 nor endorsed by, reMarkable AS. I am not responsible for any
