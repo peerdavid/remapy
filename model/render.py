@@ -87,7 +87,7 @@ def pdf(rm_files_path, path_highlighter, path_original_pdf, path_annotated_pdf, 
             annotations_pdf.append(None)
             continue
 
-        annotated_page = _render_rm_file(rm_file_name, path_highlighter=path_highlighter, page_layout=page_layout)
+        annotated_page = _render_rm_file(rm_file_name, page_layout=page_layout, path_highlighter=path_highlighter)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(None)
         else:
@@ -182,7 +182,7 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     return blank
 
 
-def _render_rm_file(rm_file_name, path_highlighter=None, page_layout=None):
+def _render_rm_file(rm_file_name, page_layout=None, path_highlighter=None):
     """ Render the .rm files (old .lines). See also
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
