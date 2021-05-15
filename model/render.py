@@ -65,7 +65,7 @@ class PDFPageLayout:
             return "PDFPageLayout: None"
 
 
-def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
+def pdf(rm_files_path, path_highlighter, path_original_pdf, path_annotated_pdf, path_oap_pdf):
     """ Render pdf with annotations. The path_oap_pdf defines the pdf
         which includes only annotated pages.
     """
@@ -87,7 +87,7 @@ def pdf(rm_files_path, path_original_pdf, path_annotated_pdf, path_oap_pdf):
             annotations_pdf.append(None)
             continue
 
-        annotated_page = _render_rm_file(rm_file_name, page_layout=page_layout)
+        annotated_page = _render_rm_file(rm_file_name, path_highlighter=path_highlighter, page_layout=page_layout)
         if len(annotated_page.pages) <= 0:
             annotations_pdf.append(None)
         else:
@@ -182,7 +182,7 @@ def _blank_page(width=DEFAULT_IMAGE_WIDTH, height=DEFAULT_IMAGE_HEIGHT):
     return blank
 
 
-def _render_rm_file(rm_file_name, page_layout=None):
+def _render_rm_file(rm_file_name, path_highlighter=None, page_layout=None):
     """ Render the .rm files (old .lines). See also
     https://plasma.ninja/blog/devices/remarkable/binary/format/2017/12/26/reMarkable-lines-file-format.html
     """
@@ -349,6 +349,34 @@ def _render_rm_file(rm_file_name, page_layout=None):
                 p.moveTo(segment_points[i], segment_points[i + 1])
                 p.close()
                 can.drawPath(p)
+
+    # Special handling to plot snapped highights
+    if(path_highlighter and os.path.exists(path_highlighter)):
+        for file_name in os.listdir(path_highlighter):
+            with open(os.path.join(path_highlighter, file_name), "r") as highlighter_file:
+                highlights = json.loads(highlighter_file.read())["highlights"]
+                for h in highlights[0]:
+                    rects = h["rects"][0]
+                    if page_layout.is_landscape:
+                        render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
+                    else:
+                        render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
+
+                    width = rects["width"] * page_layout.scale
+                    height = rects["height"] * page_layout.scale
+                    render_ypos -= height / 2
+
+                    can.setStrokeColor(default_stroke_color[3])
+                    can.setLineWidth(height)
+                    can.setStrokeAlpha(0.2)
+
+                    p = can.beginPath()
+                    p.moveTo(render_xpos, render_ypos)
+                    p.lineTo(render_xpos+width, render_ypos)
+                    p.close()
+                    can.drawPath(p)
 
     can.save()
     packet.seek(0)

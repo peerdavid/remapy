@@ -39,7 +39,7 @@ class Document(Item):
     #
     def __init__(self, metadata, parent: Collection):
         super(Document, self).__init__(metadata, parent)
-        
+
         # Remarkable tablet paths
         self.path_zip = "%s.zip" % self.path
         self.path_rm_files = "%s/%s" % (self.path, self.id())
@@ -50,6 +50,7 @@ class Document(Item):
         self.path_oap_pdf = self._get_path_oap_pdf()
         self.path_original_pdf = "%s/%s.pdf" % (self.path, self.id())
         self.path_original_epub = "%s/%s.epub" % (self.path, self.id())
+        self.path_highlighter = "%s/%s.highlights/" % (self.path, self.id())
 
         # Other props
         self.download_url = None
@@ -66,7 +67,7 @@ class Document(Item):
     #
     def _get_path_annotated_pdf(self):
         return "%s/%s.pdf" % (self.path_remapy, self.name().replace("/", "."))
-    
+
     def _get_path_oap_pdf(self):
         return "%s/%s_oap.pdf" % (self.path_remapy, self.name().replace("/", "."))
 
@@ -86,9 +87,9 @@ class Document(Item):
     def ann_or_orig_file(self):
         if os.path.exists(self.path_annotated_pdf):
             return self.path_annotated_pdf
-        
+
         return self.orig_file()
-    
+
     def is_landscape(self):
         with open(self.path_content_file, "r") as f:
             content_file = json.load(f)
@@ -96,7 +97,7 @@ class Document(Item):
         return orientation.lower() == "landscape"
 
     def rename(self, new_name):
-        
+
         self.path_oap_pdf
         super(Document, self).rename(new_name)
 
@@ -116,19 +117,19 @@ class Document(Item):
 
 
     def oap_file(self):
-        """ Returns Only Annotated Pages of the pdf file. For notebooks 
+        """ Returns Only Annotated Pages of the pdf file. For notebooks
             this is every page...
         """
-        # For notebooks this not really exists. Therefore 
+        # For notebooks this not really exists. Therefore
         # we return the annotated pdf
         if self.type == TYPE_NOTEBOOK:
             return self.path_annotated_pdf
 
         if os.path.exists(self.path_oap_pdf):
             return self.path_oap_pdf
-        
+
         return None
-    
+
 
     def orig_file(self):
         if self.type == TYPE_EPUB:
@@ -146,7 +147,7 @@ class Document(Item):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         self._update_state()
-    
+
 
     def delete(self):
         ok = self.rm_client.delete_item(self.id(), self.version())
@@ -159,8 +160,8 @@ class Document(Item):
 
     def sync(self):
         if self.state == model.item.STATE_SYNCING:
-            return 
-            
+            return
+
         self.state = model.item.STATE_SYNCING
         self._update_state_listener()
 
@@ -172,18 +173,19 @@ class Document(Item):
 
         if self.type == TYPE_NOTEBOOK and annotations_exist:
             render.notebook(
-                self.path, 
-                self.id(), 
+                self.path,
+                self.id(),
                 self.path_annotated_pdf,
                 self.is_landscape(),
                 path_templates=cfg.get("general.templates"))
-        
+
         else:
             if annotations_exist:
                 # Also for epubs a pdf file exists which we can annotate :)
                 # We will then show the pdf rather than the epub...
                 render.pdf(
-                    self.path_rm_files, 
+                    self.path_rm_files,
+                    self.path_highlighter,
                     self.path_original_pdf,
                     self.path_annotated_pdf,
                     self.path_oap_pdf)
@@ -204,27 +206,27 @@ class Document(Item):
         raw_file = self.rm_client.get_raw_file(self.blob_url)
         with open(self.path_zip, "wb") as out:
             out.write(raw_file)
-        
+
         with zipfile.ZipFile(self.path_zip, "r") as zip_ref:
             zip_ref.extractall(path)
-        
+
         os.remove(self.path_zip)
 
         # Update state
         self._update_state(inform_listener=False)
-    
+
 
     def update_state(self):
         self._update_state(inform_listener=True)
 
 
     def _update_state(self, inform_listener=True):
-        
+
         # Not synced
         if not os.path.exists(self.path_metadata_local):
             self.type = TYPE_UNKNOWN
             self.state = STATE_NOT_SYNCED
-        
+
         # If synced get file type
         else:
             with open(self.path_metadata_local, encoding='utf-8') as f:
@@ -243,13 +245,13 @@ class Document(Item):
 
         # Inform listener if needed
         if not inform_listener:
-            return 
+            return
 
         self._update_state_listener()
 
 
     def create_backup(self, backup_path):
-        
+
         backup_path = "%s/%s" % (backup_path, self.parent().full_name())
         Path(backup_path).mkdir(parents=True, exist_ok=True)
 

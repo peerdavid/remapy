@@ -3,24 +3,30 @@
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
 reMarkable cloud. You can upload documents (via copy and paste), open notebooks
 and annotated pdfs and delete documents or collections. RemaPy is written in
-Python and only tested on Linux. Thanks to the community for adding scripts 
-and code to make RemaPy also executable on Windows! 
-Note that for OSX we have currently some  problems with RemaPy. 
+Python and only tested on Linux. Thanks to the community for adding scripts
+and code to make RemaPy also executable on Windows!
+Note that for OSX we have currently some  problems with RemaPy.
 See also [Issue 10](https://github.com/peerdavid/remapy/issues/10).
-A "how to install", the software architecture and FAQ's 
+A "how to install", the software architecture and FAQ's
 can be found in the [wiki](https://github.com/peerdavid/RemaPy/wiki).
 
 Checkout also my reMarkable Uploader App on the [Google Play Store](https://play.google.com/store/apps/details?id=org.remadroid).
 
-*WARNING: This project is not affiliated to, 
-nor endorsed by, reMarkable AS. I am not responsible for any 
-damage done to your device or your data 
+*rM v2.7 is now supported! (snapped highlights)*
+
+*WARNING: This project is not affiliated to,
+nor endorsed by, reMarkable AS. I am not responsible for any
+damage done to your device or your data
 due to the use of this software.*
 
 
-# Features 
+# Features
 ## Overview
 <img src="doc/explorer.png" />
+
+## Support for snapped highlights
+Snapped highlights of v2.7 are fully supported:<br />
+<img src="doc/snapped_highlight.png" />
 
 ## Open with or without annotations
 With RemaPy you can open the annotated pdf file (double click). You can also
@@ -31,14 +37,14 @@ collection, all child items are opened recursively.
 
 ## Upload pdfs, epubs or webpages
 If you copy and paste a file from your file explorer into RemaPy, it
-is uploaded if the file ends with .pdf or .epub. Select the base folder 
+is uploaded if the file ends with .pdf or .epub. Select the base folder
 (or any item in this folder) where the file should be located after the upload.
 If you copy and paste a URL, the given website is automatically converted into
 a pdf and uploaded to your reMarkable. Note that some heuristics
-are implemented to accepts the "terms of usage" of pages automatically, 
-but this will not work in every case 
+are implemented to accepts the "terms of usage" of pages automatically,
+but this will not work in every case
 (see also [FAQ](https://github.com/peerdavid/RemaPy/wiki)). Please also note
-that some additional packages must be installed to use this feature 
+that some additional packages must be installed to use this feature
 (pdfkit and wkhtmltopdf).
 
 ## Rendering and custom colors
@@ -46,9 +52,9 @@ The rendering is implemented accordingly to [4]:<br />
 <img src="doc/goofy.png" width="500sp" />
 
 Custom colors for individual layers are used by RemaPy for rendering
-if the layer name contains a '#' followed by a valid color name or 
+if the layer name contains a '#' followed by a valid color name or
 [hex code](https://www.color-hex.com/).
-For example "Layer1 #ffee11" is rendered with hex color #ffee11 or "Layer 2 #red" 
+For example "Layer1 #ffee11" is rendered with hex color #ffee11 or "Layer 2 #red"
 is rendered in red. The hex code also supports alpha values (e.g. #ffee11dd).
 Therefore you can easily hide layers in the rendering process by setting the last
 two values of the hex code to zero: #xxxxxx00.<br />
@@ -64,8 +70,8 @@ that contain "RemaPy", enter "!b RemaPy".
 To search all items that contain "RemaPy" enter only "RemaPy".
 
 ## Backup
-In the settings tab you can find an option "Backup". This creates a 
-backup of all your annotated pdf files into the given folder. Note that it 
+In the settings tab you can find an option "Backup". This creates a
+backup of all your annotated pdf files into the given folder. Note that it
 it is not possible to backup or restore the *raw* items.
 
 ## Trash
@@ -84,6 +90,6 @@ the trash. You can also restore files that are deleted from the trash.
 # Acknowledgments
 [1] Python reMarkable api, https://github.com/subutux/rmapy <br />
 [2] Golang reMarkable tool, https://github.com/juruen/rmapi/ <br />
-[3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip, 
+[3] Icons made by Freepik, Smashicons, Pixel Perfect, iconixar  srip,
 Good ware, prettycons, Payungkead, bqlqn from www.flaticon.com <br />
 [4] Improved our rendering a lot, https://github.com/lschwetlick/maxio <br />
