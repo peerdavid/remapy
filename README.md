@@ -24,7 +24,7 @@ due to the use of this software.*
 ## Overview
 <img src="doc/explorer.png" />
 
-## Support for snapped highlights
+## Snapped highlight support
 Snapped highlights of v2.7 are fully supported:<br />
 <img src="doc/snapped_highlight.png" />
 
