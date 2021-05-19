@@ -9,7 +9,7 @@ import json
 import utils.config as cfg
 from utils.helper import Singleton
 
-# 
+#
 # EVENTS
 #
 EVENT_SUCCESS = 0
@@ -26,9 +26,9 @@ EVENT_ONETIMECODE_NEEDED = 4
 #
 USER_AGENT = "remapy"
 BASE_URL = "https://document-storage-production-dot-remarkable-production.appspot.com"
-DEVICE_TOKEN_URL = "https://my.remarkable.com/token/json/2/device/new"
-USER_TOKEN_URL = "https://my.remarkable.com/token/json/2/user/new"
-DEVICE = "desktop-windows"
+DEVICE_TOKEN_URL = "https://webapp-production-dot-remarkable-production.appspot.com/token/json/2/device/new"
+USER_TOKEN_URL = "https://webapp-production-dot-remarkable-production.appspot.com/token/json/2/user/new"
+DEVICE = "mobile-android"
 SERVICE_MGR_URL = "https://service-manager-production-dot-remarkable-production.appspot.com"
 
 LIST_DOCS_URL = BASE_URL + "/document-storage/json/2/docs"
@@ -45,16 +45,16 @@ class RemarkableClient():
     """
 
     class SignInListenerHandler(metaclass=Singleton):
-        
+
         def __init__(self):
             self.sign_in_listener = []
 
         def listen_sign_in_event(self, subscriber):
-            """ Sends a signal (true) if successfully signed in 
+            """ Sends a signal (true) if successfully signed in
                 and (false) if login was not possible in rm cloud.
             """
             self.sign_in_listener.append(subscriber)
-        
+
         def publish(self, code=EVENT_SUCCESS, data=None):
             for subscriber in self.sign_in_listener:
                 try:
@@ -69,13 +69,13 @@ class RemarkableClient():
         self.listener_handler = self.SignInListenerHandler()
 
     def listen_sign_in_event(self, subscriber):
-        self.listener_handler.listen_sign_in_event(subscriber)   
+        self.listener_handler.listen_sign_in_event(subscriber)
 
 
     def sign_in(self, onetime_code=None):
-        """ Load token. If not available the user must provide a 
+        """ Load token. If not available the user must provide a
             one time code from https://my.remarkable.com/connect/remarkable
-        """ 
+        """
 
         try:
             # Get device token if not stored local
@@ -88,14 +88,14 @@ class RemarkableClient():
                 device_token = self._get_device_token(onetime_code)
                 if device_token is None:
                     self.listener_handler.publish(EVENT_DEVICE_TOKEN_FAILED)
-                    return            
-            
+                    return
+
             # Renew the user token.
             user_token = self._get_user_token(device_token)
             if user_token is None:
                 self.listener_handler.publish(EVENT_USER_TOKEN_FAILED)
                 return
-            
+
             # Save tokens to config
             auth = {"device_token": device_token,
                     "user_token": user_token}
@@ -108,34 +108,34 @@ class RemarkableClient():
             self.listener_handler.publish(EVENT_FAILED, auth)
 
         return auth
-        
+
 
     def get_item(self, id):
-        
+
         response = self._request("GET", LIST_DOCS_URL, params={
             "doc": id,
             "withBlob": True
         })
-        
+
         if response.ok:
             items = response.json()
             return items[0]
-        
+
         return None
 
-    
+
     def delete_item(self, id, version):
-        
+
         response = self._request("PUT", DELETE_ENTRY_URL, body=[{
             "ID": id,
             "Version": version
         }])
-        
+
         if response.ok:
             return True
-        
+
         return False
-    
+
 
     def list_items(self):
         response = self._request("GET", LIST_DOCS_URL)
@@ -150,7 +150,7 @@ class RemarkableClient():
 
             return items
         return None
-    
+
 
     def get_raw_file(self, blob_url):
         stream = self._request("GET", blob_url, stream=True)
@@ -158,7 +158,7 @@ class RemarkableClient():
         for chunk in stream.iter_content(chunk_size=8192):
             zip_io.write(chunk)
         return zip_io.getbuffer()
-    
+
 
     def upload(self, id, metadata, zip_file):
         response = self._request("PUT", "/document-storage/json/2/upload/request",
@@ -167,35 +167,35 @@ class RemarkableClient():
                                "Type": "DocumentType",
                                "Version": 1
                            }])
-        if not response.ok:        
+        if not response.ok:
             print("(Error) Upload request failed")
-            return 
+            return
 
         response = response.json()
         blob_url = response[0].get("BlobURLPut", None)
 
         response = self._request("PUT", blob_url, data=zip_file.getvalue())
         zip_file.seek(0)
-        if not response.ok:        
+        if not response.ok:
             print("(Error) Upload request failed")
-            return 
-        
+            return
+
         return self.update_metadata(metadata)
-    
+
 
     def update_metadata(self, metadata):
         response = self._request("PUT", UPDATE_STATUS_URL, body=[metadata])
-        if not response.ok:        
+        if not response.ok:
             print("(Error) Upload request failed")
-            return 
+            return
 
         return self.get_item(metadata["ID"])
-        
+
 
     def _get_device_token(self, one_time_code):
-        """ Create a new device for a given one_time_code to be able to 
+        """ Create a new device for a given one_time_code to be able to
             connect to the rm cloud
-        """ 
+        """
         body = {
             "code": one_time_code,
             "deviceDesc": DEVICE,
@@ -215,7 +215,7 @@ class RemarkableClient():
         """
         if device_token is None or device_token == "":
             return None
-        
+
         try:
             response = self._request("POST", USER_TOKEN_URL, None, headers={
                     "Authorization": "Bearer %s" % device_token
@@ -227,7 +227,7 @@ class RemarkableClient():
             user_token = response.text
             return user_token
         return None
-    
+
 
     def _request(self, method, path,
                 data=None, body=None, headers=None,
@@ -253,7 +253,7 @@ class RemarkableClient():
 
         if headers is None:
             headers = {}
-       
+
         if not path.startswith("http"):
             if not path.startswith('/'):
                 path = '/' + path
@@ -268,10 +268,10 @@ class RemarkableClient():
         user_token = cfg.get("authentication.user_token")
         if user_token != None:
             _headers["Authorization"] = "Bearer %s" % user_token
-        
+
         for k in headers.keys():
             _headers[k] = headers[k]
-        
+
         r = requests.request(method, url,
                              json=body,
                              data=data,
@@ -283,4 +283,3 @@ class RemarkableClient():
 
 
 
-        
