@@ -90,11 +90,21 @@ class Document(Item):
 
         return self.orig_file()
 
+
     def is_landscape(self):
         with open(self.path_content_file, "r") as f:
             content_file = json.load(f)
             orientation = content_file["orientation"]
         return orientation.lower() == "landscape"
+
+
+    def get_pages(self):
+        with open(self.path_content_file, "r") as f:
+            content_file = json.load(f)
+            pages = content_file["pages"]
+
+        return pages
+
 
     def rename(self, new_name):
 
@@ -186,6 +196,7 @@ class Document(Item):
                 render.pdf(
                     self.path_rm_files,
                     self.path_highlighter,
+                    self.get_pages(),
                     self.path_original_pdf,
                     self.path_annotated_pdf,
                     self.path_oap_pdf)
