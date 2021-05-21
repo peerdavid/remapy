@@ -355,8 +355,8 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
                 p.close()
                 can.drawPath(p)
 
-    # Special handling to plot snapped highights
-    if(os.path.exists(page_file)):
+    # Special handling to plot snapped highlights
+    if(page_file and os.path.exists(page_file)):
         with open(page_file, "r") as f:
             highlights = json.loads(f.read())["highlights"]
             for h in highlights[0]:
