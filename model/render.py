@@ -24,7 +24,7 @@ default_stroke_color = {
 
 
 class PDFPageLayout:
-    def __init__(self, pdf_page=None, is_landscape=False):
+    def __init__(self, pdf_page=None, is_landscape=False, default_layout=None):
         if not pdf_page:
             if is_landscape:
                 self.layout = [0, 0, DEFAULT_IMAGE_HEIGHT, DEFAULT_IMAGE_WIDTH]
@@ -32,7 +32,10 @@ class PDFPageLayout:
                 self.layout = [0, 0, DEFAULT_IMAGE_WIDTH, DEFAULT_IMAGE_HEIGHT]
         else:
             self.layout = pdf_page.CropBox or pdf_page.BleedBox or pdf_page.TrimBox or pdf_page.MediaBox or pdf_page.ArtBox
-            if self.layout is None:
+
+            if self.layout is None and default_layout is not None:
+                self.layout = default_layout
+            elif self.layout is None and default_layout is None:
                 return
 
         self.layout = [float(self.layout[0]), float(self.layout[1]), float(self.layout[2]), float(self.layout[3])]
@@ -82,7 +85,11 @@ def pdf(rm_files_path, path_highlighter, pages, path_original_pdf, path_annotate
             annotations_pdf.append(None)
             continue
 
-        page_layout = PDFPageLayout(base_pdf.pages[page_nr])
+        if hasattr(base_pdf, "Root") and hasattr(base_pdf.Root, "Pages") and hasattr(base_pdf.Root.Pages, "MediaBox"):
+            default_layout = base_pdf.Root.Pages.MediaBox
+        else:
+            default_layout = None
+        page_layout = PDFPageLayout(base_pdf.pages[page_nr], default_layout=default_layout)
         if page_layout.layout is None:
             annotations_pdf.append(None)
             continue
