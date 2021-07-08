@@ -1,5 +1,7 @@
 # RemaPy Explorer
 
+[![paypal](https://www.paypalobjects.com/en_US/AT/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9B8J938QN53T2)
+
 *IMPORTANT: ON SOME DEVICES, REMAPY NO MORE SYNCS CORRECTLY AND I CAN CURRENTLY NOT REPRODUCE THIS PROBELM OR GUARANTEE THAT FILES ARE NOT CORRUPTED AFTERWARDS. NEVERTHELESS, I HOPE WE CAN FIX THIS ISSUE SOON. SEE ALSO https://github.com/peerdavid/remapy/issues/47*
 
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
@@ -20,6 +22,7 @@ Checkout also my reMarkable Uploader App on the [Google Play Store](https://play
 nor endorsed by, reMarkable AS. I am not responsible for any
 damage done to your device or your data
 due to the use of this software.*
+
 
 
 # Features
