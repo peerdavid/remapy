@@ -1,5 +1,7 @@
 # RemaPy Explorer
 
+*IMPORTANT: ON SOME DEVICES, REMAPY NO MORE SYNCS CORRECTLY AND I CAN CURRENTLY NOT REPRODUCE THIS PROBELM OR GUARANTEE THAT FILES ARE NOT CORRUPTED AFTERWARDS. NEVERTHELESS, I HOPE WE CAN FIX THIS ISSUE SOON. SEE ALSO https://github.com/peerdavid/remapy/issues/47*
+
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
 reMarkable cloud. You can upload documents (via copy and paste), open notebooks
 and annotated pdfs and delete documents or collections. RemaPy is written in
