@@ -38,7 +38,7 @@ class Settings(object):
         label = tk.Label(root, text="Authentication", font="Helvetica 14 bold")
         label.grid(row=1, column=2, sticky="W")
 
-        self.onetime_code_link = "https://my.remarkable.com/device/connect/desktop"
+        self.onetime_code_link = "https://my.remarkable.com#desktop"
         self.label_onetime_code = tk.Label(root, justify="left", anchor="w",
                     fg="blue", cursor="hand2", text="\nDownload one-time code from \n" + self.onetime_code_link)
         self.label_onetime_code.grid(row=2, column=7, sticky="SW")
