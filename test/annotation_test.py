@@ -1,19 +1,41 @@
-import os
+import json
+from pathlib import Path
 
 from model.render import pdf
 
-INPUT_BASE_PATH = "./testcases/annotation/"
-OUTPUT_BASE_PATH = "./testcases/out/"
+INPUT_BASE_PATH = Path("testcases/annotation/")
+OUTPUT_BASE_PATH = Path("testcases/out/")
 
-if not os.path.exists(OUTPUT_BASE_PATH):
-    os.makedirs(OUTPUT_BASE_PATH)
+OUTPUT_BASE_PATH.mkdir(parents=True, exist_ok=True)
+
+
+def get_pages(rm_files_path):
+    content_file = rm_files_path.with_suffix(".content")
+    with open(content_file, "r") as f:
+        content = json.load(f)
+        pages = content["pages"]
+
+    return pages
 
 
 def render(id, name):
     print()
     print("Rendering " + name + ".....")
-    pdf(INPUT_BASE_PATH + id + "/" + id, INPUT_BASE_PATH + id + "/" + id + ".pdf",
-        OUTPUT_BASE_PATH + name + "_annotated.pdf", OUTPUT_BASE_PATH + name + "_oap.pdf")
+    path_original_pdf = INPUT_BASE_PATH / id / f"{id}.pdf"
+    rm_files_path = INPUT_BASE_PATH / id / id
+    path_highlighter = INPUT_BASE_PATH / f"{id}.highlights"
+    pages = get_pages(rm_files_path)
+    path_annotated_pdf = OUTPUT_BASE_PATH / f"{name}_annotated.pdf"
+    path_oap_pdf = OUTPUT_BASE_PATH / f"{name}_oap.pdf"
+
+    pdf(
+        rm_files_path,
+        path_highlighter,
+        pages,
+        path_original_pdf,
+        path_annotated_pdf,
+        path_oap_pdf,
+    )
 
 
 render("31a5899b-c3a8-49f7-b35a-8adf07c8f16c", "top_left")
