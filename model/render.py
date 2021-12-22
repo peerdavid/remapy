@@ -385,31 +385,31 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
                 can.drawPath(p)
 
     # Special handling to plot snapped highlights
-    # if(page_file and os.path.exists(page_file)):
-    #     with open(page_file, "r") as f:
-    #         highlights = json.loads(f.read())["highlights"]
-    #         for h in highlights[0]:
-    #             rects = h["rects"][0]
-    #             if page_layout.is_landscape:
-    #                 render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
-    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
-    #             else:
-    #                 render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
-    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
-    #
-    #             width = rects["width"] * page_layout.scale
-    #             height = rects["height"] * page_layout.scale
-    #             render_ypos -= height / 2
-    #
-    #             can.setStrokeColor(segment_colors[int(i / 2)])
-    #             can.setLineWidth(height)
-    #             can.setStrokeAlpha(0.1)
-    #
-    #             p = can.beginPath()
-    #             p.moveTo(render_xpos, render_ypos)
-    #             p.lineTo(render_xpos+width, render_ypos)
-    #             p.close()
-    #             can.drawPath(p)
+    if(page_file and os.path.exists(page_file)):
+        with open(page_file, "r") as f:
+            highlights = json.loads(f.read())["highlights"]
+            for h in highlights[0]:
+                rects = h["rects"][0]
+                if page_layout.is_landscape:
+                    render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
+                    render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
+                else:
+                    render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
+                    render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
+
+                width = rects["width"] * page_layout.scale
+                height = rects["height"] * page_layout.scale
+                render_ypos -= height / 2
+
+                can.setStrokeColor(default_stroke_color[3])
+                can.setLineWidth(height)
+                can.setStrokeAlpha(0.1)
+
+                p = can.beginPath()
+                p.moveTo(render_xpos, render_ypos)
+                p.lineTo(render_xpos+width, render_ypos)
+                p.close()
+                can.drawPath(p)
 
     can.save()
     packet.seek(0)
