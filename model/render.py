@@ -224,6 +224,7 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
         print('Not a valid reMarkable file: <header={}><nlayers={}>'.format(header, nlayers))
         os.abort()
 
+
     # Load name of layers; if layer name starts with # we use this color
     # for this layer
     layer_colors = [None for _ in range(nlayers)]
@@ -231,7 +232,7 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
         with open(rm_file_metadata, "r") as meta_file:
             layers = json.loads(meta_file.read())["layers"]
 
-        otherlist = []
+
         for l in range(len(layers)):
             layer = layers[l]
 
@@ -256,9 +257,40 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
 
             # No valid color found... automatic fallback to default
 
-    # Iterate through layers on the page (There is at least one)
     packet = io.BytesIO()
     can = canvas.Canvas(packet, pagesize=(page_layout.x_end, page_layout.y_end))
+    # Special handling to plot snapped highlights
+    if(page_file and os.path.exists(page_file)):
+        with open(page_file, "r") as f:
+            highlights = json.loads(f.read())["highlights"]
+            for h in highlights[0]:
+                can.setStrokeColor(default_stroke_color[h["color"]])
+                can.setStrokeAlpha(0.3)
+
+                p = can.beginPath()
+                for rects in h["rects"]:
+                    if page_layout.is_landscape:
+                        render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
+                        width = rects["height"] * page_layout.scale
+                        height = rects["width"] * page_layout.scale
+                        render_xpos -= width
+                        render_ypos -= height / 2
+                    else:
+                        render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
+                        width = rects["width"] * page_layout.scale
+                        height = rects["height"] * page_layout.scale
+                        render_ypos -= height / 2
+
+                    can.setLineWidth(height)
+
+                    p.moveTo(render_xpos, render_ypos)
+                    p.lineTo(render_xpos+width, render_ypos)
+                p.close()
+                can.drawPath(p)
+    otherlist = []
+    # Iterate through layers on the page (There is at least one)
     for layer in range(nlayers):
         fmt = '<I'
         (strokes_count,) = struct.unpack_from(fmt, data, offset)
@@ -371,45 +403,20 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
                     p.close()
                     can.drawPath(p)
 
-        for element in otherlist: # then render all the other strokes
-            can.setLineCap(1)
-            for i in range(2, len(element["points"]), 2):
-                can.setStrokeColor(element["colors"][int(i / 2)])
-                can.setLineWidth(element["widths"][int(i / 2)])
-                can.setStrokeAlpha(element["opac"][int(i / 2)])
-                p = can.beginPath()
-                p.moveTo(element["points"][i - 2], element["points"][i - 1])
-                p.lineTo(element["points"][i], element["points"][i + 1])
-                p.moveTo(element["points"][i], element["points"][i + 1])
-                p.close()
-                can.drawPath(p)
+    for element in otherlist: # then render all the other strokes
+        can.setLineCap(1)
+        for i in range(2, len(element["points"]), 2):
+            can.setStrokeColor(element["colors"][int(i / 2)])
+            can.setLineWidth(element["widths"][int(i / 2)])
+            can.setStrokeAlpha(element["opac"][int(i / 2)])
+            p = can.beginPath()
+            p.moveTo(element["points"][i - 2], element["points"][i - 1])
+            p.lineTo(element["points"][i], element["points"][i + 1])
+            p.moveTo(element["points"][i], element["points"][i + 1])
+            p.close()
+            can.drawPath(p)
 
-    # Special handling to plot snapped highlights
-    # if(page_file and os.path.exists(page_file)):
-    #     with open(page_file, "r") as f:
-    #         highlights = json.loads(f.read())["highlights"]
-    #         for h in highlights[0]:
-    #             rects = h["rects"][0]
-    #             if page_layout.is_landscape:
-    #                 render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
-    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
-    #             else:
-    #                 render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
-    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
-    #
-    #             width = rects["width"] * page_layout.scale
-    #             height = rects["height"] * page_layout.scale
-    #             render_ypos -= height / 2
-    #
-    #             can.setStrokeColor(segment_colors[int(i / 2)])
-    #             can.setLineWidth(height)
-    #             can.setStrokeAlpha(0.1)
-    #
-    #             p = can.beginPath()
-    #             p.moveTo(render_xpos, render_ypos)
-    #             p.lineTo(render_xpos+width, render_ypos)
-    #             p.close()
-    #             can.drawPath(p)
+
 
     can.save()
     packet.seek(0)
