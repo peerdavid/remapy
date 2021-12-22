@@ -15,11 +15,14 @@ DEFAULT_IMAGE_HEIGHT = 1872
 
 # Mappings
 default_stroke_color = {
-    0: (48 / 255., 63 / 255., 159 / 255.),        # Pen color 1
-    1: (211 / 255., 47 / 255., 47 / 255.),        # Pen color 2
-    2: (255 / 255., 255 / 255., 255 / 255.),      # Eraser
-    3: (255 / 255., 255 / 255., 0),               # Highlighter
-    4: (50 / 255., 50 / 255., 50 / 255.)          # Pencil
+    0: (0 / 255., 0 / 255., 0 / 255.),        # Pen color 1 black
+    1: (100 / 255., 100 / 255., 100 / 255.),        # Pen color 2 grey
+    2: (255 / 255., 255 / 255., 255 / 255.),      # Eraser white
+    3: (255 / 255., 255 / 255., 0 / 255.),               # Highlighter yellow
+    4: (0 / 255., 255 / 255., 0 / 255.),          # Highlighter green
+    5: (255 / 255., 0 / 255., 255 / 255.), # Highlighter pink
+    6: (50 / 255., 50 / 255., 255 / 255.), # blue
+    7: (255 / 255., 50 / 255., 50 / 255.) # red
 }
 
 
@@ -228,6 +231,7 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
         with open(rm_file_metadata, "r") as meta_file:
             layers = json.loads(meta_file.read())["layers"]
 
+        otherlist = []
         for l in range(len(layers)):
             layer = layers[l]
 
@@ -348,46 +352,64 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
 
             # Render lines after the arrays are filled
             # such that we have access to the next and previous points
-            can.setLineCap(0 if is_highlighter else 1)
+            # can.setLineCap(0 if is_highlighter else 1)
+            if not is_highlighter:
+                otherlist.append({"points": segment_points,
+                "widths":segment_widths,
+                "opac": segment_opacities,
+                "colors": segment_colors })
+            else: # rendering highlighter first
+                can.setLineCap(1)
+                for i in range(2, len(segment_points), 2):
+                    can.setStrokeColor(segment_colors[int(i / 2)])
+                    can.setLineWidth(segment_widths[int(i / 2)])
+                    can.setStrokeAlpha(0.1)
+                    p = can.beginPath()
+                    p.moveTo(segment_points[i - 2], segment_points[i - 1])
+                    p.lineTo(segment_points[i], segment_points[i + 1])
+                    p.moveTo(segment_points[i], segment_points[i + 1])
+                    p.close()
+                    can.drawPath(p)
 
-            for i in range(2, len(segment_points), 2):
-                can.setStrokeColor(segment_colors[int(i / 2)])
-                can.setLineWidth(segment_widths[int(i / 2)])
-                can.setStrokeAlpha(segment_opacities[int(i / 2)])
-
+        for element in otherlist: # then render all the other strokes
+            can.setLineCap(1)
+            for i in range(2, len(element["points"]), 2):
+                can.setStrokeColor(element["colors"][int(i / 2)])
+                can.setLineWidth(element["widths"][int(i / 2)])
+                can.setStrokeAlpha(element["opac"][int(i / 2)])
                 p = can.beginPath()
-                p.moveTo(segment_points[i - 2], segment_points[i - 1])
-                p.lineTo(segment_points[i], segment_points[i + 1])
-                p.moveTo(segment_points[i], segment_points[i + 1])
+                p.moveTo(element["points"][i - 2], element["points"][i - 1])
+                p.lineTo(element["points"][i], element["points"][i + 1])
+                p.moveTo(element["points"][i], element["points"][i + 1])
                 p.close()
                 can.drawPath(p)
 
     # Special handling to plot snapped highlights
-    if(page_file and os.path.exists(page_file)):
-        with open(page_file, "r") as f:
-            highlights = json.loads(f.read())["highlights"]
-            for h in highlights[0]:
-                rects = h["rects"][0]
-                if page_layout.is_landscape:
-                    render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
-                    render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
-                else:
-                    render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
-                    render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
-
-                width = rects["width"] * page_layout.scale
-                height = rects["height"] * page_layout.scale
-                render_ypos -= height / 2
-
-                can.setStrokeColor(default_stroke_color[3])
-                can.setLineWidth(height)
-                can.setStrokeAlpha(0.2)
-
-                p = can.beginPath()
-                p.moveTo(render_xpos, render_ypos)
-                p.lineTo(render_xpos+width, render_ypos)
-                p.close()
-                can.drawPath(p)
+    # if(page_file and os.path.exists(page_file)):
+    #     with open(page_file, "r") as f:
+    #         highlights = json.loads(f.read())["highlights"]
+    #         for h in highlights[0]:
+    #             rects = h["rects"][0]
+    #             if page_layout.is_landscape:
+    #                 render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
+    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
+    #             else:
+    #                 render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
+    #                 render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
+    #
+    #             width = rects["width"] * page_layout.scale
+    #             height = rects["height"] * page_layout.scale
+    #             render_ypos -= height / 2
+    #
+    #             can.setStrokeColor(segment_colors[int(i / 2)])
+    #             can.setLineWidth(height)
+    #             can.setStrokeAlpha(0.1)
+    #
+    #             p = can.beginPath()
+    #             p.moveTo(render_xpos, render_ypos)
+    #             p.lineTo(render_xpos+width, render_ypos)
+    #             p.close()
+    #             can.drawPath(p)
 
     can.save()
     packet.seek(0)
@@ -468,7 +490,7 @@ class Marker(Pen):
 
 class Pencil(Pen):
     def __init__(self, ratio, base_width, base_color):
-        super().__init__(ratio, base_width, 4)
+        super().__init__(ratio, base_width, base_color)
         self.segment_length = 2
         self.name = "Pencil"
 
@@ -521,9 +543,9 @@ class Brush(Pen):
 
 class Highlighter(Pen):
     def __init__(self, ratio, base_width, base_color):
-        super().__init__(ratio, base_width, 3)
+        super().__init__(ratio, base_width, base_color)
         self.stroke_cap = "square"
-        self.base_opacity = 0.2
+        self.base_opacity = 0.0
         self.name = "Highlighter"
         self.segment_length = 2
 
