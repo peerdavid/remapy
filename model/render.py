@@ -384,24 +384,23 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
 
             # Render lines after the arrays are filled
             # such that we have access to the next and previous points
-            # can.setLineCap(0 if is_highlighter else 1)
+            can.setLineCap(1)
             if not is_highlighter:
                 otherlist.append({"points": segment_points,
                 "widths":segment_widths,
                 "opac": segment_opacities,
                 "colors": segment_colors })
             else: # rendering highlighter first
-                can.setLineCap(1)
+                can.setStrokeColor(segment_colors[1])
+                can.setStrokeAlpha(0.3)
+                can.setLineWidth(segment_widths[1])
+                p = can.beginPath()
+
                 for i in range(2, len(segment_points), 2):
-                    can.setStrokeColor(segment_colors[int(i / 2)])
-                    can.setLineWidth(segment_widths[int(i / 2)])
-                    can.setStrokeAlpha(0.1)
-                    p = can.beginPath()
                     p.moveTo(segment_points[i - 2], segment_points[i - 1])
                     p.lineTo(segment_points[i], segment_points[i + 1])
-                    p.moveTo(segment_points[i], segment_points[i + 1])
-                    p.close()
-                    can.drawPath(p)
+                p.close()
+                can.drawPath(p)
 
     for element in otherlist: # then render all the other strokes
         can.setLineCap(1)
