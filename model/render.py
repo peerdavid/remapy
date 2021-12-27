@@ -80,12 +80,14 @@ def pdf(rm_files_path, path_highlighter, pages, path_original_pdf, path_annotate
 
     # Parse remarkable files and write into pdf
     annotations_pdf = []
+    offsets = []
 
     for page_nr in range(base_pdf.numPages):
         rm_file_name = "%s/%d" % (rm_files_path, page_nr)
         rm_file = "%s.rm" % rm_file_name
         if not os.path.exists(rm_file):
             annotations_pdf.append(None)
+            offsets.append(None)
             continue
 
         if hasattr(base_pdf, "Root") and hasattr(base_pdf.Root, "Pages") and hasattr(base_pdf.Root.Pages, "MediaBox"):
@@ -95,10 +97,11 @@ def pdf(rm_files_path, path_highlighter, pages, path_original_pdf, path_annotate
         page_layout = PDFPageLayout(base_pdf.pages[page_nr], default_layout=default_layout)
         if page_layout.layout is None:
             annotations_pdf.append(None)
+            offsets.append(None)
             continue
 
         page_file = os.path.join(path_highlighter, f"{pages[page_nr]}.json")
-        annotated_page = _render_rm_file(
+        annotated_page, offset = _render_rm_file(
             rm_file_name,
             page_layout=page_layout,
             page_file=page_file,)
@@ -108,6 +111,7 @@ def pdf(rm_files_path, path_highlighter, pages, path_original_pdf, path_annotate
         else:
             page = annotated_page.pages[0]
             annotations_pdf.append(page)
+        offsets.append(offset)
 
     # Merge annotations pdf and original pdf
     writer_full = PdfWriter()
@@ -116,11 +120,17 @@ def pdf(rm_files_path, path_highlighter, pages, path_original_pdf, path_annotate
         annotations_page = annotations_pdf[i]
 
         if annotations_page is not None:
-            merger = PageMerge(base_pdf.pages[i])
-            merger.add(annotations_page).render()
-            writer_oap.addpage(base_pdf.pages[i])
-
-        writer_full.addpage(base_pdf.pages[i])
+            # The annotations page is at least as large as the base PDF page,
+            # so we merge the base PDF page under the annotations page.
+            merger = PageMerge(annotations_page)
+            pdf = merger.add(base_pdf.pages[i], prepend=True)[0]
+            pdf.x -= offsets[i][0]
+            pdf.y -= offsets[i][1]
+            merger.render()
+            writer_oap.addpage(annotations_page)
+            writer_full.addpage(annotations_page)
+        else:
+            writer_full.addpage(base_pdf.pages[i])
 
     writer_full.write(path_annotated_pdf)
     writer_oap.write(path_oap_pdf)
@@ -138,7 +148,7 @@ def notebook(path, uuid, path_annotated_pdf, is_landscape, path_templates=None):
         if not os.path.exists(rm_file):
             break
 
-        overlay = _render_rm_file(rm_file_name, PDFPageLayout(is_landscape=is_landscape))
+        overlay, _ = _render_rm_file(rm_file_name, PDFPageLayout(is_landscape=is_landscape))
         annotations_pdf.append(overlay)
         p += 1
 
@@ -232,7 +242,6 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
         with open(rm_file_metadata, "r") as meta_file:
             layers = json.loads(meta_file.read())["layers"]
 
-
         for l in range(len(layers)):
             layer = layers[l]
 
@@ -257,46 +266,18 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
 
             # No valid color found... automatic fallback to default
 
-    packet = io.BytesIO()
-    can = canvas.Canvas(packet, pagesize=(page_layout.x_end, page_layout.y_end))
-    # Special handling to plot snapped highlights
-    if(page_file and os.path.exists(page_file)):
-        with open(page_file, "r") as f:
-            highlights = json.loads(f.read())["highlights"]
-            for h in highlights[0]:
-                can.setStrokeColor(default_stroke_color[h["color"]])
-                can.setStrokeAlpha(0.3)
-
-                p = can.beginPath()
-                for rects in h["rects"]:
-                    if page_layout.is_landscape:
-                        render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
-                        render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
-                        width = rects["height"] * page_layout.scale
-                        height = rects["width"] * page_layout.scale
-                        render_xpos -= width
-                        render_ypos -= height / 2
-                    else:
-                        render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
-                        render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
-                        width = rects["width"] * page_layout.scale
-                        height = rects["height"] * page_layout.scale
-                        render_ypos -= height / 2
-
-                    can.setLineWidth(height)
-
-                    p.moveTo(render_xpos, render_ypos)
-                    p.lineTo(render_xpos+width, render_ypos)
-                p.close()
-                can.drawPath(p)
-    otherlist = []
-    # Iterate through layers on the page (There is at least one)
+    # Iterate through layers on the page (There is at least one) to collect annotation data to render
+    layer_data_list = []
+    all_x = [page_layout.x_start, page_layout.x_end]
+    all_y = [page_layout.y_start, page_layout.y_end]
     for layer in range(nlayers):
         fmt = '<I'
         (strokes_count,) = struct.unpack_from(fmt, data, offset)
         offset += struct.calcsize(fmt)
 
         # Iterate through the strokes in the layer (If there is any)
+        highlighter_stroke_list = []
+        other_stroke_list = []
         for stroke in range(strokes_count):
             if is_v3:
                 fmt = '<IIIfI'
@@ -306,8 +287,6 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
                 fmt = '<IIIffI'
                 pen_nr, color, i_unk, width, unknown, segments_count = struct.unpack_from(fmt, data, offset)
                 offset += struct.calcsize(fmt)
-
-            last_width = 0
 
             # Check which tool is used for both, v3 and v5 and set props
             # https://support.remarkable.com/hc/en-us/articles/115004558545-5-1-Tools-Overview
@@ -349,6 +328,7 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
                 opacity = 0.
 
             # Iterate through the segments to form a polyline
+            last_width = 0
             segment_points = []
             segment_widths = []
             segment_opacities = []
@@ -382,46 +362,99 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
             if is_eraser_area or is_eraser:
                 continue
 
-            # Render lines after the arrays are filled
-            # such that we have access to the next and previous points
-            can.setLineCap(1)
-            if not is_highlighter:
-                otherlist.append({"points": segment_points,
-                "widths":segment_widths,
-                "opac": segment_opacities,
-                "colors": segment_colors })
-            else: # rendering highlighter first
-                can.setStrokeColor(segment_colors[1])
-                can.setStrokeAlpha(0.3)
-                can.setLineWidth(segment_widths[1])
-                p = can.beginPath()
+            stroke_data = {}
+            stroke_data["x_coordinates"] = segment_points[0::2]
+            stroke_data["y_coordinates"] = segment_points[1::2]
+            stroke_data["segment_widths"] = segment_widths
+            stroke_data["segment_opacities"] = segment_opacities
+            stroke_data["segment_colors"] = segment_colors
+            if is_highlighter:
+                highlighter_stroke_list.append(stroke_data)
+            else:
+                other_stroke_list.append(stroke_data)
+            all_x.extend(stroke_data["x_coordinates"])
+            all_y.extend(stroke_data["y_coordinates"])
 
-                for i in range(2, len(segment_points), 2):
-                    p.moveTo(segment_points[i - 2], segment_points[i - 1])
-                    p.lineTo(segment_points[i], segment_points[i + 1])
+        layer_data = {}
+        layer_data["highlighter_strokes"] = highlighter_stroke_list
+        layer_data["other_strokes"] = other_stroke_list
+        layer_data_list.append(layer_data)
+
+    # Preprocess collected data to determine canvas size and offset
+    min_x = min(all_x)
+    max_x = max(all_x)
+    min_y = min(all_y)
+    max_y = max(all_y)
+    canvas_width = max_x - min_x
+    canvas_height = max_y - min_y
+    canvas_offset = (min_x, min_y)
+    packet = io.BytesIO()
+    can = canvas.Canvas(packet, pagesize=(canvas_width, canvas_height))
+    can.translate(-canvas_offset[0], -canvas_offset[1])
+
+    # Special handling to plot snapped highlights
+    if(page_file and os.path.exists(page_file)):
+        with open(page_file, "r") as f:
+            highlights = json.loads(f.read())["highlights"]
+            for h in highlights[0]:
+                can.setStrokeColor(default_stroke_color[h["color"]])
+                can.setStrokeAlpha(0.3)
+
+                p = can.beginPath()
+                for rects in h["rects"]:
+                    if page_layout.is_landscape:
+                        render_xpos = page_layout.x_end - page_layout.scale * rects["y"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["x"]
+                        width = rects["height"] * page_layout.scale
+                        height = rects["width"] * page_layout.scale
+                        render_xpos -= width
+                        render_ypos -= height / 2
+                    else:
+                        render_xpos = page_layout.x_start + page_layout.scale * rects["x"]
+                        render_ypos = page_layout.y_end - page_layout.scale * rects["y"]
+                        width = rects["width"] * page_layout.scale
+                        height = rects["height"] * page_layout.scale
+                        render_ypos -= height / 2
+
+                    can.setLineWidth(height)
+
+                    p.moveTo(render_xpos, render_ypos)
+                    p.lineTo(render_xpos+width, render_ypos)
                 p.close()
                 can.drawPath(p)
 
-    for element in otherlist: # then render all the other strokes
-        can.setLineCap(1)
-        for i in range(2, len(element["points"]), 2):
-            can.setStrokeColor(element["colors"][int(i / 2)])
-            can.setLineWidth(element["widths"][int(i / 2)])
-            can.setStrokeAlpha(element["opac"][int(i / 2)])
-            p = can.beginPath()
-            p.moveTo(element["points"][i - 2], element["points"][i - 1])
-            p.lineTo(element["points"][i], element["points"][i + 1])
-            p.moveTo(element["points"][i], element["points"][i + 1])
-            p.close()
-            can.drawPath(p)
-
-
+    # Iterate over collected data to draw annotations
+    for layer in layer_data_list:
+        for stroke in layer["highlighter_strokes"]:
+            can.setLineCap(1)
+            for i in range(1, len(stroke["x_coordinates"])):
+                can.setStrokeColor(stroke["segment_colors"][i])
+                can.setLineWidth(stroke["segment_widths"][i])
+                can.setStrokeAlpha(0.1)
+                p = can.beginPath()
+                p.moveTo(stroke["x_coordinates"][i-1], stroke["y_coordinates"][i-1])
+                p.lineTo(stroke["x_coordinates"][i], stroke["y_coordinates"][i])
+                p.moveTo(stroke["x_coordinates"][i], stroke["y_coordinates"][i])
+                p.close()
+                can.drawPath(p)
+        for stroke in layer["other_strokes"]:
+            can.setLineCap(1)
+            for i in range(1, len(stroke["x_coordinates"])):
+                can.setStrokeColor(stroke["segment_colors"][i])
+                can.setLineWidth(stroke["segment_widths"][i])
+                can.setStrokeAlpha(stroke["segment_opacities"][i])
+                p = can.beginPath()
+                p.moveTo(stroke["x_coordinates"][i-1], stroke["y_coordinates"][i-1])
+                p.lineTo(stroke["x_coordinates"][i], stroke["y_coordinates"][i])
+                p.moveTo(stroke["x_coordinates"][i], stroke["y_coordinates"][i])
+                p.close()
+                can.drawPath(p)
 
     can.save()
     packet.seek(0)
     overlay = PdfReader(packet)
 
-    return overlay
+    return overlay, canvas_offset
 
 
 def _get_color(color):
