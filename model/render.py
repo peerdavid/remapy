@@ -397,7 +397,8 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
         with open(page_file, "r") as f:
             highlights = json.loads(f.read())["highlights"]
             for h in highlights[0]:
-                can.setStrokeColor(default_stroke_color[h["color"]])
+                c = h["color"] if "color" in h else 3
+                can.setStrokeColor(default_stroke_color[c])
                 can.setStrokeAlpha(0.3)
 
                 p = can.beginPath()
