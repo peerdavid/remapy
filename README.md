@@ -2,7 +2,7 @@
 
 [![paypal](https://www.paypalobjects.com/en_US/AT/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9B8J938QN53T2)
 
-*IMPORTANT: ON SOME DEVICES, REMAPY NO MORE SYNCS CORRECTLY AND I CAN CURRENTLY NOT REPRODUCE THIS PROBELM OR GUARANTEE THAT FILES ARE NOT CORRUPTED AFTERWARDS. NEVERTHELESS, I HOPE WE CAN FIX THIS ISSUE SOON. SEE ALSO https://github.com/peerdavid/remapy/issues/47*
+*IMPORTANT: THE API OF REMARKABLE CHANGED AND I'M NOT SURE IF I CAN UPDATE REMAPY ACCORDINGLY. SO IT COULD EASILY BE THAT THIS TOOL WILL NOT WORK AGAIN. I'M REALLY SRY AND I WILL TRY MY BEST TO SOLVE IT. ANY HELP IS WELCOME.*
 
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
 reMarkable cloud. You can upload documents (via copy and paste), open notebooks
