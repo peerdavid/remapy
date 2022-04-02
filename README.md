@@ -4,12 +4,13 @@
 
 *IMPORTANT: THE API OF REMARKABLE CHANGED AND I'M NOT SURE IF I CAN UPDATE REMAPY ACCORDINGLY. SO IT COULD EASILY BE THAT THIS TOOL WILL NOT WORK AGAIN. I'M REALLY SRY AND I WILL TRY MY BEST TO SOLVE IT. ANY HELP IS WELCOME. SEE ALSO THIS [ISSUE](https://github.com/peerdavid/remapy/issues/60)*
 
+ANOTHER TOOL THAT CAN BE USED DIRECTLY VIA SSH IS https://github.com/bordaigorl/remy
 
 
 
 
 
-
+-------------------------------------------------------------------------------------
 RemaPy is an open-source file explorer for your reMarkable tablet that uses the
 reMarkable cloud. You can upload documents (via copy and paste), open notebooks
 and annotated pdfs and delete documents or collections. RemaPy is written in
