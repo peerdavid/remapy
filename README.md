@@ -1,7 +1,5 @@
 # RemaPy Explorer
 
-[![paypal](https://www.paypalobjects.com/en_US/AT/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9B8J938QN53T2)
-
 *IMPORTANT: THE API OF REMARKABLE CHANGED AND I'M NOT SURE IF I CAN UPDATE REMAPY ACCORDINGLY. SO IT COULD EASILY BE THAT THIS TOOL WILL NOT WORK AGAIN. I'M REALLY SRY AND I WILL TRY MY BEST TO SOLVE IT. ANY HELP IS WELCOME. SEE ALSO THIS [ISSUE](https://github.com/peerdavid/remapy/issues/60)*
 
 ANOTHER TOOL THAT CAN BE USED DIRECTLY VIA SSH IS https://github.com/bordaigorl/remy
