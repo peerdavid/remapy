@@ -4,5 +4,6 @@ pyyaml
 requests
 pdfrw
 reportlab
-pathlib
+pathlib2
 wheel
+
