@@ -266,6 +266,16 @@ def _render_rm_file(rm_file_name, page_layout=None, page_file=None):
 
             # No valid color found... automatic fallback to default
 
+    # Sanitize page layout.
+    # Badly behaved PDF pages can have layouts [x_start, y_start, x_end, y_end]
+    # with x_start != 0 or y_start != 0.
+    # The reMarkable seems to compensate for this when displaying the PDF,
+    # but does not seem to adjust annotation coordinates.
+    page_layout.x_end -= page_layout.x_start
+    page_layout.y_end -= page_layout.y_start
+    page_layout.x_start = 0
+    page_layout.y_start = 0
+
     # Iterate through layers on the page (There is at least one) to collect annotation data to render
     layer_data_list = []
     all_x = [page_layout.x_start, page_layout.x_end]
